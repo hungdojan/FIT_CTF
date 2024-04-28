@@ -1,0 +1,16 @@
+version: '3.8'
+
+name: {{ name }}
+
+services:
+  admin:
+    build: ./admin
+    networks:
+      - main_net
+  http:
+    build: ./http
+    networks:
+      - main_net
+
+networks:
+  main_net:

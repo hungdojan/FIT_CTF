@@ -14,11 +14,12 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./data/mongo:/data:z
-
-  # TODO:
-  # redis:
+      - mongo_data:/data/db:z
+        # - ./initdb.js:/docker-entrypoint-initdb.d/initdb.js:z,ro
 
 env_file:
   - path: ../.env
     required: true
+
+volumes:
+  mongo_data:

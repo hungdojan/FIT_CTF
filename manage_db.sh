@@ -17,10 +17,14 @@ case "$1" in
     "validate")
         cd db && podman-compose --env-file ../.env config
         ;;
+    "mongosh")
+        source ./.env
+        podman exec -it ctf-database-mongo mongosh -u ${DB_USERNAME} -p ${DB_PASSWORD}
+        ;;
     *)
         echo "Missing argument!"
         echo "Usage:"
-        echo "./start_db.sh (start|stop|validate)"
+        echo "./manage_db.sh (start|stop|validate|mongosh)"
         exit 1
         ;;
 esac

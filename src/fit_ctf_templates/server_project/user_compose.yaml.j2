@@ -1,0 +1,16 @@
+version: '3.8'
+
+name: {{ project.name }}
+
+services:
+  {{ user.username }}:
+    build: ./user
+    networks:
+      - main_net
+    ports:
+      - "{{ sshport }}:22"
+    volumes:
+      - {{}}
+
+networks:
+  main_net:
