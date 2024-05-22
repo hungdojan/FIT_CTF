@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile:1
+FROM registry.access.redhat.com/ubi8:8.9-1136
+
+# install sshd and ssh
+RUN dnf update -y \
+    && dnf install openssh-server openssh-clients -y \
+    && /usr/bin/ssh-keygen -A
+
+# config sshd
+RUN mkdir /var/run/sshd \
+    && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
+    && useradd user
+
+# install other utils
+RUN dnf install iproute nmap vim nano -y \
+    && dnf clean all \
+    && rm -rf /var/cache/yum
+
+# expose ssh port
+EXPOSE 22
+
+# run default command
+CMD ["/usr/sbin/sshd", "-D"]

@@ -1,16 +1,18 @@
 version: '3.8'
 
-name: {{ project.name }}
+name: {{ project.name }}_{{ user.username}}
 
 services:
-  {{ user.username }}:
+  login:
     build: ./user
     networks:
       - main_net
     ports:
-      - "{{ sshport }}:22"
+      - "{{ user_config.ssh_port }}:22"
     volumes:
-      - {{}}
+      - {{ project.volume_mount_root_dir }}/{{ user.username }}:/home/user:z
+      - {{ user.shadow_path }}:/etc/shadow:z
 
 networks:
   main_net:
+  private_net:

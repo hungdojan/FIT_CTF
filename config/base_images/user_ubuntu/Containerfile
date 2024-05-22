@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1
+FROM docker.io/library/ubuntu:jammy
+
+# install sshd and ssh
+RUN apt update -y \
+    && apt install openssh-server vim nmap openssh -y \
+    && /usr/bin/ssh-keygen -A \
+
+# config sshd
+RUN mkdir /var/run/sshd \
+    && sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd \
+    && useradd user
+
+# install other utils
+RUN apt install -y vim iproute nmap nano \
+    && apt clean \
+    && rm -rf /var/cache/apt/lists
+
+# expose ssh port
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D"]

@@ -1,15 +1,18 @@
 from __future__ import annotations
+
 import os
-from fit_ctf_db_models import Project, ProjectManager, UserManager, UserConfigManager
+from pathlib import Path
+
+from pymongo import MongoClient
+from pymongo.database import Database
+
 from fit_ctf_backend.exceptions import (
     CTFException,
     DirNotEmptyException,
     ProjectNotExistsException,
     UserNotExistsException,
 )
-from pathlib import Path
-from pymongo import MongoClient
-from pymongo.database import Database
+from fit_ctf_db_models import Project, ProjectManager, UserConfigManager, UserManager
 
 
 class CTFManager:
@@ -88,6 +91,12 @@ class CTFManager:
             self.user_config_mgr.add_user_to_project(users, project_name)
         else:
             self.user_config_mgr.add_multiple_users_to_project(users, project_name)
+
+    def unassign_user_from_project(self, users: str | list[str], project_name: str):
+        if isinstance(users, list):
+            self.user_config_mgr.remove_multiple_users_from_project(users, project_name)
+        else:
+            self.user_config_mgr.remove_user_from_project(users, project_name)
 
     def get_running_projects(self):
         raise NotImplemented()

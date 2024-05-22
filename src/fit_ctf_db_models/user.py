@@ -1,6 +1,5 @@
 from __future__ import annotations
-import fit_ctf_db_models.project as _project
-import fit_ctf_db_models.user_config as _user_config
+
 import hashlib
 import logging
 import os
@@ -8,23 +7,24 @@ import re
 import secrets
 import string
 import subprocess
-
-from bson import ObjectId
 from dataclasses import asdict, dataclass
 from enum import Enum
-from fit_ctf_backend import (
-    ProjectNotExistsException,
-    UserNotExistsException,
-    DirNotExistsException,
-    CONFIG_PATH,
-    TEMPLATE_FILES,
-    DEFAULT_PASSWORD_LENGTH,
-    get_template,
-)
-from fit_ctf_db_models.base import Base, BaseManager
+from typing import Any
+
+from bson import ObjectId
 from passlib.hash import sha512_crypt
 from pymongo.database import Database
-from typing import Any
+
+import fit_ctf_db_models.project as _project
+import fit_ctf_db_models.user_config as _user_config
+from fit_ctf_backend import (
+    DEFAULT_PASSWORD_LENGTH,
+    DirNotExistsException,
+    ProjectNotExistsException,
+    UserNotExistsException,
+)
+from fit_ctf_db_models.base import Base, BaseManager
+from fit_ctf_templates import TEMPLATE_FILES, get_template
 
 log = logging.getLogger()
 log.disabled = False
@@ -43,16 +43,7 @@ class User(Base):
     shadow_path: str
     shadow_hash: str = ""
     email: str = ""
-
-
-    def start(self) -> subprocess.CompletedProcess:
-        raise NotImplemented()
-
-    def stop(self) -> subprocess.CompletedProcess:
-        raise NotImplemented()
-
-    def is_running(self) -> subprocess.CompletedProcess:
-        raise NotImplemented()
+    active: bool = True
 
 
 class UserManager(BaseManager[User]):
@@ -141,7 +132,7 @@ class UserManager(BaseManager[User]):
             password (str): User's password.
 
         Raises:
-            UserNotFound: Given user could not be found in the database.
+            UserNotExistsException: Given user could not be found in the database.
 
         Return:
             User: Updated `User` object.
@@ -153,7 +144,7 @@ class UserManager(BaseManager[User]):
         # calculate and update hash for shadow
         log.info(f"Updating `{user.shadow_path}`")
         crypt_hash = sha512_crypt.using(salt="randomText").hash(password)
-        template = get_template(TEMPLATE_FILES["shadow"], f"{CONFIG_PATH}/templates")
+        template = get_template(TEMPLATE_FILES["shadow"])
         with open(f"{user.shadow_path}", "w") as f:
             f.write(template.render(user={"name": "student", "hash": crypt_hash}))
 
@@ -164,7 +155,9 @@ class UserManager(BaseManager[User]):
         self.update_doc(user)
         return user
 
-    def create_new_user(self, username: str, password: str, shadow_dir: str) -> User:
+    def create_new_user(
+        self, username: str, password: str, shadow_dir: str, email: str = ""
+    ) -> User:
         """Create a new user.
 
         If user already exists function will return an instance of the old user
@@ -174,6 +167,7 @@ class UserManager(BaseManager[User]):
             username (str): User's username.
             password (str): User's password.
             shadow_dir (str): Destination directory where a shadow file will be generated.
+            email (str): User's email.
 
         Raises:
             DirNotExistsException: `shadow_dir` does not exists.
@@ -190,7 +184,7 @@ class UserManager(BaseManager[User]):
 
         # generate shadow from file
         log.info(f"Generating `{shadow_dir}{username}`")
-        template = get_template(TEMPLATE_FILES["shadow"], f"{CONFIG_PATH}/templates")
+        template = get_template(TEMPLATE_FILES["shadow"])
         shadow_dir += "/" if not shadow_dir.endswith("/") else ""
         crypt_hash = sha512_crypt.using(salt=username).hash(password)
         with open(f"{shadow_dir}{username}", "w") as f:
@@ -203,6 +197,7 @@ class UserManager(BaseManager[User]):
             role=UserRole.USER,
             shadow_path=f"{shadow_dir}{username}",
             shadow_hash=crypt_hash,
+            email=email,
         )
 
         self.insert_doc(user)
@@ -287,6 +282,26 @@ class UserManager(BaseManager[User]):
 
         return users
 
+    def delete_a_user(self, username: str):
+        """Delete the given user.
+
+        Params:
+            username: Account's username.
+
+        Raises:
+            UserNotExistsException: Given user could not be found in the database.
+        """
+        user = self.get_doc_by_filter(username=username)
+        if not user:
+            raise UserNotExistsException(f"User `{username}` does not exist.")
+
+        # TODO:
+        #   stop instances
+        #   unfollow from all projects
+        #       -> remove from
+        #   remove global config file
+        #   remove from database
+
     def delete_users(self, lof_usernames: list[str]) -> int:
         """Deletes users from the list.
 
@@ -296,9 +311,7 @@ class UserManager(BaseManager[User]):
         Return:
             int: Number of deleted users.
         """
-        users = self.get_docs(
-            filter={"username": {"$in": lof_usernames}}
-        )
+        users = self.get_docs(filter={"username": {"$in": lof_usernames}})
 
         ids = [u.id for u in users]
 

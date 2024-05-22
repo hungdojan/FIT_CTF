@@ -1,25 +1,25 @@
 from __future__ import annotations
 
-import fit_ctf_db_models.user as _user
-import fit_ctf_db_models.user_config as _user_config
 import json
 import logging
 import os
 import shutil
 import subprocess
 import sys
-
-from bson import ObjectId
 from dataclasses import asdict, dataclass, field
 from distutils.dir_util import copy_tree
-from fit_ctf_backend import ProjectNotExistsException, DirNotEmptyException
-from fit_ctf_db_models.base import BaseManager, Base
-from fit_ctf_db_models.network import Network
-from fit_ctf_templates import TEMPLATE_DIRNAME
-from fit_ctf_utils import get_template
 from pathlib import Path
-from pymongo.database import Database
 from typing import Any
+
+from bson import ObjectId
+from pymongo.database import Database
+
+import fit_ctf_db_models.user as _user
+import fit_ctf_db_models.user_config as _user_config
+from fit_ctf_backend import DirNotEmptyException, ProjectNotExistsException
+from fit_ctf_db_models.base import Base, BaseManager
+from fit_ctf_db_models.network import Network
+from fit_ctf_templates import TEMPLATE_DIRNAME, TEMPLATE_FILES, get_template
 
 log = logging.getLogger()
 CURR_FILE = os.path.realpath(__file__)
@@ -33,6 +33,7 @@ class Project(Base):
     volume_mount_root_dir: str
     networks: list[Network] = field(default_factory=list)
     description: str = ""
+    active: bool = True
 
     @property
     def _compose_filepath(self) -> Path:
@@ -53,6 +54,17 @@ class Project(Base):
             stderr=sys.stderr,
         )
         return proc
+
+    def restart(self):
+        """Restart project server.
+
+        Run `podman-compose up` in the sub-shell.
+
+        Returns:
+            subprocess.CompletedProcess: Command call results.
+        """
+        self.stop()
+        self.start()
 
     def stop(self) -> subprocess.CompletedProcess:
         """Stop the project server.
@@ -76,12 +88,8 @@ class Project(Base):
         Returns:
             bool: Returns `True` if the server is running; `False` otherwise.
         """
-        cmd = f'podman ps -a --format=json --filter=name=^{self.name}'
-        proc = subprocess.run(
-            cmd.split(),
-            capture_output=True,
-            text=True
-        )
+        cmd = f"podman ps -a --format=json --filter=name=^{self.name}"
+        proc = subprocess.run(cmd.split(), capture_output=True, text=True)
         data = json.loads(proc.stdout)
         return len(data) > 0
 
@@ -136,7 +144,7 @@ class ProjectManager(BaseManager[Project]):
 
     def get_active_users_for_project(self, project_name: str) -> list[_user.User]:
         """Return list of users that are assigned to the project."""
-        project = self.get_doc_by_filter(name=project_name)
+        project = self.get_doc_by_filter(name=project_name, invalid=False)
         if not project:
             raise ProjectNotExistsException(
                 f"Project `{project_name}` does not exists."
@@ -203,7 +211,7 @@ class ProjectManager(BaseManager[Project]):
         # create server_compose.yaml file
         compose_filepath = destination / compose_file
         with open(str(compose_filepath), "w") as f:
-            template = get_template("server_compose.yaml.j2", str(template_dir / "templates"))
+            template = get_template(TEMPLATE_FILES["server_compose"])
             f.write(template.render(name=name))
 
         # store into the database
@@ -217,7 +225,7 @@ class ProjectManager(BaseManager[Project]):
 
         return prj
 
-    def delete_project(self, name: str) -> bool:
+    def delete_project(self, name: str):
         """Delete a project."""
         # also deletes everything
         prj = self.get_doc_by_filter(name=name)
@@ -229,12 +237,20 @@ class ProjectManager(BaseManager[Project]):
         if prj.is_running():
             prj.stop()
 
+        # TODO: unfollow all users
+
         # TODO: remove built images
 
         # remove everything from the directory
         shutil.rmtree(prj.config_root_dir)
-        return self.remove_doc_by_id(prj.id)
+        # return self.remove_doc_by_id(prj.id)
+        prj.active = True
+        self.update_doc(prj)
 
-    def get_projects(self) -> list[str]:
-        res = self._coll.find(filter={}, projection={"_id": 0, "name": 1})
+    def get_projects(self, ignore_inactive: bool=False) -> list[str]:
+        _filter = {}
+        if not ignore_inactive:
+            _filter["active"] = True
+
+        res = self._coll.find(filter=_filter, projection={"_id": 0, "name": 1, "active": 1})
         return [i["name"] for i in res]

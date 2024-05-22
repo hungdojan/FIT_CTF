@@ -1,27 +1,26 @@
 from __future__ import annotations
 
-import fit_ctf_db_models.user as _user
-import fit_ctf_db_models.project as _project
 import logging
 import os
 import shutil
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
+from typing import Any
 
 from bson import DBRef, ObjectId
-from dataclasses import asdict, dataclass, field
+from pymongo.database import Database
+
+import fit_ctf_db_models.project as _project
+import fit_ctf_db_models.user as _user
 from fit_ctf_backend import (
-    get_template,
-    TEMPLATE_FILES,
-    CONFIG_PATH,
-    UserNotExistsException,
     ProjectNotExistsException,
     SSHPortOutOfRangeException,
     UserNotAssignedToProjectException,
+    UserNotExistsException,
 )
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_db_models.service import Service
-from pathlib import Path
-from pymongo.database import Database
-from typing import Any
+from fit_ctf_templates import TEMPLATE_FILES, get_template
 
 log = logging.getLogger()
 
@@ -32,10 +31,12 @@ class UserConfig(Base):
     user_id: DBRef
     project_id: DBRef
     ssh_port: int
+    forwarded_port: int = -1
     services: list[Service] = field(default_factory=list)
+    active: bool = True
 
     def get_template(self):
-        template = get_template(TEMPLATE_FILES["shadow"], f"{CONFIG_PATH}/templates")
+        template = get_template(TEMPLATE_FILES["shadow"])
         # TODO: create tempfile
         raise NotImplemented()
 
@@ -205,7 +206,7 @@ class UserConfigManager(BaseManager[UserConfig]):
                     "from": "user",
                     "localField": "user_id.$id",
                     "foreignField": "_id",
-                    "as": "user"
+                    "as": "user",
                 }
             },
             {
@@ -214,18 +215,14 @@ class UserConfigManager(BaseManager[UserConfig]):
             },
             {
                 # search for users in the given list of username
-                "$match": {
-                    "user.username": {
-                        "$in": lof_usernames
-                    }
-                }
+                "$match": {"user.username": {"$in": lof_usernames}}
             },
             {
                 # transform to the final internet format
                 "$project": {
                     "username": "$user.username",
                 }
-            }
+            },
         ]
         user_configs = [i for i in self._coll.aggregate(pipeline)]
 
