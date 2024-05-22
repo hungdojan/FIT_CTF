@@ -41,7 +41,6 @@ class CTFManager:
         self,
         name: str,
         dest_dir: str,
-        volume_mount_root_dir: str,
         dir_name: str = "",
         description: str = "",
         compose_file: str = "server_compose.yaml",
@@ -49,7 +48,7 @@ class CTFManager:
         """Create a project template."""
         # check if project already exists
         return self.prj_mgr.init_project(
-            name, dest_dir, volume_mount_root_dir, dir_name, description, compose_file
+            name, dest_dir, dir_name, description, compose_file
         )
 
     def start_project(self, name: str) -> bool:
@@ -78,13 +77,12 @@ class CTFManager:
     def stop_user_instance(self, username: str, project_name: str):
         raise NotImplemented()
 
-    def delete_project(self, name: str) -> bool:
+    def delete_project(self, name: str):
         """Delete a project."""
         try:
             return self.prj_mgr.delete_project(name)
         except CTFException as e:
             print(e)
-            return False
 
     def assign_users_to_project(self, users: str | list[str], project_name: str):
         if isinstance(users, str):

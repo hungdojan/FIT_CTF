@@ -43,12 +43,6 @@ def project(ctx: click.Context):
     required=True,
 )
 @click.option(
-    "-vd",
-    "--volume-mount-dir",
-    help="A directory the will contain use home volumes.",
-    required=True,
-)
-@click.option(
     "-dn",
     "--dir-name",
     help="Name of the directory that will be created inside `dest-dir`.",
@@ -67,7 +61,6 @@ def create_project(
     ctx: click.Context,
     name: str,
     dest_dir: str,
-    volume_mount_dir: str,
     dir_name: str,
     description: str,
     compose_file: str,
@@ -75,7 +68,7 @@ def create_project(
     """Create and initialize a new project.\f"""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     prj = ctf_mgr.init_project(
-        name, dest_dir, volume_mount_dir, dir_name, description, compose_file
+        name, dest_dir, dir_name, description, compose_file
     )
     click.echo(prj)
 
@@ -201,7 +194,9 @@ def resources_usage(ctx: click.Context):
 @click.argument("project_name")
 @click.pass_context
 def export_project(ctx: click.Context, project_name: str):
-    raise NotImplemented()
+    """Export project configurations."""
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"] # pyright: ignore
+    ctf_mgr.export_project_configs(project_name)
 
 
 @project.command("delete")

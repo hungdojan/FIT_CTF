@@ -30,7 +30,6 @@ class Project(Base):
     name: str
     config_root_dir: str
     compose_file: str
-    volume_mount_root_dir: str
     networks: list[Network] = field(default_factory=list)
     description: str = ""
     active: bool = True
@@ -178,7 +177,6 @@ class ProjectManager(BaseManager[Project]):
         self,
         name: str,
         dest_dir: str,
-        volume_mount_root_dir: str,
         dir_name: str = "",
         description: str = "",
         compose_file: str = "server_compose.yaml",
@@ -201,7 +199,7 @@ class ProjectManager(BaseManager[Project]):
                 f"Destination directory `{destination}` is not empty"
             )
 
-        os.makedirs(volume_mount_root_dir, exist_ok=True)
+        os.makedirs(destination / "_mounts", exist_ok=True)
 
         # fill directory with templates
         template_dir = Path(TEMPLATE_DIRNAME)
@@ -219,7 +217,6 @@ class ProjectManager(BaseManager[Project]):
             name=name,
             config_root_dir=str(destination),
             compose_file=compose_file,
-            volume_mount_root_dir=str(volume_mount_root_dir),
             description=description,
         )
 
