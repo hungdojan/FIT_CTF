@@ -43,6 +43,12 @@ def project(ctx: click.Context):
     required=True,
 )
 @click.option(
+    "-vd",
+    "--volume-mount-dir",
+    help="A directory the will contain use home volumes.",
+    default="_mounts",
+)
+@click.option(
     "-dn",
     "--dir-name",
     help="Name of the directory that will be created inside `dest-dir`.",
@@ -61,6 +67,7 @@ def create_project(
     ctx: click.Context,
     name: str,
     dest_dir: str,
+    volume_mount_dir: str,
     dir_name: str,
     description: str,
     compose_file: str,
@@ -68,19 +75,22 @@ def create_project(
     """Create and initialize a new project.\f"""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     prj = ctf_mgr.init_project(
-        name, dest_dir, dir_name, description, compose_file
+        name, dest_dir, volume_mount_dir, dir_name, description, compose_file
     )
     click.echo(prj)
 
 
 @project.command(name="ls")
+@click.option(
+    "-a", "--all", is_flag=True, help="Display both active and inactive projects.)"
+)
 @click.pass_context
-def list_projects(ctx: click.Context):
+def list_projects(ctx: click.Context, all: bool):
     if not ctx.parent:
         click.echo("No parent")
         return
     prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]
-    pprint.pprint(prj_mgr.get_docs({}))
+    pprint.pprint(prj_mgr.get_projects(ignore_inactive=all))
 
 
 @project.command(name="get-info")
@@ -195,7 +205,7 @@ def resources_usage(ctx: click.Context):
 @click.pass_context
 def export_project(ctx: click.Context, project_name: str):
     """Export project configurations."""
-    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"] # pyright: ignore
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     ctf_mgr.export_project_configs(project_name)
 
 
@@ -212,11 +222,16 @@ def delete_project(ctx: click.Context, project_name: str):
         project_name (str): Project's name.
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    res = ctf_mgr.delete_project(project_name)
-    if not res:
-        click.echo("Failed to delete project.")
-        sys.exit(1)
+    ctf_mgr.delete_project(project_name)
     click.echo("Project deleted successfully.")
+
+
+@project.command("flush-db")
+@click.pass_context
+def flush_db(ctx: click.Context):
+    """Removes all inactive projects from the database."""
+    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    prj_mgr.remove_doc_by_filter(active=False)
 
 
 ## MANAGE PROJECT INSTANCE

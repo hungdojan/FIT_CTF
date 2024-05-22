@@ -72,6 +72,7 @@ def create_user(
 def multiple_create(ctx: click.Context, ignore_existing: bool, filename: str):
     raise NotImplemented()
 
+
 @user.command(name="ls")
 @click.pass_context
 def list_users(ctx: click.Context):
@@ -88,9 +89,7 @@ def list_users(ctx: click.Context):
 def active_projects(ctx: click.Context, username: str):
     """Get a list of active projects that a user is assigned to."""
     user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
-    pprint.pprint(
-        user_mgr.get_active_projects_for_user(username)
-    )
+    pprint.pprint(user_mgr.get_active_projects_for_user(username))
 
 
 @user.command(name="change-password")
@@ -145,12 +144,11 @@ def restart_user(ctx: click.Context, username: str, project_name: str):
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
 def user_is_running(ctx: click.Context, username: str, project_name: str):
-    user_mgr: UserManager = ctx.parent.obj["user_mgr"] # pyright: ignore
+    user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
     user = user_mgr.get_doc_by_filter(username=username)
     if not user:
         click.echo("User not found")
         return
-
 
     raise NotImplemented()
 
@@ -162,7 +160,7 @@ def user_is_running(ctx: click.Context, username: str, project_name: str):
 def follow_project(ctx: click.Context, username: str, project_name: str):
     """Assign user to the project."""
 
-    context_dir: dict[str, Any] = ctx.parent.obj # pyright: ignore
+    context_dir: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dir["ctf_mgr"]
     user = ctf_mgr.user_mgr.get_doc_by_filter(username=username)
     if not user:

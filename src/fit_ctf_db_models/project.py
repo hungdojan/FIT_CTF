@@ -14,6 +14,7 @@ from typing import Any
 from bson import ObjectId
 from pymongo.database import Database
 
+from fit_ctf_backend.exceptions import DirNotExistsException
 import fit_ctf_db_models.user as _user
 import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend import DirNotEmptyException, ProjectNotExistsException
@@ -29,6 +30,7 @@ CURR_FILE = os.path.realpath(__file__)
 class Project(Base):
     name: str
     config_root_dir: str
+    volume_mount_dirname: str
     compose_file: str
     networks: list[Network] = field(default_factory=list)
     description: str = ""
@@ -118,6 +120,11 @@ class ProjectManager(BaseManager[Project]):
     def __init__(self, db: Database):
         super().__init__(db, db["project"])
 
+    @property
+    def _uc_mgr(self):
+        return _user_config.UserConfigManager(self._db)
+
+
     def get_doc_by_id(self, _id: ObjectId) -> Project | None:
         res = self._coll.find_one({"_id": _id})
         return Project(**res) if res else None
@@ -149,7 +156,7 @@ class ProjectManager(BaseManager[Project]):
                 f"Project `{project_name}` does not exists."
             )
 
-        uc_coll = _user_config.UserConfigManager(self._db).collection
+        uc_coll = self._uc_mgr.collection
         pipeline = [
             {
                 # search only user_config for the given user
@@ -177,15 +184,26 @@ class ProjectManager(BaseManager[Project]):
         self,
         name: str,
         dest_dir: str,
+        volume_mount_dirname: str = "_mounts",
         dir_name: str = "",
         description: str = "",
         compose_file: str = "server_compose.yaml",
     ) -> Project:
-        """Create a project template."""
+        """Create a project template.
+        This function creates the following file structure:
+            <dest_dir>
+              -- <dir_name>
+                  -- <compose_file>
+                  -- <server_config>
+                  -- _mounts
+                      -- <home_volumes_for_each_user>
+        """
         # check if project already exists
         prj = self.get_doc_by_filter(name=name)
         if prj:
             return prj
+        if not os.path.isdir(dest_dir):
+            raise DirNotExistsException("A destination directory does not exists.")
 
         if not dir_name:
             dir_name = name.lower().replace(" ", "_")
@@ -199,7 +217,8 @@ class ProjectManager(BaseManager[Project]):
                 f"Destination directory `{destination}` is not empty"
             )
 
-        os.makedirs(destination / "_mounts", exist_ok=True)
+        volume_mount_dirpath = destination / volume_mount_dirname
+        os.makedirs(volume_mount_dirpath, exist_ok=True)
 
         # fill directory with templates
         template_dir = Path(TEMPLATE_DIRNAME)
@@ -215,9 +234,10 @@ class ProjectManager(BaseManager[Project]):
         # store into the database
         prj = self.create_and_insert_doc(
             name=name,
-            config_root_dir=str(destination),
+            config_root_dir=str(destination.resolve()),
             compose_file=compose_file,
             description=description,
+            volume_mount_dirname=volume_mount_dirname
         )
 
         return prj
@@ -225,23 +245,22 @@ class ProjectManager(BaseManager[Project]):
     def delete_project(self, name: str):
         """Delete a project."""
         # also deletes everything
-        prj = self.get_doc_by_filter(name=name)
+        prj = self.get_doc_by_filter(name=name, active=True)
         if not prj:
             raise ProjectNotExistsException(f"Project `{name}` does not exists.")
 
         # stop project if running
-        # TODO: enable in the future
         if prj.is_running():
             prj.stop()
 
         # TODO: unfollow all users
+        self._uc_mgr.unfollow_from_project(prj)
 
         # TODO: remove built images
 
         # remove everything from the directory
         shutil.rmtree(prj.config_root_dir)
-        # return self.remove_doc_by_id(prj.id)
-        prj.active = True
+        prj.active = False
         self.update_doc(prj)
 
     def get_projects(self, ignore_inactive: bool=False) -> list[str]:
@@ -249,5 +268,6 @@ class ProjectManager(BaseManager[Project]):
         if not ignore_inactive:
             _filter["active"] = True
 
+        # TODO: add more fields (e. g. number of students)
         res = self._coll.find(filter=_filter, projection={"_id": 0, "name": 1, "active": 1})
-        return [i["name"] for i in res]
+        return [i for i in res]
