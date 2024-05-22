@@ -19,6 +19,10 @@ from fit_ctf_backend import (
     UserNotAssignedToProjectException,
     UserNotExistsException,
 )
+from fit_ctf_backend.exceptions import (
+    MaxUserCountReachedException,
+    PortUsageCollisionException,
+)
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_db_models.service import Service
 from fit_ctf_templates import TEMPLATE_FILES, get_template
@@ -67,21 +71,19 @@ class UserConfigManager(BaseManager[UserConfig]):
 
         return user, project
 
-    def get_min_available_sshport(self, project_name: str) -> int:
-        prj = self._prj_mgr.get_doc_by_filter(name=project_name)
-        if not prj:
-            raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
-
-        user_configs = self.get_docs_raw(
-            filter={"project_id.$id": prj.id}, projection={"_id": 0, "ssh_port": 1}
+    def get_min_available_sshport(self, project: _project.Project) -> int:
+        user_configs = (
+            self._coll.find(
+                filter={"project_id.$id": project.id},
+                projection={"_id": 0, "ssh_port": 1},
+            )
+            .sort({"ssh_port": -1})
+            .limit(1)
         )
-        self._coll.find(
-            filter={"project_id.$id": prj.id}, projection={"_id": 0, "ssh_port": 1}
-        ).sort({"ssh_port": -1}).limit(1)
         res = [uc["ssh_port"] for uc in user_configs]
         if res:
             return res[0] + 1
-        return 50000
+        return project.starting_port_bind
 
     def get_doc_by_id(self, _id: ObjectId) -> UserConfig | None:
         res = self._coll.find_one({"_id": _id})
@@ -94,7 +96,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         res = self._coll.find_one(filter=kw)
         return UserConfig(**res) if res else None
 
-    def get_docs(self, filter: dict[str, Any]) -> list[UserConfig]:
+    def get_docs(self, **filter) -> list[UserConfig]:
         res = self._coll.find(filter=filter)
         return [UserConfig(**data) for data in res]
 
@@ -104,16 +106,14 @@ class UserConfigManager(BaseManager[UserConfig]):
         return doc
 
     def add_user_to_project(
-        self, username: str, project_name: str, ssh_port: int = -1
+        self,
+        username: str,
+        project_name: str,
+        ssh_port: int = -1,
+        forwarded_port: int = -1,
     ) -> UserConfig:
         user, project = self._get_user_and_project(username, project_name)
-
-        # create volume dir
-        mount_dir = (
-            Path(project.config_root_dir) / project.volume_mount_dirname / user.username
-        )
-        os.makedirs(str(mount_dir))
-
+        users = self._prj_mgr.get_active_users_for_project(project)
         user_config = self.get_doc_by_filter(
             **{
                 "user_id.$id": user.id,
@@ -124,14 +124,49 @@ class UserConfigManager(BaseManager[UserConfig]):
         if user_config:
             return user_config
 
+        if len(users) >= project.max_nof_users:
+            raise MaxUserCountReachedException(
+                f"Project `{project.name}` has already reached the maximum number of users."
+            )
+
         if ssh_port < 0:
-            ssh_port = self.get_min_available_sshport(project_name)
+            ssh_port = self.get_min_available_sshport(project)
+
+        if forwarded_port < 0:
+            forwarded_port = ssh_port
+
+        collision_test = [
+            i
+            for i in self._coll.aggregate(
+                [
+                    {
+                        "$match": {
+                            "$or": [
+                                {"forwarded_port": forwarded_port},
+                                {"ssh_port": ssh_port},
+                            ]
+                        }
+                    }
+                ]
+            )
+        ]
+        if collision_test:
+            raise PortUsageCollisionException(
+                f"Either forwarded port `{forwarded_port}` or system port `{ssh_port}` is already in use by another user in the project."
+            )
+
+        # create volume dir
+        mount_dir = (
+            Path(project.config_root_dir) / project.volume_mount_dirname / user.username
+        )
+        os.makedirs(mount_dir)
 
         user_config = UserConfig(
             _id=ObjectId(),
             user_id=DBRef("user", user.id),
             project_id=DBRef("project", project.id),
             ssh_port=ssh_port,
+            forwarded_port=forwarded_port,
         )
 
         self.insert_doc(user_config)
@@ -247,8 +282,13 @@ class UserConfigManager(BaseManager[UserConfig]):
         # return self.remove_docs_by_id([uc["_id"] for uc in user_configs])
         return 0
 
-    def unfollow_from_project(self, project_or_name: str | _project.Project):
+    def unassign_users(self, project_or_name: str | _project.Project):
         """Unfollow all users from the project."""
+
+        def _deactivate(uc: UserConfig):
+            uc.active = False
+            return uc
+
         prj = project_or_name
         if not isinstance(prj, _project.Project):
             prj = self._prj_mgr.get_doc_by_filter(name=project_or_name)
@@ -257,5 +297,22 @@ class UserConfigManager(BaseManager[UserConfig]):
                     f"Project `{project_or_name}` does not exist."
                 )
 
-        lof_docs = self.get_docs({"project_id.$id": prj.id, "active": True})
+        lof_docs = self.get_docs(**{"project_id.$id": prj.id, "active": True})
+        lof_docs = list(map(lambda uc: _deactivate(uc), lof_docs))
+        pprint(lof_docs)
+
+    def unassign_user_from_projects(self, user_or_username: str | _user.User):
+        def _deactivate(uc: UserConfig):
+            uc.active = False
+            return uc
+
+        user = user_or_username
+        if not isinstance(user, _user.User):
+            user = self._user_mgr.get_doc_by_filter(username=user_or_username)
+            if not user:
+                raise UserNotExistsException(
+                    f"User `{user_or_username}` does not exist."
+                )
+        lof_docs = self.get_docs(**{"user_id.$id": user.id, "active": True})
+        lof_docs = list(map(lambda uc: _deactivate(uc), lof_docs))
         pprint(lof_docs)

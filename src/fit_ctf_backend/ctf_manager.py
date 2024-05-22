@@ -41,15 +41,24 @@ class CTFManager:
         self,
         name: str,
         dest_dir: str,
-        volume_mount_dir: str = "_mounts",
-        dir_name: str = "",
-        description: str = "",
-        compose_file: str = "server_compose.yaml",
+        max_nof_users: int,
+        starting_port_bind: int,
+        volume_mount_dirname: str,
+        dir_name: str,
+        description: str,
+        compose_file: str,
     ) -> Project:
         """Create a project template."""
         # check if project already exists
         return self.prj_mgr.init_project(
-            name, dest_dir, volume_mount_dir, dir_name, description, compose_file
+            name,
+            dest_dir,
+            max_nof_users,
+            starting_port_bind,
+            volume_mount_dirname,
+            dir_name,
+            description,
+            compose_file,
         )
 
     def start_project(self, name: str) -> bool:

@@ -6,7 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Any
@@ -14,10 +14,11 @@ from typing import Any
 from bson import ObjectId
 from pymongo.database import Database
 
-from fit_ctf_backend.exceptions import DirNotExistsException
 import fit_ctf_db_models.user as _user
 import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend import DirNotEmptyException, ProjectNotExistsException
+from fit_ctf_backend.constants import DEFAULT_STARTING_PORT
+from fit_ctf_backend.exceptions import DirNotExistsException
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_db_models.network import Network
 from fit_ctf_templates import TEMPLATE_DIRNAME, TEMPLATE_FILES, get_template
@@ -32,6 +33,8 @@ class Project(Base):
     config_root_dir: str
     volume_mount_dirname: str
     compose_file: str
+    max_nof_users: int
+    starting_port_bind: int
     networks: list[Network] = field(default_factory=list)
     description: str = ""
     active: bool = True
@@ -124,7 +127,6 @@ class ProjectManager(BaseManager[Project]):
     def _uc_mgr(self):
         return _user_config.UserConfigManager(self._db)
 
-
     def get_doc_by_id(self, _id: ObjectId) -> Project | None:
         res = self._coll.find_one({"_id": _id})
         return Project(**res) if res else None
@@ -136,7 +138,7 @@ class ProjectManager(BaseManager[Project]):
         res = self._coll.find_one(filter=kw)
         return Project(**res) if res else None
 
-    def get_docs(self, filter: dict[str, Any]) -> list[Project]:
+    def get_docs(self, **filter) -> list[Project]:
         res = self._coll.find(filter=filter)
         return [Project(**data) for data in res]
 
@@ -146,15 +148,19 @@ class ProjectManager(BaseManager[Project]):
         return doc
 
     def get_project_info(self) -> dict[str, Any]:
-        return {p.name: p for p in self.get_docs({})}
+        return {p.name: p for p in self.get_docs()}
 
-    def get_active_users_for_project(self, project_name: str) -> list[_user.User]:
+    def get_active_users_for_project(
+        self, project_or_name: str | Project
+    ) -> list[dict[str, Any]]:
         """Return list of users that are assigned to the project."""
-        project = self.get_doc_by_filter(name=project_name, invalid=False)
-        if not project:
-            raise ProjectNotExistsException(
-                f"Project `{project_name}` does not exists."
-            )
+        project = project_or_name
+        if not isinstance(project, Project):
+            project = self.get_doc_by_filter(name=project_or_name, active=True)
+            if not project:
+                raise ProjectNotExistsException(
+                    f"Project `{project_or_name}` does not exists."
+                )
 
         uc_coll = self._uc_mgr.collection
         pipeline = [
@@ -163,12 +169,25 @@ class ProjectManager(BaseManager[Project]):
                 "$match": {"project_id.$id": project.id}
             },
             {
+                "$lookup": {
+                    "from": "project",
+                    "localField": "project_id.$id",
+                    "foreignField": "_id",
+                    "pipeline": [{"$project": {"config_root_dir": 1, "_id": 0}}],
+                    "as": "project"
+                }
+            },
+            {
                 # get project info
                 "$lookup": {
                     "from": "user",
                     "localField": "user_id.$id",
                     "foreignField": "_id",
                     "as": "user",
+                    "pipeline": [
+                        {"$match": {"active": True}},
+                        {"$project": {"password": 0, "shadow_hash": 0}},
+                    ],
                 }
             },
             {
@@ -176,14 +195,51 @@ class ProjectManager(BaseManager[Project]):
                 # pop the first element from the array
                 "$unwind": "$user"
             },
-            {"$project": {"user": 1, "_id": 0}},
+            {
+                "$unwind": "$project"
+            },
+            {
+                "$project": {
+                    "user": 1,
+                    "_id": 0,
+                    "mount": {"$concat": ["$project.config_root_dir", "/", "$user.username"]},
+                }
+            },
         ]
-        return [_user.User(**i["user"]) for i in uc_coll.aggregate(pipeline)]
+
+        #        vvvvvvvvvvv -- spreading dict key-values
+        return [{**i["user"], "mount": i["mount"]} for i in uc_coll.aggregate(pipeline)]
+
+    def _get_avaiable_starting_port(self) -> int:
+        lof_prjs_cur = self._coll.find(
+            filter={"active": True},
+            projection={"_id": 0, "max_nof_users": 1, "starting_port_bind": 1},
+        ).sort({"starting_port_bind": -1})
+        lof_prjs = [i for i in lof_prjs_cur]
+        if not lof_prjs:
+            return DEFAULT_STARTING_PORT
+        return lof_prjs[0]["starting_port_bind"] + lof_prjs[0]["max_nof_users"] + 1000
+
+    def get_reserved_ports(self) -> list[dict[str, Any]]:
+        pipeline = [
+            {"$match": {"active": True}},
+            {
+                "$project": {
+                    "_id": 1,
+                    "name": 1,
+                    "min_port": "$starting_port_bind",
+                    "max_port": {"$add": ["$max_nof_users", "$starting_port_bind"]},
+                }
+            },
+        ]
+        return [i for i in self._coll.aggregate(pipeline)]
 
     def init_project(
         self,
         name: str,
         dest_dir: str,
+        max_nof_users: int,
+        starting_port_bind: int = -1,
         volume_mount_dirname: str = "_mounts",
         dir_name: str = "",
         description: str = "",
@@ -204,6 +260,9 @@ class ProjectManager(BaseManager[Project]):
             return prj
         if not os.path.isdir(dest_dir):
             raise DirNotExistsException("A destination directory does not exists.")
+
+        if starting_port_bind < 0:
+            starting_port_bind = self._get_avaiable_starting_port()
 
         if not dir_name:
             dir_name = name.lower().replace(" ", "_")
@@ -236,8 +295,10 @@ class ProjectManager(BaseManager[Project]):
             name=name,
             config_root_dir=str(destination.resolve()),
             compose_file=compose_file,
+            max_nof_users=max_nof_users,
+            starting_port_bind=starting_port_bind,
             description=description,
-            volume_mount_dirname=volume_mount_dirname
+            volume_mount_dirname=volume_mount_dirname,
         )
 
         return prj
@@ -254,7 +315,7 @@ class ProjectManager(BaseManager[Project]):
             prj.stop()
 
         # TODO: unfollow all users
-        self._uc_mgr.unfollow_from_project(prj)
+        self._uc_mgr.unassign_users(prj)
 
         # TODO: remove built images
 
@@ -263,11 +324,32 @@ class ProjectManager(BaseManager[Project]):
         prj.active = False
         self.update_doc(prj)
 
-    def get_projects(self, ignore_inactive: bool=False) -> list[str]:
+    def get_projects(self, ignore_inactive: bool = False) -> list[dict[str, Any]]:
         _filter = {}
         if not ignore_inactive:
             _filter["active"] = True
 
-        # TODO: add more fields (e. g. number of students)
-        res = self._coll.find(filter=_filter, projection={"_id": 0, "name": 1, "active": 1})
+        res = self._coll.aggregate(
+            [
+                {"$match": _filter},
+                {
+                    "$lookup": {
+                        "from": "user_config",
+                        "localField": "_id",
+                        "foreignField": "project_id.$id",
+                        "as": "user_configs",
+                        "pipeline": [{"$match": {"active": True}}],
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "name": 1,
+                        "max_nof_users": 1,
+                        "active_users": {"$size": "$user_configs"},
+                        "active": 1,
+                    }
+                },
+            ]
+        )
         return [i for i in res]

@@ -4,6 +4,7 @@ from dataclasses import asdict
 from typing import Any
 
 import click
+from tabulate import tabulate
 
 import fit_ctf_backend.cli as _cli
 from fit_ctf_backend.ctf_manager import CTFManager
@@ -43,18 +44,42 @@ def project(ctx: click.Context):
     required=True,
 )
 @click.option(
+    "-mu",
+    "--max-nof-users",
+    help="Max number of users.",
+    default=1000,
+    show_default=True,
+    type=int,
+)
+@click.option(
+    "-p",
+    "--starting-port-bind",
+    help="A starting port value for each user. Each user will received a port from the range from <starting-port-bind>"
+    "to <starting-port-bind + max-nof-users>. If set to -1, the tool will automatically assign an available port value."
+    "User can choose a number between 10_000 to 65_535.",
+    default=-1,
+    show_default=True,
+    type=int,
+)
+@click.option(
     "-vd",
-    "--volume-mount-dir",
-    help="A directory the will contain use home volumes.",
+    "--volume-mount-dirname",
+    help="A directory name that will contain all user home volumes for the given project. "
+    "This directory will be created inside project configuration directory (<dest-dir>/<dir-name>/<volume-mount-dirname>).",
     default="_mounts",
+    show_default=True,
 )
 @click.option(
     "-dn",
     "--dir-name",
-    help="Name of the directory that will be created inside `dest-dir`.",
+    help="Name of the directory that will be created inside <dest-dir>. If no name is set, the directory name will be "
+    "generated using project name.",
     default="",
+    show_default=True,
 )
-@click.option("-de", "--description", help="Project description", default="")
+@click.option(
+    "-de", "--description", help="A project description.", default="", show_default=True
+)
 @click.option(
     "-cf",
     "--compose-file",
@@ -67,7 +92,9 @@ def create_project(
     ctx: click.Context,
     name: str,
     dest_dir: str,
-    volume_mount_dir: str,
+    max_nof_users: int,
+    starting_port_bind: int,
+    volume_mount_dirname: str,
     dir_name: str,
     description: str,
     compose_file: str,
@@ -75,7 +102,14 @@ def create_project(
     """Create and initialize a new project.\f"""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     prj = ctf_mgr.init_project(
-        name, dest_dir, volume_mount_dir, dir_name, description, compose_file
+        name,
+        dest_dir,
+        max_nof_users,
+        starting_port_bind,
+        volume_mount_dirname,
+        dir_name,
+        description,
+        compose_file,
     )
     click.echo(prj)
 
@@ -86,11 +120,16 @@ def create_project(
 )
 @click.pass_context
 def list_projects(ctx: click.Context, all: bool):
-    if not ctx.parent:
-        click.echo("No parent")
+    """Display existing projects."""
+    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    lof_prj = prj_mgr.get_projects(ignore_inactive=all)
+    if not lof_prj:
         return
-    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]
-    pprint.pprint(prj_mgr.get_projects(ignore_inactive=all))
+    headers = list(lof_prj[0].keys())
+    values = [list(i.values()) for i in lof_prj]
+    # TODO: sort columns
+    click.echo(tabulate(values, headers))
+
 
 
 @project.command(name="get-info")
@@ -139,7 +178,12 @@ def registered_users(ctx: click.Context, project_name: str):
     PROJECT_NAME    Project's name.\f
     """
     prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
-    click.echo(prj_mgr.get_active_users_for_project(project_name))
+    lof_active_users = prj_mgr.get_active_users_for_project(project_name)
+    if not lof_active_users:
+        return
+    header = list(lof_active_users[0].keys())
+    values = [list(i.values()) for i in lof_active_users]
+    click.echo(tabulate(values, header))
 
 
 @project.command(name="add-users")
@@ -170,6 +214,19 @@ def port_forwarding(ctx: click.Context, project_name: str):
         project_name (str): Project's name.
     """
     raise NotImplemented()
+
+
+@project.command(name="reserved-ports")
+@click.pass_context
+def used_ports(ctx: click.Context):
+    """Returns list of reserved ports."""
+    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    lof_prj = prj_mgr.get_reserved_ports()
+    if not lof_prj:
+        return
+    header = list(lof_prj[0].keys())
+    values = [list(i.values()) for i in lof_prj]
+    click.echo(tabulate(values, header))
 
 
 @project.command(name="remove-users")

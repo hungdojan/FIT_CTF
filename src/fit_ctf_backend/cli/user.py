@@ -33,7 +33,10 @@ def user(ctx: click.Context):
 @click.option("-p", "--password", default="", help="Account password.")
 @click.option("--generate-password", is_flag=True, help="Computer generate a password.")
 @click.option(
-    "-sd", "--shadow-dir", help="A directory where a shadow file will be created."
+    "-sd",
+    "--shadow-dir",
+    help="A directory where a shadow file will be created.",
+    required=True,
 )
 @click.option("-e", "--email", help="Account email.")
 @click.pass_context
@@ -50,7 +53,6 @@ def create_user(
     user = user_mgr.get_doc_by_filter(username=username)
     if user:
         click.echo("User exists")
-        # TODO: finish
         return
 
     if password:
@@ -59,10 +61,13 @@ def create_user(
             return
     elif generate_password:
         password = user_mgr.generate_password(DEFAULT_PASSWORD_LENGTH)
+    else:
+        click.echo("Missing either `-p` or `--generate-password` option.")
+        return
 
-    # TODO: print password
-    user = user_mgr.create_new_user(username, password, shadow_dir, email)
-    # TODO:
+    user, data = user_mgr.create_new_user(username, password, shadow_dir, email)
+    # print password
+    click.echo(data)
 
 
 @user.command(name="multiple_create")
@@ -105,7 +110,9 @@ def change_password(ctx: click.Context, username: str, password: str):
 @click.option("-u", "--username", required=True, help="Account username.")
 @click.pass_context
 def delete_user(ctx: click.Context, username: str):
-    raise NotImplemented()
+    """Remove user from the database."""
+    user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
+    user_mgr.delete_a_user(username)
 
 
 @user.command(name="get")
@@ -153,31 +160,32 @@ def user_is_running(ctx: click.Context, username: str, project_name: str):
     raise NotImplemented()
 
 
-@user.command(name="follow")
+@user.command(name="assign")
 @click.option("-u", "--username", required=True, help="Account username.")
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
-def follow_project(ctx: click.Context, username: str, project_name: str):
+def assign_to_project(ctx: click.Context, username: str, project_name: str):
     """Assign user to the project."""
 
     context_dir: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dir["ctf_mgr"]
-    user = ctf_mgr.user_mgr.get_doc_by_filter(username=username)
+    user = ctf_mgr.user_mgr.get_doc_by_filter(username=username, active=True)
     if not user:
         raise UserNotExistsException(f"User `{username}` does not exist.")
-    prj = ctf_mgr.prj_mgr.get_doc_by_filter(name=project_name)
+    prj = ctf_mgr.prj_mgr.get_doc_by_filter(name=project_name, active=True)
     if not prj:
         raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
 
     ctf_mgr.assign_users_to_project(user.username, prj.name)
     click.echo(f"User `{user.username}` was assigned to the project `{prj.name}`.")
+    # TODO: return forwarded ports
 
 
-@user.command(name="unfollow")
+@user.command(name="unassign")
 @click.option("-u", "--username", required=True, help="Account username.")
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
-def unfollow_project(ctx: click.Context, username: str, project_name: str):
+def unassign_to_project(ctx: click.Context, username: str, project_name: str):
     raise NotImplemented()
 
 

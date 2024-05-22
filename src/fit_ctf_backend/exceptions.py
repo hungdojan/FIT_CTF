@@ -22,9 +22,21 @@ class UserNotExistsException(CTFException):
     pass
 
 
+class UserExistsException(CTFException):
+    pass
+
+
 class SSHPortOutOfRangeException(CTFException):
     pass
 
 
 class UserNotAssignedToProjectException(CTFException):
+    pass
+
+
+class MaxUserCountReachedException(CTFException):
+    pass
+
+
+class PortUsageCollisionException(CTFException):
     pass

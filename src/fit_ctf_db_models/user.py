@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
+from pathlib import Path
 import re
 import secrets
 import string
@@ -15,6 +16,7 @@ from bson import ObjectId
 from passlib.hash import sha512_crypt
 from pymongo.database import Database
 
+from fit_ctf_backend.exceptions import UserExistsException
 import fit_ctf_db_models.project as _project
 import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend import (
@@ -50,6 +52,10 @@ class UserManager(BaseManager[User]):
     def __init__(self, db: Database):
         super().__init__(db, db["user"])
 
+    @property
+    def _uc_mgr(self):
+        return _user_config.UserConfigManager(self._db)
+
     def get_doc_by_id(self, _id: ObjectId) -> User | None:
         res = self._coll.find_one({"_id": _id})
         return User(**res) if res else None
@@ -61,7 +67,7 @@ class UserManager(BaseManager[User]):
         res = self._coll.find_one(filter=kw)
         return User(**res) if res else None
 
-    def get_docs(self, filter: dict[str, Any]) -> list[User]:
+    def get_docs(self, **filter) -> list[User]:
         res = self._coll.find(filter=filter)
         return [User(**data) for data in res]
 
@@ -157,7 +163,7 @@ class UserManager(BaseManager[User]):
 
     def create_new_user(
         self, username: str, password: str, shadow_dir: str, email: str = ""
-    ) -> User:
+    ) -> tuple[User, dict[str, str]]:
         """Create a new user.
 
         If user already exists function will return an instance of the old user
@@ -171,23 +177,27 @@ class UserManager(BaseManager[User]):
 
         Raises:
             DirNotExistsException: `shadow_dir` does not exists.
+            UserExistsException: A user with given `username` already exists.
 
         Return:
             User: Newly created user object.
         """
         user = self.get_doc_by_filter(username=username)
         if user:
-            return user
+            raise UserExistsException(f"User `{username}` already exists.")
 
-        if not os.path.isdir(shadow_dir):
-            raise DirNotExistsException("Directory `{shadow_dir}` does not exists.")
+        shadow_dirpath = Path(shadow_dir)
+
+        if not os.path.isdir(shadow_dirpath):
+            raise DirNotExistsException(f"Directory `{shadow_dir}` does not exists.")
+
+        shadow_file = shadow_dirpath / username
 
         # generate shadow from file
-        log.info(f"Generating `{shadow_dir}{username}`")
+        log.info(f"Generating `{str(shadow_file)}`")
         template = get_template(TEMPLATE_FILES["shadow"])
-        shadow_dir += "/" if not shadow_dir.endswith("/") else ""
         crypt_hash = sha512_crypt.using(salt=username).hash(password)
-        with open(f"{shadow_dir}{username}", "w") as f:
+        with open(str(shadow_file), "w") as f:
             f.write(template.render(user={"name": "student", "hash": crypt_hash}))
 
         user = User(
@@ -195,13 +205,13 @@ class UserManager(BaseManager[User]):
             username=username,
             password=self.get_password_hash(password),
             role=UserRole.USER,
-            shadow_path=f"{shadow_dir}{username}",
+            shadow_path=str(shadow_file.resolve()),
             shadow_hash=crypt_hash,
             email=email,
         )
 
         self.insert_doc(user)
-        return user
+        return user, {"username": username, "password": password}
 
     def start_user_instance(self, username: str, project_name: str):
         user = self.get_doc_by_filter(username=username)
@@ -295,9 +305,11 @@ class UserManager(BaseManager[User]):
         if not user:
             raise UserNotExistsException(f"User `{username}` does not exist.")
 
-        # TODO:
-        #   stop instances
-        #   unfollow from all projects
+        # TODO: stop instances
+
+        # unfollow from all projects
+
+        self._uc_mgr.unassign_user_from_projects(user)
         #       -> remove from
         #   remove global config file
         #   remove from database
@@ -317,12 +329,11 @@ class UserManager(BaseManager[User]):
 
         for u in users:
             projects = self.get_active_projects_for_user(u.username)
-            volume_dirs = [p.volume_mount_root_dir for p in projects]
+            volume_dirs = [Path(p.config_root_dir) / p.volume_mount_dirname for p in projects]
             log.debug(f"Deleting `{u.shadow_path}`")
             # os.remove(u.shadow_path)
             for d in volume_dirs:
-                d += "/" if not d.endswith("/") else ""
-                if os.path.isdir(f"{d}{u.username}"):
+                if os.path.isdir(d / u.username):
                     # os.remove(f"{d}{u.username}")
                     pass
 

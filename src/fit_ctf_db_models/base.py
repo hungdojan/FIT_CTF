@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import logging
-
 from abc import ABC, abstractmethod
-from bson import ObjectId
 from dataclasses import asdict, dataclass
-from pymongo.database import Database
-from pymongo.collection import Collection
 from typing import Any, Generic, TypeVar
+
+from bson import ObjectId
+from pymongo.collection import Collection
+from pymongo.database import Database
 
 log = logging.getLogger()
 
@@ -69,7 +69,7 @@ class BaseManager(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_docs(self, filter: dict[str, Any]) -> list[T]:
+    def get_docs(self, **filter) -> list[T]:
         """Search for all documents using filter."""
         pass
 
