@@ -1,12 +1,14 @@
 import pprint
 
 import click
+from tabulate import tabulate
 
 import fit_ctf_backend.cli as _cli
 from fit_ctf_backend.constants import DEFAULT_PASSWORD_LENGTH
 from fit_ctf_backend.ctf_manager import CTFManager
 from fit_ctf_backend.exceptions import ProjectNotExistsException, UserNotExistsException
 from fit_ctf_db_models.user import UserManager
+from fit_ctf_db_models.user_config import UserConfigManager
 
 #######################
 ## User CLI commands ##
@@ -94,7 +96,14 @@ def list_users(ctx: click.Context):
 def active_projects(ctx: click.Context, username: str):
     """Get a list of active projects that a user is assigned to."""
     user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
-    pprint.pprint(user_mgr.get_active_projects_for_user(username))
+    lof_prj = user_mgr.get_active_projects_for_user_raw(username)
+    if not lof_prj:
+        click.echo("User has is not assigned to any project.")
+        return
+
+    header = list(lof_prj[0].keys())
+    values = [list(i.values()) for i in lof_prj]
+    click.echo(tabulate(values, header))
 
 
 @user.command(name="change-password")
@@ -186,7 +195,10 @@ def assign_to_project(ctx: click.Context, username: str, project_name: str):
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
 def unassign_to_project(ctx: click.Context, username: str, project_name: str):
-    raise NotImplemented()
+    """Remove user from the project."""
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    uc_mgr: UserConfigManager = ctf_mgr.user_config_mgr
+    uc_mgr.remove_user_from_project(username, project_name)
 
 
 @user.command(name="generate-from-file")

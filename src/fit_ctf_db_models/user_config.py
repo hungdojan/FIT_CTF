@@ -152,7 +152,8 @@ class UserConfigManager(BaseManager[UserConfig]):
         ]
         if collision_test:
             raise PortUsageCollisionException(
-                f"Either forwarded port `{forwarded_port}` or system port `{ssh_port}` is already in use by another user in the project."
+                f"Either forwarded port `{forwarded_port}` or system port `{ssh_port}`"
+                "is already in use by another user in the project."
             )
 
         # create volume dir
@@ -180,13 +181,21 @@ class UserConfigManager(BaseManager[UserConfig]):
         if not project:
             raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
 
-        min_sshport = self.get_min_available_sshport(project_name)
-        if min_sshport + len(lof_usernames) - 1 > 65_535:
+        nof_existing_users = len(self._prj_mgr.get_active_users_for_project(project))
+        nof_new_users = len(lof_usernames)
+        if nof_existing_users + nof_new_users > project.max_nof_users:
+            raise MaxUserCountReachedException(
+                f"Project `{project.name}` has already reached the maximum number of users."
+            )
+
+        min_sshport = self.get_min_available_sshport(project)
+        if min_sshport + nof_new_users - 1 > 65_535:
             raise SSHPortOutOfRangeException("Not enough available ports.")
 
-        users = self._user_mgr.get_docs(filter={"username": {"$in": lof_usernames}})
+        users = self._user_mgr.get_docs(username={"$in": lof_usernames}, active=True)
         mount_dir = Path(project.config_root_dir) / project.volume_mount_dirname
         user_configs = []
+        # TODO: collision_test
         for i, user in enumerate(users):
             os.makedirs(mount_dir / user.username)
             user_configs.append(
@@ -195,6 +204,7 @@ class UserConfigManager(BaseManager[UserConfig]):
                     user_id=DBRef("user", user.id),
                     project_id=DBRef("project", project.id),
                     ssh_port=min_sshport + i,
+                    forwarded_port=min_sshport + i,
                 )
             )
 
@@ -214,17 +224,15 @@ class UserConfigManager(BaseManager[UserConfig]):
 
         if not user_config:
             raise UserNotAssignedToProjectException(
-                "User `{username}` is not assigned to the project `{project_name}`"
+                f"User `{username}` is not assigned to the project `{project_name}`"
             )
 
         # create volume dir
         mount_dir = (
             Path(project.config_root_dir) / project.volume_mount_dirname / user.username
         )
-        if mount_dir.exists() and mount_dir.is_dir():
+        if mount_dir.exists() and mount_dir.is_dir() and len(str(mount_dir)) > 0:
             shutil.rmtree(mount_dir)
-
-        print(user_config, mount_dir)
 
         user_config.active = False
         self.update_doc(user_config)
@@ -249,6 +257,14 @@ class UserConfigManager(BaseManager[UserConfig]):
                     "localField": "user_id.$id",
                     "foreignField": "_id",
                     "as": "user",
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "active": True,
+                                "user.username": {"$in": lof_usernames},
+                            }
+                        }
+                    ],
                 }
             },
             {
@@ -256,13 +272,10 @@ class UserConfigManager(BaseManager[UserConfig]):
                 "$unwind": "$user"
             },
             {
-                # search for users in the given list of username
-                "$match": {"user.username": {"$in": lof_usernames}}
-            },
-            {
                 # transform to the final internet format
                 "$project": {
                     "username": "$user.username",
+                    "shadow_path": "$user.shadow_path",
                 }
             },
         ]
@@ -278,16 +291,15 @@ class UserConfigManager(BaseManager[UserConfig]):
             if mount_dir.exists() and mount_dir.is_dir():
                 # shutil.rmtree(mount_dir)
                 pass
-            print(uc["_id"], mount_dir)
+
+            shadow_path = Path(uc["shadow_path"])
+            if shadow_path.exists():
+                shadow_path.unlink()
         # return self.remove_docs_by_id([uc["_id"] for uc in user_configs])
         return 0
 
     def unassign_users(self, project_or_name: str | _project.Project):
         """Unfollow all users from the project."""
-
-        def _deactivate(uc: UserConfig):
-            uc.active = False
-            return uc
 
         prj = project_or_name
         if not isinstance(prj, _project.Project):
@@ -297,15 +309,13 @@ class UserConfigManager(BaseManager[UserConfig]):
                     f"Project `{project_or_name}` does not exist."
                 )
 
-        lof_docs = self.get_docs(**{"project_id.$id": prj.id, "active": True})
-        lof_docs = list(map(lambda uc: _deactivate(uc), lof_docs))
-        pprint(lof_docs)
+        ids = [
+            uc.id for uc in self.get_docs(**{"project_id.$id": prj.id, "active": True})
+        ]
+        self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
 
     def unassign_user_from_projects(self, user_or_username: str | _user.User):
-        def _deactivate(uc: UserConfig):
-            uc.active = False
-            return uc
-
+        """Unassign the user from all the projects they are connected to."""
         user = user_or_username
         if not isinstance(user, _user.User):
             user = self._user_mgr.get_doc_by_filter(username=user_or_username)
@@ -313,6 +323,7 @@ class UserConfigManager(BaseManager[UserConfig]):
                 raise UserNotExistsException(
                     f"User `{user_or_username}` does not exist."
                 )
-        lof_docs = self.get_docs(**{"user_id.$id": user.id, "active": True})
-        lof_docs = list(map(lambda uc: _deactivate(uc), lof_docs))
-        pprint(lof_docs)
+        ids = [
+            uc.id for uc in self.get_docs(**{"user_id.$id": user.id, "active": True})
+        ]
+        self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})

@@ -115,6 +115,3 @@ class CTFManager:
 
     def get_project_info(self, name: str) -> Project | None:
         return self.prj_mgr.get_doc_by_filter(name=name)
-
-    def get_projects_names(self) -> list[str]:
-        return self.prj_mgr.get_projects()

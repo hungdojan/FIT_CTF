@@ -3,20 +3,19 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
-from pathlib import Path
 import re
 import secrets
 import string
 import subprocess
 from dataclasses import asdict, dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from bson import ObjectId
 from passlib.hash import sha512_crypt
 from pymongo.database import Database
 
-from fit_ctf_backend.exceptions import UserExistsException
 import fit_ctf_db_models.project as _project
 import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend import (
@@ -25,6 +24,7 @@ from fit_ctf_backend import (
     ProjectNotExistsException,
     UserNotExistsException,
 )
+from fit_ctf_backend.exceptions import UserExistsException
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_templates import TEMPLATE_FILES, get_template
 
@@ -242,6 +242,7 @@ class UserManager(BaseManager[User]):
                     "localField": "project_id.$id",
                     "foreignField": "_id",
                     "as": "project",
+                    "pipeline": [{"$match": {"active": True}}],
                 }
             },
             {
@@ -252,6 +253,57 @@ class UserManager(BaseManager[User]):
             {"$project": {"project": 1, "_id": 0}},
         ]
         return [_project.Project(**i["project"]) for i in uc_coll.aggregate(pipeline)]
+
+    def get_active_projects_for_user_raw(self, username: str) -> list[dict[str, Any]]:
+        """Return list of projects that a user is assigned to."""
+        user = self.get_doc_by_filter(username=username)
+        if not user:
+            raise UserNotExistsException(f"User `{username}` does not exists.")
+
+        uc_coll = _user_config.UserConfigManager(self._db).collection
+        project_pipeline = [
+            {"$match": {"active": True}},
+            {
+                "$lookup": {
+                    "from": "user_config",
+                    "localField": "_id",
+                    "foreignField": "project_id.$id",
+                    "as": "user_configs",
+                    "pipeline": [{"$match": {"active": True}}],
+                }
+            },
+            {
+                "$project": {
+                    "name": 1,
+                    "active": 1,
+                    "max_nof_users": 1,
+                    "active_users": {"$size": "$user_configs"},
+                }
+            },
+        ]
+        pipeline = [
+            {
+                # search only user_config for the given user
+                "$match": {"user_id.$id": user.id, "active": True}
+            },
+            {
+                # get project info
+                "$lookup": {
+                    "from": "project",
+                    "localField": "project_id.$id",
+                    "foreignField": "_id",
+                    "as": "project",
+                    "pipeline": project_pipeline,
+                }
+            },
+            {
+                # since lookup returns array
+                # pop the first element from the array
+                "$unwind": "$project"
+            },
+            {"$project": {"project": 1, "_id": 0}},
+        ]
+        return [i["project"] for i in uc_coll.aggregate(pipeline)]
 
     def generate_users(
         self, lof_usernames: list[str], shadow_dir: str, default_password: str = ""
@@ -314,7 +366,7 @@ class UserManager(BaseManager[User]):
         #   remove global config file
         #   remove from database
 
-    def delete_users(self, lof_usernames: list[str]) -> int:
+    def delete_users(self, lof_usernames: list[str]):
         """Deletes users from the list.
 
         Params:
@@ -323,13 +375,16 @@ class UserManager(BaseManager[User]):
         Return:
             int: Number of deleted users.
         """
-        users = self.get_docs(filter={"username": {"$in": lof_usernames}})
+
+        users = self.get_docs(username={"$in": lof_usernames}, active=True)
 
         ids = [u.id for u in users]
 
         for u in users:
             projects = self.get_active_projects_for_user(u.username)
-            volume_dirs = [Path(p.config_root_dir) / p.volume_mount_dirname for p in projects]
+            volume_dirs = [
+                Path(p.config_root_dir) / p.volume_mount_dirname for p in projects
+            ]
             log.debug(f"Deleting `{u.shadow_path}`")
             # os.remove(u.shadow_path)
             for d in volume_dirs:
@@ -337,4 +392,4 @@ class UserManager(BaseManager[User]):
                     # os.remove(f"{d}{u.username}")
                     pass
 
-        return self.remove_docs_by_id(ids)
+        self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
