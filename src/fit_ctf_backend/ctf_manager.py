@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-import os
-from pathlib import Path
+import subprocess
 
 from pymongo import MongoClient
 from pymongo.database import Database
 
-from fit_ctf_backend.exceptions import (
-    CTFException,
-    DirNotEmptyException,
-    ProjectNotExistsException,
-    UserNotExistsException,
-)
+from fit_ctf_backend.exceptions import CTFException, ProjectNotExistsException
 from fit_ctf_db_models import Project, ProjectManager, UserConfigManager, UserManager
 
 
@@ -72,6 +66,8 @@ class CTFManager:
         project = self.prj_mgr.get_doc_by_filter(name=name)
         if not project:
             raise ProjectNotExistsException(f"Project `{name}` does not exist.")
+
+        self.user_config_mgr.stop_all_user_instances(project)
         proc = project.stop()
         return proc.returncode != 0
 
@@ -81,11 +77,18 @@ class CTFManager:
             raise ProjectNotExistsException(f"Project `{name}` does not exist.")
         return project.is_running()
 
-    def start_user_instance(self, username: str, project_name: str):
-        raise NotImplemented()
+    def start_user_instance(
+        self, username: str, project_name: str
+    ) -> subprocess.CompletedProcess:
+        return self.user_config_mgr.start_user_instance(username, project_name)
 
-    def stop_user_instance(self, username: str, project_name: str):
-        raise NotImplemented()
+    def stop_user_instance(
+        self, username: str, project_name: str
+    ) -> subprocess.CompletedProcess:
+        return self.user_config_mgr.stop_user_instance(username, project_name)
+
+    def user_instance_is_running(self, username: str, project_name: str) -> bool:
+        return self.user_config_mgr.user_instance_is_running(username, project_name)
 
     def delete_project(self, name: str):
         """Delete a project."""
@@ -96,15 +99,17 @@ class CTFManager:
 
     def assign_users_to_project(self, users: str | list[str], project_name: str):
         if isinstance(users, str):
-            self.user_config_mgr.add_user_to_project(users, project_name)
+            self.user_config_mgr.assign_user_to_project(users, project_name)
         else:
-            self.user_config_mgr.add_multiple_users_to_project(users, project_name)
+            self.user_config_mgr.assign_multiple_users_to_project(users, project_name)
 
     def unassign_user_from_project(self, users: str | list[str], project_name: str):
-        if isinstance(users, list):
-            self.user_config_mgr.remove_multiple_users_from_project(users, project_name)
+        if isinstance(users, str):
+            self.user_config_mgr.unassign_user_from_project(users, project_name)
         else:
-            self.user_config_mgr.remove_user_from_project(users, project_name)
+            self.user_config_mgr.unassign_multiple_users_from_project(
+                users, project_name
+            )
 
     def get_running_projects(self):
         raise NotImplemented()

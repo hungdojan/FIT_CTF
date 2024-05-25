@@ -3,9 +3,13 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-from dataclasses import asdict, dataclass, field
+import subprocess
+import tempfile
+from dataclasses import asdict, dataclass, field, fields
+from distutils import sys
 from pathlib import Path
 from pprint import pprint
+from subprocess import Popen
 from typing import Any
 
 from bson import DBRef, ObjectId
@@ -24,26 +28,38 @@ from fit_ctf_backend.exceptions import (
     PortUsageCollisionException,
 )
 from fit_ctf_db_models.base import Base, BaseManager
-from fit_ctf_db_models.service import Service
+from fit_ctf_db_models.compose_objects import Module
 from fit_ctf_templates import TEMPLATE_FILES, get_template
+from fit_ctf_utils.podman_utils import (
+    podman_get_images,
+    podman_get_networks,
+    podman_rm_images,
+    podman_rm_networks,
+)
 
 log = logging.getLogger()
 
 
-@dataclass
+@dataclass(init=False)
 class UserConfig(Base):
     _id: ObjectId
     user_id: DBRef
     project_id: DBRef
     ssh_port: int
-    forwarded_port: int = -1
-    services: list[Service] = field(default_factory=list)
-    active: bool = True
+    forwarded_port: int
+    active: bool = field(default=True)
+    modules: dict[str, Module] = field(default_factory=dict)
 
-    def get_template(self):
-        template = get_template(TEMPLATE_FILES["shadow"])
-        # TODO: create tempfile
-        raise NotImplemented()
+    def __init__(self, **kwargs):
+        # set default values
+        self.modules = dict()
+        self.active = True
+
+        # ignore extra fields
+        names = set([f.name for f in fields(self)])
+        for k, v in kwargs.items():
+            if k in names:
+                setattr(self, k, v)
 
 
 class UserConfigManager(BaseManager[UserConfig]):
@@ -58,6 +74,77 @@ class UserConfigManager(BaseManager[UserConfig]):
     def _user_mgr(self):
         return _user.UserManager(self._db)
 
+    def _multiple_users_pipeline(
+        self, project: _project.Project, lof_usernames: list[str]
+    ) -> list:
+        return [
+            {
+                # get configs for a given project
+                "$match": {"project_id.$id": project.id, "active": True}
+            },
+            {
+                # get user info
+                "$lookup": {
+                    "from": "user",
+                    "localField": "user_id.$id",
+                    "foreignField": "_id",
+                    "as": "user",
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "active": True,
+                                "username": {"$in": lof_usernames},
+                            }
+                        }
+                    ],
+                }
+            },
+            {
+                # pop first element from the array
+                "$unwind": "$user"
+            },
+            {
+                # transform to the final internet format
+                "$project": {
+                    "username": "$user.username",
+                }
+            },
+        ]
+
+    def _all_users_pipeline(self, project: _project.Project) -> list:
+        return [
+            {
+                # get configs for a given project
+                "$match": {"project_id.$id": project.id, "active": True}
+            },
+            {
+                # get user info
+                "$lookup": {
+                    "from": "user",
+                    "localField": "user_id.$id",
+                    "foreignField": "_id",
+                    "as": "user",
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "active": True,
+                            }
+                        }
+                    ],
+                }
+            },
+            {
+                # pop first element from the array
+                "$unwind": "$user"
+            },
+            {
+                # transform to the final internet format
+                "$project": {
+                    "username": "$user.username",
+                }
+            },
+        ]
+
     def _get_user_and_project(
         self, username: str, project_name: str
     ) -> tuple[_user.User, _project.Project]:
@@ -70,6 +157,38 @@ class UserConfigManager(BaseManager[UserConfig]):
             raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
 
         return user, project
+
+    def _get_user(self, user_or_username: str | _user.User):
+        user = user_or_username
+        if not isinstance(user, _user.User):
+            user = self._user_mgr.get_doc_by_filter(
+                username=user_or_username, active=True
+            )
+            if not user:
+                raise UserNotExistsException(
+                    f"User `{user_or_username}` does not exist."
+                )
+        return user
+
+    def _get_project(self, project_or_name: str | _project.Project):
+        prj = project_or_name
+        if not isinstance(prj, _project.Project):
+            prj = self._prj_mgr.get_doc_by_filter(name=project_or_name, active=True)
+            if not prj:
+                raise ProjectNotExistsException(
+                    f"Project `{project_or_name}` does not exist."
+                )
+        return prj
+
+    def get_user_config(self, project: _project.Project, user: _user.User):
+        user_config = self.get_doc_by_filter(
+            **{"user_id.$id": user.id, "project_id.$id": project.id, "active": True}
+        )
+        if not user_config:
+            raise UserNotAssignedToProjectException(
+                f"User `{user.username}` is not assigned to the project `{project.name}`."
+            )
+        return user_config
 
     def get_min_available_sshport(self, project: _project.Project) -> int:
         user_configs = (
@@ -105,7 +224,9 @@ class UserConfigManager(BaseManager[UserConfig]):
         self._coll.insert_one(asdict(doc))
         return doc
 
-    def add_user_to_project(
+    # ASSIGN USER TO PROJECTS
+
+    def assign_user_to_project(
         self,
         username: str,
         project_name: str,
@@ -113,7 +234,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         forwarded_port: int = -1,
     ) -> UserConfig:
         user, project = self._get_user_and_project(username, project_name)
-        users = self._prj_mgr.get_active_users_for_project(project)
+        users = self._prj_mgr.get_active_users_for_project_raw(project)
         user_config = self.get_doc_by_filter(
             **{
                 "user_id.$id": user.id,
@@ -173,7 +294,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         self.insert_doc(user_config)
         return user_config
 
-    def add_multiple_users_to_project(
+    def assign_multiple_users_to_project(
         self, lof_usernames: list[str], project_name: str
     ):
         # check project existence
@@ -181,7 +302,9 @@ class UserConfigManager(BaseManager[UserConfig]):
         if not project:
             raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
 
-        nof_existing_users = len(self._prj_mgr.get_active_users_for_project(project))
+        nof_existing_users = len(
+            self._prj_mgr.get_active_users_for_project_raw(project)
+        )
         nof_new_users = len(lof_usernames)
         if nof_existing_users + nof_new_users > project.max_nof_users:
             raise MaxUserCountReachedException(
@@ -211,7 +334,9 @@ class UserConfigManager(BaseManager[UserConfig]):
         self._coll.insert_many([asdict(uc) for uc in user_configs])
         return user_configs
 
-    def remove_user_from_project(self, username: str, project_name: str):
+    # UNASSIGN USERS FROM PROJECTS
+
+    def unassign_user_from_project(self, username: str, project_name: str):
         user, project = self._get_user_and_project(username, project_name)
 
         user_config = self.get_doc_by_filter(
@@ -234,52 +359,22 @@ class UserConfigManager(BaseManager[UserConfig]):
         if mount_dir.exists() and mount_dir.is_dir() and len(str(mount_dir)) > 0:
             shutil.rmtree(mount_dir)
 
+        podman_rm_networks(f"{project.name}_{user.username}_")
+
         user_config.active = False
         self.update_doc(user_config)
 
-    def remove_multiple_users_from_project(
+    def unassign_multiple_users_from_project(
         self, lof_usernames: list[str], project_name: str
     ):
         # check project existence
-        project = self._prj_mgr.get_doc_by_filter(name=project_name)
-        if not project:
-            raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
-
-        pipeline = [
-            {
-                # get configs for a given project
-                "$match": {"project_id.$id": project.id, "active": True}
-            },
-            {
-                # get user info
-                "$lookup": {
-                    "from": "user",
-                    "localField": "user_id.$id",
-                    "foreignField": "_id",
-                    "as": "user",
-                    "pipeline": [
-                        {
-                            "$match": {
-                                "active": True,
-                                "user.username": {"$in": lof_usernames},
-                            }
-                        }
-                    ],
-                }
-            },
-            {
-                # pop first element from the array
-                "$unwind": "$user"
-            },
-            {
-                # transform to the final internet format
-                "$project": {
-                    "username": "$user.username",
-                    "shadow_path": "$user.shadow_path",
-                }
-            },
+        project = self._get_project(project_name)
+        user_configs = [
+            i
+            for i in self._coll.aggregate(
+                self._multiple_users_pipeline(project, lof_usernames)
+            )
         ]
-        user_configs = [i for i in self._coll.aggregate(pipeline)]
 
         # remove mount dirs
         for uc in user_configs:
@@ -289,41 +384,222 @@ class UserConfigManager(BaseManager[UserConfig]):
                 / uc.get("username")
             )
             if mount_dir.exists() and mount_dir.is_dir():
-                # shutil.rmtree(mount_dir)
-                pass
+                shutil.rmtree(mount_dir)
 
-            shadow_path = Path(uc["shadow_path"])
-            if shadow_path.exists():
-                shadow_path.unlink()
-        # return self.remove_docs_by_id([uc["_id"] for uc in user_configs])
-        return 0
+        lof_prefix_name = list(
+            map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
+        )
+        podman_rm_networks(lof_prefix_name)
 
-    def unassign_users(self, project_or_name: str | _project.Project):
+        uc_ids = [uc["_id"] for uc in user_configs]
+        self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": True}})
+
+    def unassign_all_from_project(self, project_or_name: str | _project.Project):
         """Unfollow all users from the project."""
 
-        prj = project_or_name
-        if not isinstance(prj, _project.Project):
-            prj = self._prj_mgr.get_doc_by_filter(name=project_or_name)
-            if not prj:
-                raise ProjectNotExistsException(
-                    f"Project `{project_or_name}` does not exist."
-                )
-
-        ids = [
-            uc.id for uc in self.get_docs(**{"project_id.$id": prj.id, "active": True})
+        project = self._get_project(project_or_name)
+        user_configs = [
+            i for i in self._coll.aggregate(self._all_users_pipeline(project))
         ]
-        self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
 
-    def unassign_user_from_projects(self, user_or_username: str | _user.User):
+        # remove mount dirs
+        for uc in user_configs:
+            mount_dir = (
+                Path(project.config_root_dir)
+                / project.volume_mount_dirname
+                / uc.get("username")
+            )
+            if mount_dir.exists() and mount_dir.is_dir():
+                shutil.rmtree(mount_dir)
+
+        lof_prefix_name = list(
+            map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
+        )
+        podman_rm_networks(lof_prefix_name)
+
+        uc_ids = [uc["_id"] for uc in user_configs]
+        self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": True}})
+
+    def unassign_user_from_all_projects(self, user_or_username: str | _user.User):
         """Unassign the user from all the projects they are connected to."""
-        user = user_or_username
-        if not isinstance(user, _user.User):
-            user = self._user_mgr.get_doc_by_filter(username=user_or_username)
-            if not user:
-                raise UserNotExistsException(
-                    f"User `{user_or_username}` does not exist."
-                )
-        ids = [
-            uc.id for uc in self.get_docs(**{"user_id.$id": user.id, "active": True})
+        user = self._get_user(user_or_username)
+        pipeline = [
+            {"$match": {"user_id.$id": user.id, "active": True}},
+            {
+                "$lookup": {
+                    "from": "project",
+                    "localField": "project_id.$id",
+                    "foreignField": "_id",
+                    "as": "project",
+                    "pipeline": [{"$match": {"active": True}}],
+                }
+            },
+            {"$unwind": "$project"},
         ]
+        agg = self._coll.aggregate(pipeline)
+        # get infos from the aggregation result
+        lof_projects = [_project.Project(**i["project"]) for i in agg]
+        ids = [uc["_id"] for uc in agg]
+
+        # remove mount dirs
+        for project in lof_projects:
+            mount_dir = (
+                Path(project.config_root_dir)
+                / project.volume_mount_dirname
+                / user.username
+            )
+            if mount_dir.exists() and mount_dir.is_dir():
+                shutil.rmtree(mount_dir)
+
+        # create podman prefixes
+        lof_prefix_name = list(
+            map(lambda prj: f"{prj.name}_{user.username}_", lof_projects)
+        )
+
+        # delete networks
+        podman_rm_networks(lof_prefix_name)
         self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
+
+    # MANAGE MODULES
+
+    def add_module(
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
+        module: Module,
+    ):
+        user = self._get_user(user_or_username)
+        project = self._get_project(project_or_name)
+        user_config = self.get_user_config(project, user)
+
+        # add and compile
+        user_config.modules[module.name] = module
+        self._compile_uc(user_config, project, user)
+
+    def remove_module(
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
+        module_name: str,
+    ):
+        user = self._get_user(user_or_username)
+        project = self._get_project(project_or_name)
+        user_config = self.get_user_config(project, user)
+        if module_name in user_config.modules:
+            user_config.modules.pop(module_name)
+
+            # recompile
+            self._compile_uc(user_config, project, user)
+
+    # RUNNING INSTANCES
+
+    def start_user_instance(
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
+    ) -> subprocess.CompletedProcess:
+        user = self._get_user(user_or_username)
+        project = self._get_project(project_or_name)
+        compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
+        cmd = f"podman-compose -f {str(compose_file)} up -d"
+        proc = subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
+        return proc
+
+    def stop_user_instance(
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
+    ) -> subprocess.CompletedProcess:
+        user = self._get_user(user_or_username)
+        project = self._get_project(project_or_name)
+        compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
+        cmd = f"podman-compose -f {str(compose_file)} down"
+        proc = subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
+        return proc
+
+    def user_instance_is_running(
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
+    ) -> bool:
+        user = self._get_user(user_or_username)
+        project = self._get_project(project_or_name)
+
+        compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
+        cmd = [
+            "podman-compose",
+            "-f",
+            str(compose_file),
+            "ps",
+            "--format",
+            '"{{ .Names }}"',
+        ]
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+        )
+        data = proc.stdout.rsplit()
+        return len(data) > 0
+
+    def _compile_uc(
+        self, user_config: UserConfig, project: _project.Project, user: _user.User
+    ):
+        compose_filepath = (
+            Path(project.config_root_dir) / f"{user.username}_compose.yaml"
+        )
+        with open(str(compose_filepath), "w") as f:
+            template = get_template(
+                TEMPLATE_FILES["user_compose"], project.config_root_dir
+            )
+            f.write(
+                template.render(project=project, user=user, user_config=user_config)
+            )
+
+    def compile_compose(
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
+    ):
+        user = self._get_user(user_or_username)
+        project = self._get_project(project_or_name)
+        user_config = self.get_user_config(project, user)
+        self._compile_uc(user_config, project, user)
+
+    def restart_user_instance(
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
+    ):
+        user = self._get_user(user_or_username)
+        project = self._get_project(project_or_name)
+        self.start_user_instance(user, project)
+        self.stop_user_instance(user, project)
+
+    def stop_all_user_instances(self, project: _project.Project):
+        """Stop all running user instances."""
+        pipeline = [
+            {"$match": {"project_id.$id": project.id, "active": True}},
+            {
+                "$lookup": {
+                    "from": "user",
+                    "localField": "user_id.$id",
+                    "foreignField": "_id",
+                    "as": "user",
+                    "pipeline": [
+                        {"$match": {"active": True}},
+                    ],
+                }
+            },
+            {"$unwind": "$user"},
+            {"$project": {"_id": 0, "user": 1}},
+        ]
+        lof_users = [_user.User(**i["user"]) for i in self._coll.aggregate(pipeline)]
+        root_path = Path(project.config_root_dir)
+        cmds = [
+            f"podman-compose -f {str(root_path)}/{user.username}_compose.yaml down"
+            for user in lof_users
+        ]
+        procs = [Popen(i.split()) for i in cmds]
+        for p in procs:
+            p.wait()

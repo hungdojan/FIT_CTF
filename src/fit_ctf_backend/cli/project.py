@@ -131,7 +131,6 @@ def list_projects(ctx: click.Context, all: bool):
     click.echo(tabulate(values, headers))
 
 
-
 @project.command(name="get-info")
 @click.argument("project_name")
 @click.pass_context
@@ -169,16 +168,16 @@ def get_config_path(ctx: click.Context, project_name: str, tree: bool):
         click.echo(prj.config_root_dir)
 
 
-@project.command(name="registered-users")
+@project.command(name="active-users")
 @click.argument("project_name")
 @click.pass_context
-def registered_users(ctx: click.Context, project_name: str):
-    """Get list of users registered to the project.
+def active_users(ctx: click.Context, project_name: str):
+    """Get list of active users that are assigned to the project.
 
     PROJECT_NAME    Project's name.\f
     """
     prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
-    lof_active_users = prj_mgr.get_active_users_for_project(project_name)
+    lof_active_users = prj_mgr.get_active_users_for_project_raw(project_name)
     if not lof_active_users:
         return
     header = list(lof_active_users[0].keys())

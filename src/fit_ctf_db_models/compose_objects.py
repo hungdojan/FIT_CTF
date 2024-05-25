@@ -1,7 +1,13 @@
 from __future__ import annotations
 
-from bson import ObjectId, DBRef
 from dataclasses import dataclass, field
+
+from bson import DBRef, ObjectId
+
+from fit_ctf_backend.constants import (
+    DEFAULT_MODULE_BUILD_DIRNAME,
+    DEFAULT_MODULE_COMPOSE_NAME,
+)
 
 
 @dataclass
@@ -38,3 +44,11 @@ class Ports:
 
     def __str__(self) -> str:
         return f"{self.container_port}:{self.host_port}"
+
+
+@dataclass
+class Module:
+    name: str
+    module_root_dir: str
+    build_dir_name: str = field(default=DEFAULT_MODULE_BUILD_DIRNAME)
+    compose_template_path: str = field(default=DEFAULT_MODULE_COMPOSE_NAME)

@@ -136,7 +136,9 @@ def get_user(ctx: click.Context, username: str):
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
 def start_user(ctx: click.Context, username: str, project_name: str):
-    raise NotImplemented()
+    """Start user instance."""
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    ctf_mgr.start_user_instance(username, project_name)
 
 
 @user.command(name="stop")
@@ -144,7 +146,9 @@ def start_user(ctx: click.Context, username: str, project_name: str):
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
 def stop_user(ctx: click.Context, username: str, project_name: str):
-    raise NotImplemented()
+    """Stop user instance."""
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    ctf_mgr.stop_user_instance(username, project_name)
 
 
 @user.command(name="restart")
@@ -152,7 +156,10 @@ def stop_user(ctx: click.Context, username: str, project_name: str):
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
 def restart_user(ctx: click.Context, username: str, project_name: str):
-    raise NotImplemented()
+    """Restart user instance."""
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    uc_mgr: UserConfigManager = ctf_mgr.user_config_mgr
+    uc_mgr.restart_user_instance(username, project_name)
 
 
 @user.command(name="is-running")
@@ -160,13 +167,9 @@ def restart_user(ctx: click.Context, username: str, project_name: str):
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
 def user_is_running(ctx: click.Context, username: str, project_name: str):
-    user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
-    user = user_mgr.get_doc_by_filter(username=username)
-    if not user:
-        click.echo("User not found")
-        return
-
-    raise NotImplemented()
+    """Check if user instance is running."""
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    click.echo(ctf_mgr.user_instance_is_running(username, project_name))
 
 
 @user.command(name="assign")
@@ -198,7 +201,7 @@ def unassign_to_project(ctx: click.Context, username: str, project_name: str):
     """Remove user from the project."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     uc_mgr: UserConfigManager = ctf_mgr.user_config_mgr
-    uc_mgr.remove_user_from_project(username, project_name)
+    uc_mgr.unassign_user_from_project(username, project_name)
 
 
 @user.command(name="generate-from-file")
@@ -206,3 +209,13 @@ def unassign_to_project(ctx: click.Context, username: str, project_name: str):
 @click.pass_context
 def generate_users_from_file(ctx: click.Context, filename: str):
     raise NotImplemented()
+
+
+@user.command(name="compile")
+@click.option("-u", "--username", required=True, help="Account username.")
+@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.pass_context
+def compile(ctx: click.Context, username: str, project_name: str):
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    uc_mgr = ctf_mgr.user_config_mgr
+    uc_mgr.compile_compose(username, project_name)

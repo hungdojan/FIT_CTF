@@ -1,8 +1,13 @@
 import os
+
 from jinja2 import Environment, FileSystemLoader, Template
 
 TEMPLATE_DIRNAME = os.path.dirname(os.path.realpath(__file__))
-TEMPLATE_FILES = {"shadow": "shadow.j2", "server_compose": "server_compose.yaml.j2"}
+TEMPLATE_FILES = {
+    "shadow": "shadow.j2",
+    "server_compose": "server_compose.yaml.j2",
+    "user_compose": "user_compose.yaml.j2",
+}
 
 
 def get_template(

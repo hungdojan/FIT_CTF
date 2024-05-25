@@ -6,7 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Any
@@ -17,17 +17,26 @@ from pymongo.database import Database
 import fit_ctf_db_models.user as _user
 import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend import DirNotEmptyException, ProjectNotExistsException
-from fit_ctf_backend.constants import DEFAULT_STARTING_PORT
+from fit_ctf_backend.constants import (
+    DEFAULT_MODULE_BUILD_DIRNAME,
+    DEFAULT_MODULE_COMPOSE_NAME,
+    DEFAULT_STARTING_PORT,
+)
 from fit_ctf_backend.exceptions import DirNotExistsException
 from fit_ctf_db_models.base import Base, BaseManager
-from fit_ctf_db_models.network import Network
+from fit_ctf_db_models.compose_objects import Module
 from fit_ctf_templates import TEMPLATE_DIRNAME, TEMPLATE_FILES, get_template
+from fit_ctf_utils.podman_utils import (
+    podman_compose_down,
+    podman_compose_up,
+    podman_rm_networks,
+)
 
 log = logging.getLogger()
 CURR_FILE = os.path.realpath(__file__)
 
 
-@dataclass
+@dataclass(init=False)
 class Project(Base):
     name: str
     config_root_dir: str
@@ -35,9 +44,20 @@ class Project(Base):
     compose_file: str
     max_nof_users: int
     starting_port_bind: int
-    networks: list[Network] = field(default_factory=list)
-    description: str = ""
-    active: bool = True
+    description: str = field(default="")
+    active: bool = field(default=True)
+    modules: dict[str, Module] = field(default_factory=dict)
+
+    def __init__(self, **kwargs):
+        # set default values
+        self.description = ""
+        self.active = True
+        self.modules = dict()
+        # ignore extra fields
+        names = set([f.name for f in fields(self)])
+        for k, v in kwargs.items():
+            if k in names:
+                setattr(self, k, v)
 
     @property
     def _compose_filepath(self) -> Path:
@@ -51,13 +71,7 @@ class Project(Base):
         Returns:
             subprocess.CompletedProcess: Command call results.
         """
-        cmd = f"podman-compose -f {self._compose_filepath} up -d"
-        proc = subprocess.run(
-            cmd.split(),
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-        )
-        return proc
+        return podman_compose_up(self._compose_filepath)
 
     def restart(self):
         """Restart project server.
@@ -78,13 +92,7 @@ class Project(Base):
         Returns:
             subprocess.CompletedProcess: Command call results.
         """
-        cmd = f"podman-compose -f {self._compose_filepath} down"
-        proc = subprocess.run(
-            cmd.split(),
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-        )
-        return proc
+        return podman_compose_down(self._compose_filepath)
 
     def is_running(self) -> bool:
         """Check if the project server is running.
@@ -152,6 +160,45 @@ class ProjectManager(BaseManager[Project]):
 
     def get_active_users_for_project(
         self, project_or_name: str | Project
+    ) -> list[_user.User]:
+        """Return list of users that are assigned to the project."""
+        project = project_or_name
+        if not isinstance(project, Project):
+            project = self.get_doc_by_filter(name=project_or_name, active=True)
+            if not project:
+                raise ProjectNotExistsException(
+                    f"Project `{project_or_name}` does not exists."
+                )
+
+        uc_coll = self._uc_mgr.collection
+        pipeline = [
+            {
+                # search only user_config for the given user
+                "$match": {"project_id.$id": project.id, "active": True}
+            },
+            {
+                # get project info
+                "$lookup": {
+                    "from": "user",
+                    "localField": "user_id.$id",
+                    "foreignField": "_id",
+                    "as": "user",
+                    "pipeline": [
+                        {"$match": {"active": True}},
+                    ],
+                }
+            },
+            {
+                # since lookup returns array
+                # pop the first element from the array
+                "$unwind": "$user"
+            },
+        ]
+
+        return [_user.User(**i["user"]) for i in uc_coll.aggregate(pipeline)]
+
+    def get_active_users_for_project_raw(
+        self, project_or_name: str | Project
     ) -> list[dict[str, Any]]:
         """Return list of users that are assigned to the project."""
         project = project_or_name
@@ -166,7 +213,7 @@ class ProjectManager(BaseManager[Project]):
         pipeline = [
             {
                 # search only user_config for the given user
-                "$match": {"project_id.$id": project.id}
+                "$match": {"project_id.$id": project.id, "active": True}
             },
             {
                 "$lookup": {
@@ -174,7 +221,7 @@ class ProjectManager(BaseManager[Project]):
                     "localField": "project_id.$id",
                     "foreignField": "_id",
                     "pipeline": [{"$project": {"config_root_dir": 1, "_id": 0}}],
-                    "as": "project"
+                    "as": "project",
                 }
             },
             {
@@ -195,14 +242,14 @@ class ProjectManager(BaseManager[Project]):
                 # pop the first element from the array
                 "$unwind": "$user"
             },
-            {
-                "$unwind": "$project"
-            },
+            {"$unwind": "$project"},
             {
                 "$project": {
                     "user": 1,
                     "_id": 0,
-                    "mount": {"$concat": ["$project.config_root_dir", "/", "$user.username"]},
+                    "mount": {
+                        "$concat": ["$project.config_root_dir", "/", "$user.username"]
+                    },
                 }
             },
         ]
@@ -299,6 +346,7 @@ class ProjectManager(BaseManager[Project]):
             starting_port_bind=starting_port_bind,
             description=description,
             volume_mount_dirname=volume_mount_dirname,
+            modules={},
         )
 
         return prj
@@ -314,10 +362,11 @@ class ProjectManager(BaseManager[Project]):
         if prj.is_running():
             prj.stop()
 
-        # TODO: unfollow all users
-        self._uc_mgr.unassign_users(prj)
+        # unfollow all users
+        self._uc_mgr.stop_all_user_instances(prj)
+        self._uc_mgr.unassign_all_from_project(prj)
 
-        # TODO: remove built images
+        podman_rm_networks(f"{prj.name}_")
 
         # remove everything from the directory
         shutil.rmtree(prj.config_root_dir)
@@ -353,3 +402,51 @@ class ProjectManager(BaseManager[Project]):
             ]
         )
         return [i for i in res]
+
+    # MANAGE MODULES
+
+    def create_module(self, project_name: str, module_name: str):
+        project = self.get_doc_by_filter(name=project_name, active=True)
+        if not project:
+            raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
+
+        # create a destination directory and check if exists
+        module_root_dir = Path(project.config_root_dir) / "_modules" / module_name
+        os.makedirs(module_root_dir, exist_ok=True)
+        if len(os.listdir(module_root_dir)) > 0:
+            raise DirNotEmptyException(
+                f"Destination directory `{module_root_dir}` is not empty."
+            )
+
+        # fill directory with templates
+        template_dir = Path(TEMPLATE_DIRNAME)
+        src_dir = template_dir / "module"
+        copy_tree(str(src_dir), str(module_root_dir))
+
+        module = Module(
+            name=module_name,
+            module_root_dir=str(module_root_dir.resolve()),
+            build_dir_name=DEFAULT_MODULE_BUILD_DIRNAME,
+            compose_template_path=DEFAULT_MODULE_COMPOSE_NAME,
+        )
+        project.modules[module_name] = module
+
+    def list_modules(self, project_name: str):
+        project = self.get_doc_by_filter(name=project_name, active=True)
+        if not project:
+            raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
+
+        return project.modules
+
+    def remove_modules(self, project_name: str, module_name: str):
+        project = self.get_doc_by_filter(name=project_name, active=True)
+        if not project:
+            raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
+
+        if module_name not in project.modules:
+            return
+
+        # remove from all users
+        lof_users = self.get_active_users_for_project(project)
+        for user in lof_users:
+            self._uc_mgr.remove_module(user, project, module_name)

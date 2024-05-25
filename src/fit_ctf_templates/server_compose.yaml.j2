@@ -4,14 +4,18 @@ name: {{ name }}
 
 services:
   admin:
-    build: ./admin
+    build:
+      context: ./admin
+      dockerfile: Containerfile
     networks:
-      - main_net
+      - {{ name }}_main_net
   http:
-    build: ./http
+    build:
+      contenxt: ./http
+      dockerfile: Containerfile
     networks:
-      - main_net
+      - {{ name }}_main_net
 
 networks:
-  main_net:
-    name: {{ net_name }}
+  {{ name }}_main_net:
+    name: "{{ name}}_main_net"

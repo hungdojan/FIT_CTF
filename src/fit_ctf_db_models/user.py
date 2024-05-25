@@ -7,7 +7,7 @@ import re
 import secrets
 import string
 import subprocess
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field, fields
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -37,15 +37,26 @@ class UserRole(str, Enum):
     ADMIN = "admin"
 
 
-@dataclass
+@dataclass(init=False)
 class User(Base):
     username: str
     password: str
     role: UserRole
     shadow_path: str
-    shadow_hash: str = ""
-    email: str = ""
-    active: bool = True
+    active: bool = field(default=True)
+    shadow_hash: str = field(default="")
+    email: str = field(default="")
+
+    def __init__(self, **kwargs):
+        # set default values
+        self.active = True
+        self.shadow_hash = ""
+        self.email = ""
+        # ignore extra fields
+        names = set([f.name for f in fields(self)])
+        for k, v in kwargs.items():
+            if k in names:
+                setattr(self, k, v)
 
 
 class UserManager(BaseManager[User]):
@@ -103,6 +114,7 @@ class UserManager(BaseManager[User]):
         Return:
             bool: `True` if password met all the criteria.
         """
+        # TODO optimize regex
         return (
             len(password) >= 8
             and re.search(r"[a-z]", password) is not None
