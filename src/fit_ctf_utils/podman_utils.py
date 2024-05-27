@@ -27,7 +27,7 @@ def podman_get_images(contains: str | list[str] | None = None) -> list[str]:
 
 
 def podman_get_networks(contains: str | list[str] | None = None) -> list[str]:
-    cmd = ["podman", "network", "ls", "--format", '"{{ .Name }}"']
+    cmd = ["podman", "network", "ls", "--format", '"{{.Name}}"']
     proc = subprocess.run(cmd, capture_output=True, text=True)
 
     if not contains:

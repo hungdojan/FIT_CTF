@@ -85,6 +85,12 @@ class UserManager(BaseManager[User]):
         self._coll.insert_one(asdict(doc))
         return doc
 
+    def get_user(self, username: str) -> User:
+        user = self.get_doc_by_filter(username=username, active=True)
+        if not user:
+            raise UserNotExistsException(f"User `{username}` does not exists.")
+        return user
+
     @staticmethod
     def generate_password(len: int) -> str:
         """Generate a random password.
@@ -113,7 +119,7 @@ class UserManager(BaseManager[User]):
             bool: `True` if password met all the criteria.
         """
         return (
-            re.search(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).{8,}$", password) is not None
+            re.search(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$", password) is not None
         )
 
     @staticmethod
@@ -269,9 +275,7 @@ class UserManager(BaseManager[User]):
 
     def get_active_projects_for_user(self, username: str) -> list[_project.Project]:
         """Return list of projects that a user is assigned to."""
-        user = self.get_doc_by_filter(username=username)
-        if not user:
-            raise UserNotExistsException(f"User `{username}` does not exists.")
+        user = self.get_user(username)
 
         uc_coll = _user_config.UserConfigManager(self._db).collection
         pipeline = [
@@ -300,9 +304,7 @@ class UserManager(BaseManager[User]):
 
     def get_active_projects_for_user_raw(self, username: str) -> list[dict[str, Any]]:
         """Return list of projects that a user is assigned to."""
-        user = self.get_doc_by_filter(username=username)
-        if not user:
-            raise UserNotExistsException(f"User `{username}` does not exists.")
+        user = self.get_user(username)
 
         uc_coll = _user_config.UserConfigManager(self._db).collection
         project_pipeline = [
@@ -358,9 +360,7 @@ class UserManager(BaseManager[User]):
         Raises:
             UserNotExistsException: Given user could not be found in the database.
         """
-        user = self.get_doc_by_filter(username=username, active=True)
-        if not user:
-            raise UserNotExistsException(f"User `{username}` does not exist.")
+        user = self.get_user(username)
 
         # stop instances
         lof_projects = self.get_active_projects_for_user(user.username)

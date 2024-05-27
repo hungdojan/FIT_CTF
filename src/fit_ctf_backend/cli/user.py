@@ -53,11 +53,6 @@ def create_user(
 ):
     """Create a new user."""
     user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
-    user = user_mgr.get_doc_by_filter(username=username)
-    if user:
-        click.echo("User exists")
-        return
-
     if password:
         if not user_mgr.validate_password_strength(password):
             click.echo("Password is not strong enough!")
@@ -68,12 +63,12 @@ def create_user(
         click.echo("Missing either `-p` or `--generate-password` option.")
         return
 
-    user, data = user_mgr.create_new_user(username, password, shadow_dir, email)
+    _, data = user_mgr.create_new_user(username, password, shadow_dir, email)
     # print password
     click.echo(data)
 
 
-@user.command(name="multiple_create")
+@user.command(name="create-multiple")
 @click.option(
     "-sd",
     "--shadow-dir",
@@ -124,9 +119,7 @@ def list_users(ctx: click.Context):
 @click.pass_context
 def get_user_info(ctx: click.Context, username: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    user = ctf_mgr.user_mgr.get_doc_by_filter(username=username)
-    if not user:
-        raise UserNotExistsException(f"User `{username}` does not exist.")
+    user = ctf_mgr.user_mgr.get_user(username)
     user_info = asdict(user)
     user_info.pop("_id")
     click.echo(json.dumps(user_info, indent=2))
@@ -165,12 +158,12 @@ def change_password(ctx: click.Context, username: str, password: str):
 
 
 @user.command(name="delete")
-@click.option("-u", "--username", required=True, help="Account username.")
+@click.argument("usernames", nargs=-1)
 @click.pass_context
-def delete_user(ctx: click.Context, username: str):
+def delete_user(ctx: click.Context, usernames: list[str]):
     """Remove user from the database."""
     user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
-    user_mgr.delete_a_user(username)
+    user_mgr.delete_users(usernames)
 
 
 @user.command(name="start")
@@ -200,8 +193,7 @@ def stop_user(ctx: click.Context, username: str, project_name: str):
 def restart_user(ctx: click.Context, username: str, project_name: str):
     """Restart user instance."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    uc_mgr: UserConfigManager = ctf_mgr.user_config_mgr
-    uc_mgr.restart_user_instance(username, project_name)
+    ctf_mgr.user_config_mgr.restart_user_instance(username, project_name)
 
 
 @user.command(name="is-running")
@@ -223,19 +215,14 @@ def assign_to_project(ctx: click.Context, username: str, project_name: str):
 
     context_dir: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dir["ctf_mgr"]
-    user = ctf_mgr.user_mgr.get_doc_by_filter(username=username, active=True)
-    if not user:
-        raise UserNotExistsException(f"User `{username}` does not exist.")
-    prj = ctf_mgr.prj_mgr.get_doc_by_filter(name=project_name, active=True)
-    if not prj:
-        raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
+    user = ctf_mgr.user_mgr.get_user(username)
+    prj = ctf_mgr.prj_mgr.get_project(project_name)
 
     ctf_mgr.assign_users_to_project(user.username, prj.name)
     click.echo(f"User `{user.username}` was assigned to the project `{prj.name}`.")
-    # TODO: return forwarded ports
 
 
-@user.command(name="assign_multiple")
+@user.command(name="assign-multiple")
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.argument("filename")
 @click.pass_context
@@ -265,11 +252,10 @@ def assign_multiple_to_project(ctx: click.Context, project_name: str, filename: 
 def unassign_to_project(ctx: click.Context, username: str, project_name: str):
     """Remove user from the project."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    uc_mgr: UserConfigManager = ctf_mgr.user_config_mgr
-    uc_mgr.unassign_user_from_project(username, project_name)
+    ctf_mgr.user_config_mgr.unassign_user_from_project(username, project_name)
 
 
-@user.command(name="unassign_multiple")
+@user.command(name="unassign-multiple")
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.argument("filename")
 @click.pass_context
@@ -298,5 +284,4 @@ def unassign_multiple_to_project(ctx: click.Context, project_name: str, filename
 @click.pass_context
 def compile(ctx: click.Context, username: str, project_name: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    uc_mgr = ctf_mgr.user_config_mgr
-    uc_mgr.compile_compose(username, project_name)
+    ctf_mgr.user_config_mgr.compile_compose(username, project_name)

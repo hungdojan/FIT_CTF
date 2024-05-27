@@ -402,6 +402,8 @@ class UserConfigManager(BaseManager[UserConfig]):
                 self._multiple_users_pipeline(project, lof_usernames)
             )
         ]
+        if not user_configs:
+            return
 
         # remove mount dirs
         for uc in user_configs:
@@ -417,11 +419,12 @@ class UserConfigManager(BaseManager[UserConfig]):
             map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
         )
         lof_network_names = podman_get_networks(lof_prefix_name)
-        cmd = ["podman", "network", "rm"] + lof_network_names
-        subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+        if lof_network_names:
+            cmd = ["podman", "network", "rm"] + lof_network_names
+            subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
 
         uc_ids = [uc["_id"] for uc in user_configs]
-        self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": True}})
+        self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": False}})
 
     def unassign_all_from_project(self, project_or_name: str | _project.Project):
         """Unfollow all users from the project."""
@@ -430,6 +433,8 @@ class UserConfigManager(BaseManager[UserConfig]):
         user_configs = [
             i for i in self._coll.aggregate(self._all_users_pipeline(project))
         ]
+        if not user_configs:
+            return
 
         # remove mount dirs
         for uc in user_configs:
@@ -445,11 +450,12 @@ class UserConfigManager(BaseManager[UserConfig]):
             map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
         )
         lof_network_names = podman_get_networks(lof_prefix_name)
-        cmd = ["podman", "network", "rm"] + lof_network_names
-        subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+        if lof_network_names:
+            cmd = ["podman", "network", "rm"] + lof_network_names
+            subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
 
         uc_ids = [uc["_id"] for uc in user_configs]
-        self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": True}})
+        self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": False}})
 
     def unassign_user_from_all_projects(self, user_or_username: str | _user.User):
         """Unassign the user from all the projects they are connected to."""
@@ -470,6 +476,8 @@ class UserConfigManager(BaseManager[UserConfig]):
         agg = self._coll.aggregate(pipeline)
         # get infos from the aggregation result
         lof_projects = [_project.Project(**i["project"]) for i in agg]
+        if not lof_projects:
+            return
         ids = [uc["_id"] for uc in agg]
 
         # remove mount dirs
@@ -489,8 +497,9 @@ class UserConfigManager(BaseManager[UserConfig]):
 
         # delete networks
         lof_network_names = podman_get_networks(lof_prefix_name)
-        cmd = ["podman", "network", "rm"] + lof_network_names
-        subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+        if lof_network_names:
+            cmd = ["podman", "network", "rm"] + lof_network_names
+            subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
         self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
 
     # MANAGE MODULES

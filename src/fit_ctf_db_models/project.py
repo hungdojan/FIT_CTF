@@ -31,6 +31,7 @@ from fit_ctf_utils.podman_utils import (
     podman_compose_down,
     podman_compose_up,
     podman_ps,
+    podman_rm_images,
     podman_rm_networks,
     podman_stats,
 )
@@ -307,7 +308,7 @@ class ProjectManager(BaseManager[Project]):
                       -- <home_volumes_for_each_user>
         """
         # check if project already exists
-        prj = self.get_doc_by_filter(name=name)
+        prj = self.get_doc_by_filter(name=name, active=True)
         if prj:
             return prj
         if not os.path.isdir(dest_dir):
@@ -419,6 +420,7 @@ class ProjectManager(BaseManager[Project]):
         self._uc_mgr.stop_all_user_instances(prj)
         self._uc_mgr.unassign_all_from_project(prj)
 
+        podman_rm_images(f"{prj.name}_")
         podman_rm_networks(f"{prj.name}_")
 
         # remove everything from the directory
