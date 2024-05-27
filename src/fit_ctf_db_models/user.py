@@ -118,9 +118,7 @@ class UserManager(BaseManager[User]):
         Return:
             bool: `True` if password met all the criteria.
         """
-        return (
-            re.search(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$", password) is not None
-        )
+        return re.search(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$", password) is not None
 
     @staticmethod
     def validate_username_format(username: str) -> bool:
@@ -163,9 +161,7 @@ class UserManager(BaseManager[User]):
         Return:
             User: Updated `User` object.
         """
-        user = self.get_doc_by_filter(username=username)
-        if not user:
-            raise UserNotExistsException(f"User `{username}` not found in the database")
+        user = self.get_user(username)
 
         # calculate and update hash for shadow
         log.info(f"Updating `{user.shadow_path}`")
@@ -199,7 +195,7 @@ class UserManager(BaseManager[User]):
         Return:
             User: Newly created user object.
         """
-        user = self.get_doc_by_filter(username=username)
+        user = self.get_doc_by_filter(username=username, active=True)
         if user:
             raise UserExistsException(f"User `{username}` already exists.")
 
