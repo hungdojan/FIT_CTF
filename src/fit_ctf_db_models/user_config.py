@@ -231,11 +231,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         user, project = self._get_user_and_project(username, project_name)
         users = self._prj_mgr.get_active_users_for_project_raw(project)
         user_config = self.get_doc_by_filter(
-            **{
-                "user_id.$id": user.id,
-                "project_id.$id": project.id,
-                "active": True
-            }
+            **{"user_id.$id": user.id, "project_id.$id": project.id, "active": True}
         )
 
         if user_config:
@@ -258,9 +254,14 @@ class UserConfigManager(BaseManager[UserConfig]):
                 [
                     {
                         "$match": {
-                            "$or": [
-                                {"forwarded_port": forwarded_port},
-                                {"ssh_port": ssh_port},
+                            "$and": [
+                                {"active": True},
+                                {
+                                    "$or": [
+                                        {"forwarded_port": forwarded_port},
+                                        {"ssh_port": ssh_port},
+                                    ]
+                                },
                             ]
                         }
                     }
