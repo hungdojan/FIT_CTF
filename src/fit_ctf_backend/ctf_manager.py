@@ -7,6 +7,7 @@ from pymongo.database import Database
 
 from fit_ctf_backend.exceptions import CTFException, ProjectNotExistsException
 from fit_ctf_db_models import Project, ProjectManager, UserConfigManager, UserManager
+from fit_ctf_utils.podman_utils import podman_ps
 
 
 class CTFManager:
@@ -77,6 +78,12 @@ class CTFManager:
             raise ProjectNotExistsException(f"Project `{name}` does not exist.")
         return project.is_running()
 
+    def project_status(self, name: str):
+        project = self.prj_mgr.get_doc_by_filter(name=name)
+        if not project:
+            raise ProjectNotExistsException(f"Project `{name}` does not exist.")
+        return podman_ps(project.name)
+
     def start_user_instance(
         self, username: str, project_name: str
     ) -> subprocess.CompletedProcess:
@@ -111,11 +118,7 @@ class CTFManager:
                 users, project_name
             )
 
-    def get_running_projects(self):
-        raise NotImplemented()
-
-    def export_project_configs(self, name: str):
-        # TODO: figure out what to export
+    def health_check(self, name: str):
         raise NotImplemented()
 
     def get_project_info(self, name: str) -> Project | None:

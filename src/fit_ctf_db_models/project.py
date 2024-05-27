@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+import zipfile
 from dataclasses import dataclass, field, fields
 from distutils.dir_util import copy_tree
 from pathlib import Path
@@ -29,7 +30,9 @@ from fit_ctf_templates import TEMPLATE_DIRNAME, TEMPLATE_FILES, get_template
 from fit_ctf_utils.podman_utils import (
     podman_compose_down,
     podman_compose_up,
+    podman_ps,
     podman_rm_networks,
+    podman_stats,
 )
 
 log = logging.getLogger()
@@ -71,7 +74,7 @@ class Project(Base):
         Returns:
             subprocess.CompletedProcess: Command call results.
         """
-        return podman_compose_up(self._compose_filepath)
+        return podman_compose_up(str(self._compose_filepath))
 
     def restart(self):
         """Restart project server.
@@ -92,7 +95,7 @@ class Project(Base):
         Returns:
             subprocess.CompletedProcess: Command call results.
         """
-        return podman_compose_down(self._compose_filepath)
+        return podman_compose_down(str(self._compose_filepath))
 
     def is_running(self) -> bool:
         """Check if the project server is running.
@@ -158,17 +161,19 @@ class ProjectManager(BaseManager[Project]):
     def get_project_info(self) -> dict[str, Any]:
         return {p.name: p for p in self.get_docs()}
 
+    def get_project(self, name: str) -> Project:
+        prj = self.get_doc_by_filter(name=name, active=True)
+        if not prj:
+            raise ProjectNotExistsException(f"Project `{name}` does not exists.")
+        return prj
+
     def get_active_users_for_project(
         self, project_or_name: str | Project
     ) -> list[_user.User]:
         """Return list of users that are assigned to the project."""
         project = project_or_name
         if not isinstance(project, Project):
-            project = self.get_doc_by_filter(name=project_or_name, active=True)
-            if not project:
-                raise ProjectNotExistsException(
-                    f"Project `{project_or_name}` does not exists."
-                )
+            project = self.get_project(project)
 
         uc_coll = self._uc_mgr.collection
         pipeline = [
@@ -203,11 +208,7 @@ class ProjectManager(BaseManager[Project]):
         """Return list of users that are assigned to the project."""
         project = project_or_name
         if not isinstance(project, Project):
-            project = self.get_doc_by_filter(name=project_or_name, active=True)
-            if not project:
-                raise ProjectNotExistsException(
-                    f"Project `{project_or_name}` does not exists."
-                )
+            project = self.get_project(project)
 
         uc_coll = self._uc_mgr.collection
         pipeline = [
@@ -247,6 +248,7 @@ class ProjectManager(BaseManager[Project]):
                 "$project": {
                     "user": 1,
                     "_id": 0,
+                    "forwarded_port": 1,
                     "mount": {
                         "$concat": ["$project.config_root_dir", "/", "$user.username"]
                     },
@@ -254,8 +256,11 @@ class ProjectManager(BaseManager[Project]):
             },
         ]
 
-        #        vvvvvvvvvvv -- spreading dict key-values
-        return [{**i["user"], "mount": i["mount"]} for i in uc_coll.aggregate(pipeline)]
+        return [
+            #   vvvvvvvvvvvv -- spreading dict key-values
+            {**i["user"], "mount": i["mount"], "forwarded_port": i["forwarded_port"]}
+            for i in uc_coll.aggregate(pipeline)
+        ]
 
     def _get_avaiable_starting_port(self) -> int:
         lof_prjs_cur = self._coll.find(
@@ -351,12 +356,60 @@ class ProjectManager(BaseManager[Project]):
 
         return prj
 
-    def delete_project(self, name: str):
+    def generate_port_forwarding_script(
+        self, project_name: str, dest_ip_addr: str, filename: str
+    ):
+        prj = self.get_project(project_name)
+        lof_user_configs = self._uc_mgr.get_docs_raw(
+            filter={"project_id.$id": prj.id, "active": True},
+            projection={"_id": 0, "ssh_port": 1, "forwarded_port": 1},
+        )
+
+        lof_cmd = [
+            "firewall-cmd --zone=public "
+            "--add-forward-port="
+            f"port={i['forwarded_port']}:"
+            "proto=tcp:"
+            f"toport={i['ssh_port']}:"
+            f"toaddr={dest_ip_addr}\n"
+            for i in lof_user_configs
+        ]
+
+        with open(filename, "w") as f:
+            f.write("#!/usr/bin/env bash\n\n")
+            f.writelines(lof_cmd)
+            f.write("firewall-cmd --zone=public --add-masquerade\n")
+        os.chmod(filename, 755)
+
+    def print_resource_usage(self, project_name: str):
+        prj = self.get_project(project_name)
+        podman_stats(prj.name)
+
+    def print_ps(self, project_name: str):
+        prj = self.get_project(project_name)
+        podman_ps(prj.name)
+
+    def export_project(self, project_name: str, output_file: str):
+        prj = self.get_project(project_name)
+        with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as zf:
+            # this code snippet originates from: https://stackoverflow.com/a/46604244
+            for dirpath, _, filenames in os.walk(prj.config_root_dir):
+                for filename in filenames:
+
+                    # Write the file named filename to the archive,
+                    # giving it the archive name 'arcname'.
+                    filepath = os.path.join(dirpath, filename)
+                    parentpath = os.path.relpath(filepath, prj.config_root_dir)
+                    arcname = os.path.join(
+                        os.path.basename(prj.config_root_dir), parentpath
+                    )
+
+                    zf.write(filepath, arcname)
+
+    def delete_project(self, project_name: str):
         """Delete a project."""
         # also deletes everything
-        prj = self.get_doc_by_filter(name=name, active=True)
-        if not prj:
-            raise ProjectNotExistsException(f"Project `{name}` does not exists.")
+        prj = self.get_project(project_name)
 
         # stop project if running
         if prj.is_running():
@@ -406,9 +459,7 @@ class ProjectManager(BaseManager[Project]):
     # MANAGE MODULES
 
     def create_module(self, project_name: str, module_name: str):
-        project = self.get_doc_by_filter(name=project_name, active=True)
-        if not project:
-            raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
+        project = self.get_project(project_name)
 
         # create a destination directory and check if exists
         module_root_dir = Path(project.config_root_dir) / "_modules" / module_name
@@ -432,16 +483,11 @@ class ProjectManager(BaseManager[Project]):
         project.modules[module_name] = module
 
     def list_modules(self, project_name: str):
-        project = self.get_doc_by_filter(name=project_name, active=True)
-        if not project:
-            raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
-
+        project = self.get_project(project_name)
         return project.modules
 
     def remove_modules(self, project_name: str, module_name: str):
-        project = self.get_doc_by_filter(name=project_name, active=True)
-        if not project:
-            raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
+        project = self.get_project(project_name)
 
         if module_name not in project.modules:
             return

@@ -282,6 +282,7 @@ class UserConfigManager(BaseManager[UserConfig]):
             Path(project.config_root_dir) / project.volume_mount_dirname / user.username
         )
         os.makedirs(mount_dir)
+        os.chmod(mount_dir, 777)
 
         user_config = UserConfig(
             _id=ObjectId(),
@@ -321,6 +322,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         # TODO: collision_test
         for i, user in enumerate(users):
             os.makedirs(mount_dir / user.username)
+            os.chmod(mount_dir / user.username, 777)
             user_configs.append(
                 UserConfig(
                     _id=ObjectId(),
@@ -333,6 +335,31 @@ class UserConfigManager(BaseManager[UserConfig]):
 
         self._coll.insert_many([asdict(uc) for uc in user_configs])
         return user_configs
+
+    # GET USER INFO
+
+    def get_user_info(self, user: _user.User) -> list[dict[str, Any]]:
+        pipeline = [
+            {"$match": {"user_id.$id": user.id, "active": True}},
+            {
+                "$lookup": {
+                    "from": "project",
+                    "localField": "project_id.$id",
+                    "foreignField": "_id",
+                    "as": "project",
+                }
+            },
+            {"$unwind": "$project"},
+            {
+                "$project": {
+                    "_id": 0,
+                    "project.name": 1,
+                    "project.config_root_dir": 1,
+                    "project.active": 1,
+                }
+            },
+        ]
+        return [i["project"] for i in self._coll.aggregate(pipeline)]
 
     # UNASSIGN USERS FROM PROJECTS
 
@@ -389,7 +416,9 @@ class UserConfigManager(BaseManager[UserConfig]):
         lof_prefix_name = list(
             map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
         )
-        podman_rm_networks(lof_prefix_name)
+        lof_network_names = podman_get_networks(lof_prefix_name)
+        cmd = ["podman", "network", "rm"] + lof_network_names
+        subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
 
         uc_ids = [uc["_id"] for uc in user_configs]
         self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": True}})
@@ -415,7 +444,9 @@ class UserConfigManager(BaseManager[UserConfig]):
         lof_prefix_name = list(
             map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
         )
-        podman_rm_networks(lof_prefix_name)
+        lof_network_names = podman_get_networks(lof_prefix_name)
+        cmd = ["podman", "network", "rm"] + lof_network_names
+        subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
 
         uc_ids = [uc["_id"] for uc in user_configs]
         self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": True}})
@@ -457,7 +488,9 @@ class UserConfigManager(BaseManager[UserConfig]):
         )
 
         # delete networks
-        podman_rm_networks(lof_prefix_name)
+        lof_network_names = podman_get_networks(lof_prefix_name)
+        cmd = ["podman", "network", "rm"] + lof_network_names
+        subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
         self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
 
     # MANAGE MODULES

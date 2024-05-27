@@ -6,7 +6,6 @@ import os
 import re
 import secrets
 import string
-import subprocess
 from dataclasses import asdict, dataclass, field, fields
 from enum import Enum
 from pathlib import Path
@@ -21,7 +20,6 @@ import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend import (
     DEFAULT_PASSWORD_LENGTH,
     DirNotExistsException,
-    ProjectNotExistsException,
     UserNotExistsException,
 )
 from fit_ctf_backend.exceptions import UserExistsException
@@ -114,23 +112,27 @@ class UserManager(BaseManager[User]):
         Return:
             bool: `True` if password met all the criteria.
         """
-        # TODO optimize regex
         return (
-            len(password) >= 8
-            and re.search(r"[a-z]", password) is not None
-            and re.search(r"[A-Z]", password) is not None
-            and re.search(r"[0-9]", password) is not None
+            re.search(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d).{8,}$", password) is not None
         )
 
     @staticmethod
     def validate_username_format(username: str) -> bool:
-        raise NotImplemented()
+        return re.search(r"^[a-zA-Z0-9]{4,}$", username) is not None
 
     @staticmethod
     def get_password_hash(password: str) -> str:
         """Calculates SHA256 hash of the given password."""
         hash_obj = hashlib.sha256(password.encode("utf-8"))
         return hash_obj.hexdigest()
+
+    @staticmethod
+    def _generate_shadow(username: str, password: str, shadow_path: str) -> str:
+        crypt_hash = sha512_crypt.using(salt=username).hash(password)
+        template = get_template(TEMPLATE_FILES["shadow"])
+        with open(f"{shadow_path}", "w") as f:
+            f.write(template.render(hash=crypt_hash))
+        return crypt_hash
 
     def validate_user_login(self, username: str, password: str) -> bool:
         """Validate user credentials."""
@@ -161,10 +163,7 @@ class UserManager(BaseManager[User]):
 
         # calculate and update hash for shadow
         log.info(f"Updating `{user.shadow_path}`")
-        crypt_hash = sha512_crypt.using(salt="randomText").hash(password)
-        template = get_template(TEMPLATE_FILES["shadow"])
-        with open(f"{user.shadow_path}", "w") as f:
-            f.write(template.render(user={"name": "student", "hash": crypt_hash}))
+        crypt_hash = self._generate_shadow(user.username, password, user.shadow_path)
 
         # calculate hash to store to the database
         user.password = self.get_password_hash(password)
@@ -207,10 +206,9 @@ class UserManager(BaseManager[User]):
 
         # generate shadow from file
         log.info(f"Generating `{str(shadow_file)}`")
-        template = get_template(TEMPLATE_FILES["shadow"])
-        crypt_hash = sha512_crypt.using(salt=username).hash(password)
-        with open(str(shadow_file), "w") as f:
-            f.write(template.render(user={"name": "student", "hash": crypt_hash}))
+        crypt_hash = self._generate_shadow(
+            username, password, str(shadow_file.resolve())
+        )
 
         user = User(
             _id=ObjectId(),
@@ -225,15 +223,49 @@ class UserManager(BaseManager[User]):
         self.insert_doc(user)
         return user, {"username": username, "password": password}
 
-    def start_user_instance(self, username: str, project_name: str):
-        user = self.get_doc_by_filter(username=username)
-        if not user:
-            raise UserNotExistsException(f"User `{username}` does not exists.")
+    def create_multiple_users(
+        self,
+        lof_usernames: list[str],
+        shadow_dir: str,
+        default_password: str | None = None,
+    ) -> dict[str, str]:
+        """Generate new users from the given list of usernames.
 
-        project = _project.ProjectManager(self._db).get_doc_by_filter(name=project_name)
-        if not project:
-            raise ProjectNotExistsException(f"User `{username}` does not exists.")
-        raise NotImplemented()
+        Ignores usernames that already has an account.
+
+        Params:
+            lof_username (list[str]): List of usernames.
+            shadow_dir (str): Path to a directory with shadow files.
+
+        Return:
+            dict[str, str]: Dictionary of usernames and passwords
+                            in raw format (not a hash).
+        """
+        # eliminate duplicates
+        existing_users = [
+            u["username"]
+            for u in self.get_docs_raw(
+                filter={"username": {"$in": lof_usernames}},
+                projection={"_id": 0, "username": 1},
+            )
+        ]
+
+        new_usernames = set(lof_usernames).difference(set(existing_users))
+        password = (
+            default_password
+            if default_password is not None
+            else self.generate_password(DEFAULT_PASSWORD_LENGTH)
+        )
+        # generate random passwords for each new user
+        lof_user_info = {username: password for username in new_usernames}
+        users = {}
+
+        # create new users
+        for username, password in lof_user_info.items():
+            user, data = self.create_new_user(username, password, shadow_dir)
+            users[user.username] = data
+
+        return users
 
     def get_active_projects_for_user(self, username: str) -> list[_project.Project]:
         """Return list of projects that a user is assigned to."""
@@ -317,45 +349,6 @@ class UserManager(BaseManager[User]):
         ]
         return [i["project"] for i in uc_coll.aggregate(pipeline)]
 
-    def generate_users(
-        self, lof_usernames: list[str], shadow_dir: str, default_password: str = ""
-    ) -> dict[str, str]:
-        """Generate new users from the given list of usernames.
-
-        Ignores usernames that already has an account.
-
-        Params:
-            lof_username (list[str]): List of usernames.
-            shadow_dir (str): Path to a directory with shadow files.
-
-        Return:
-            dict[str, str]: Dictionary of usernames and passwords
-                            in raw format (not a hash).
-        """
-        # eliminate duplicates
-        existing_users = [
-            u["username"]
-            for u in self.get_docs_raw(
-                filter={"username": {"$in": lof_usernames}},
-                projection={"_id": 0, "username": 1},
-            )
-        ]
-
-        new_usernames = set(lof_usernames).difference(set(existing_users))
-        password = (
-            default_password
-            if default_password
-            else self.generate_password(DEFAULT_PASSWORD_LENGTH)
-        )
-        # generate random passwords for each new user
-        users = {username: password for username in new_usernames}
-
-        # create new users
-        for username, password in users.items():
-            self.create_new_user(username, password, shadow_dir)
-
-        return users
-
     def delete_a_user(self, username: str):
         """Delete the given user.
 
@@ -365,18 +358,22 @@ class UserManager(BaseManager[User]):
         Raises:
             UserNotExistsException: Given user could not be found in the database.
         """
-        user = self.get_doc_by_filter(username=username)
+        user = self.get_doc_by_filter(username=username, active=True)
         if not user:
             raise UserNotExistsException(f"User `{username}` does not exist.")
 
-        # TODO: stop instances
+        # stop instances
+        lof_projects = self.get_active_projects_for_user(user.username)
+        for project in lof_projects:
+            self._uc_mgr.stop_user_instance(user, project)
 
-        # unfollow from all projects
+        self._uc_mgr.unassign_user_from_all_projects(user)
 
-        self._uc_mgr.unassign_user_from_projects(user)
-        #       -> remove from
-        #   remove global config file
-        #   remove from database
+        # remove shadow file
+        Path(user.shadow_path).unlink()
+
+        user.active = False
+        self.update_doc(user)
 
     def delete_users(self, lof_usernames: list[str]):
         """Deletes users from the list.
@@ -392,16 +389,14 @@ class UserManager(BaseManager[User]):
 
         ids = [u.id for u in users]
 
-        for u in users:
-            projects = self.get_active_projects_for_user(u.username)
-            volume_dirs = [
-                Path(p.config_root_dir) / p.volume_mount_dirname for p in projects
-            ]
-            log.debug(f"Deleting `{u.shadow_path}`")
-            # os.remove(u.shadow_path)
-            for d in volume_dirs:
-                if os.path.isdir(d / u.username):
-                    # os.remove(f"{d}{u.username}")
-                    pass
+        for user in users:
+            projects = self.get_active_projects_for_user(user.username)
+            for project in projects:
+                self._uc_mgr.stop_user_instance(user, project)
+
+            self._uc_mgr.unassign_user_from_all_projects(user)
+
+            # remove shadow file
+            Path(user.shadow_path).unlink()
 
         self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})

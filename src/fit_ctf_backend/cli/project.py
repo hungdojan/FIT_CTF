@@ -151,7 +151,7 @@ def get_project_info(ctx: click.Context, project_name: str):
 @click.option("-t", "--tree", help="Display tree format.", is_flag=True)
 @click.argument("project_name")
 @click.pass_context
-def get_config_path(ctx: click.Context, project_name: str, tree: bool):
+def get_config_path(ctx: click.Context, project_name: str):
     """Return directory containing project configuration files.
 
     PROJECT_NAME    Project's name.\f
@@ -162,10 +162,7 @@ def get_config_path(ctx: click.Context, project_name: str, tree: bool):
         click.echo(f"Project `{project_name}` not found.")
         return
 
-    if tree:
-        raise NotImplemented()
-    else:
-        click.echo(prj.config_root_dir)
+    click.echo(prj.config_root_dir)
 
 
 @project.command(name="active-users")
@@ -185,34 +182,25 @@ def active_users(ctx: click.Context, project_name: str):
     click.echo(tabulate(values, header))
 
 
-@project.command(name="add-users")
-@click.option("-n", "--name", help="Project's name.", required=True)
-@click.option("-f", "--filename", help="A file containing list of users to add.")
-@click.option("-u", "--username", help="Username of the user to add.")
-@click.pass_context
-def add_users(ctx: click.Context, name: str, filename: str, username: str):
-    """Add users to the project.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-        name (str): Project's name.
-        filename (str): A file containing list of users to add.
-        username (str): A specific user to add to the project
-    """
-    raise NotImplemented()
-
-
-@project.command(name="port-forwarding")
+@project.command(name="generate-firewall-rules")
+@click.option("-ip", "--ip-addr", required=True, help="The destination IP address.")
+@click.option(
+    "-o",
+    "--output",
+    default="firewall.sh",
+    help="Destination file where the script content will be written.",
+)
 @click.argument("project_name")
 @click.pass_context
-def port_forwarding(ctx: click.Context, project_name: str):
-    """Get list of forwarded ports to user instances.\f
+def firewall_rules(ctx: click.Context, project_name: str, ip_addr: str, output: str):
+    """Generate port forwarding rules for `firewalld`.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
         project_name (str): Project's name.
     """
-    raise NotImplemented()
+    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    prj_mgr.generate_port_forwarding_script(project_name, ip_addr, output)
 
 
 @project.command(name="reserved-ports")
@@ -228,41 +216,29 @@ def used_ports(ctx: click.Context):
     click.echo(tabulate(values, header))
 
 
-@project.command(name="remove-users")
-@click.option("-n", "--name", help="Project's name.", required=True)
-@click.option("-f", "--filename", help="A file containing list of users to add.")
-@click.option("-u", "--username", help="Username of the user to add.")
-@click.pass_context
-def remove_users(ctx: click.Context, name: str, filename: str, username: str):
-    """Remove users from the project.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-        name (str): Project's name.
-        filename (str): A file containing list of users to add.
-        username (str): A specific user to add to the project
-    """
-    raise NotImplemented()
-
-
 @project.command(name="resources")
+@click.argument("project_name")
 @click.pass_context
-def resources_usage(ctx: click.Context):
+def resources_usage(ctx: click.Context, project_name: str):
     """Display project resources.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
     """
-    raise NotImplemented()
+    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    prj_mgr.print_resource_usage(project_name)
 
 
 @project.command(name="export")
+@click.option(
+    "-o", "--output", default="project_archive.zip", help="Final ZIP file name."
+)
 @click.argument("project_name")
 @click.pass_context
-def export_project(ctx: click.Context, project_name: str):
+def export_project(ctx: click.Context, project_name: str, output: str):
     """Export project configurations."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    ctf_mgr.export_project_configs(project_name)
+    ctf_mgr.prj_mgr.export_project(project_name, output)
 
 
 @project.command("delete")
@@ -331,6 +307,20 @@ def stop_project(ctx: click.Context):
     ctf_mgr.stop_project(name)
 
 
+@server.command(name="status")
+@click.pass_context
+def status_project(ctx: click.Context):
+    """Turn off the project server.\f
+
+    Params:
+        ctx (click.Context): Context of the argument manager.
+    """
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    name = context_dict["name"]
+    ctf_mgr.prj_mgr.print_ps(name)
+
+
 @server.command(name="is-running")
 @click.pass_context
 def is_running(ctx: click.Context):
@@ -374,8 +364,29 @@ def restart_project(ctx: click.Context):
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
-    prj = ctf_mgr.get_project_info(name)
+    prj = ctf_mgr.prj_mgr.get_doc_by_filter(name=name, active=True)
     if not prj:
         click.echo(f"Project `{name}` not found.")
         return
+    ctf_mgr.user_config_mgr.stop_all_user_instances(prj)
     click.echo(prj.restart())
+
+
+@server.command(name="health_check")
+@click.pass_context
+def health_check(ctx: click.Context):
+    context_dir: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dir["ctf_mgr"]
+    name: str = context_dir["name"]
+
+    # TODO:
+    ctf_mgr.health_check(name)
+
+
+@server.command(name="shell_admin")
+@click.pass_context
+def shell_admin(ctx: click.Context):
+    context_dir: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dir["ctf_mgr"]
+    name: str = context_dir["name"]
+    # TODO:
