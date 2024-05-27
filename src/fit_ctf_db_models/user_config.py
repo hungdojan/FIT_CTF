@@ -148,13 +148,8 @@ class UserConfigManager(BaseManager[UserConfig]):
     def _get_user_and_project(
         self, username: str, project_name: str
     ) -> tuple[_user.User, _project.Project]:
-        user = self._user_mgr.get_doc_by_filter(username=username)
-        if not user:
-            raise UserNotExistsException(f"User `{username}` does not exist.")
-
-        project = self._prj_mgr.get_doc_by_filter(name=project_name)
-        if not project:
-            raise ProjectNotExistsException(f"Project `{project_name}` does not exist.")
+        user = self._user_mgr.get_user(username=username)
+        project = self._prj_mgr.get_project(name=project_name)
 
         return user, project
 
@@ -239,6 +234,7 @@ class UserConfigManager(BaseManager[UserConfig]):
             **{
                 "user_id.$id": user.id,
                 "project_id.$id": project.id,
+                "active": True
             }
         )
 

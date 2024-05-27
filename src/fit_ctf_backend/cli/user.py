@@ -104,11 +104,14 @@ def multiple_create(
 
 
 @user.command(name="ls")
+@click.option("-a", "--all", is_flag=True, help="Display all users (even inactive).")
 @click.pass_context
-def list_users(ctx: click.Context):
+def list_users(ctx: click.Context, _all: bool):
     """Get a list of registered users in the database."""
     user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
-    users = user_mgr.get_docs_raw({}, {"password": 0, "shadow_hash": 0})
+    filter = {} if _all else {"active": True}
+
+    users = user_mgr.get_docs_raw(filter, {"password": 0, "shadow_hash": 0})
     values = [list(i.values()) for i in users]
     header = list(users[0].keys())
     click.echo(tabulate(values, header))
