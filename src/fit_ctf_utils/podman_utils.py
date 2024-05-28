@@ -3,6 +3,8 @@ from __future__ import annotations
 import subprocess
 import sys
 
+import fit_ctf_db_models.project as _project
+
 
 def podman_get_images(contains: str | list[str] | None = None) -> list[str]:
     cmd = ["podman", "images", "--format", '"{{ .Repository }}"']
@@ -106,6 +108,7 @@ def podman_stats(project_name: str) -> subprocess.CompletedProcess:
     ] + container_names
     return subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
 
+
 def podman_ps(project_name: str) -> subprocess.CompletedProcess:
     cmd = [
         "podman",
@@ -113,7 +116,11 @@ def podman_ps(project_name: str) -> subprocess.CompletedProcess:
         "-a",
         "--format",
         "table {{.Names}} {{.Networks}} {{.Ports}} {{.State}} {{.CreatedHuman}}",
-        f"--filter=name=^{project_name}"
+        f"--filter=name=^{project_name}",
     ]
     return subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
 
+
+def podman_shell(file: str, service: str, command: str):
+    cmd = f"podman-compose -f {file} exec {service} {command}"
+    return subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)

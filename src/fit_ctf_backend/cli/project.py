@@ -1,5 +1,5 @@
+import json
 import pprint
-import sys
 from dataclasses import asdict
 from typing import Any
 
@@ -116,18 +116,21 @@ def create_project(
 
 @project.command(name="ls")
 @click.option(
-    "-a", "--all", is_flag=True, help="Display both active and inactive projects.)"
+    "-a",
+    "--all",
+    "_all",
+    is_flag=True,
+    help="Display both active and inactive projects.)",
 )
 @click.pass_context
-def list_projects(ctx: click.Context, all: bool):
+def list_projects(ctx: click.Context, _all: bool):
     """Display existing projects."""
     prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
-    lof_prj = prj_mgr.get_projects(ignore_inactive=all)
+    lof_prj = prj_mgr.get_projects(ignore_inactive=_all)
     if not lof_prj:
         return
     headers = list(lof_prj[0].keys())
     values = [list(i.values()) for i in lof_prj]
-    # TODO: sort columns
     click.echo(tabulate(values, headers))
 
 
@@ -148,7 +151,6 @@ def get_project_info(ctx: click.Context, project_name: str):
 
 
 @project.command(name="get-config")
-@click.option("-t", "--tree", help="Display tree format.", is_flag=True)
 @click.argument("project_name")
 @click.pass_context
 def get_config_path(ctx: click.Context, project_name: str):
@@ -375,18 +377,116 @@ def restart_project(ctx: click.Context):
 @server.command(name="health_check")
 @click.pass_context
 def health_check(ctx: click.Context):
-    context_dir: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dir["ctf_mgr"]
-    name: str = context_dir["name"]
-
-    # TODO:
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    name: str = context_dict["name"]
     ctf_mgr.health_check(name)
+
+
+@server.command(name="compile")
+@click.pass_context
+def compile_project(ctx: click.Context):
+    """Restart the project server.\f
+
+    Params:
+        ctx (click.Context): Context of the argument manager.
+    """
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    name = context_dict["name"]
+    prj = ctf_mgr.prj_mgr.get_doc_by_filter(name=name, active=True)
+    if not prj:
+        click.echo(f"Project `{name}` not found.")
+        return
+    prj.compile()
 
 
 @server.command(name="shell_admin")
 @click.pass_context
 def shell_admin(ctx: click.Context):
-    context_dir: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dir["ctf_mgr"]
-    name: str = context_dir["name"]
-    # TODO:
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    name: str = context_dict["name"]
+    prj = ctf_mgr.prj_mgr.get_project(name)
+    prj.shell_admin()
+
+
+# MODULES
+
+
+@project.group(name="project-modules")
+@click.option("-n", "--name", help="Project's name", required=True)
+@click.pass_context
+def project_modules(ctx: click.Context, name: str):
+    """Managing project instances."""
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    context_dict["name"] = name
+    ctx.obj = context_dict
+
+
+@project_modules.command(name="create")
+@click.option("-n", "--name", required=True, help="Name of the service module.")
+@click.pass_context
+def create_project_module(ctx: click.Context, name: str):
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    prj_name = context_dict["name"]
+    ctf_mgr.prj_mgr.create_project_module(prj_name, name)
+
+
+@project_modules.command(name="ls")
+@click.pass_context
+def list_project_modules(ctx: click.Context):
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    name = context_dict["name"]
+    click.echo(json.dumps(ctf_mgr.prj_mgr.list_project_modules(name), indent=4))
+
+
+@project_modules.command(name="remove")
+@click.option("-n", "--name", required=True, help="Name of the service module.")
+@click.pass_context
+def remove_project_module(ctx: click.Context, name: str):
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    prj_name = context_dict["name"]
+    ctf_mgr.prj_mgr.remove_project_modules(prj_name, name)
+
+
+@project.group(name="user-modules")
+@click.option("-n", "--name", help="Project's name", required=True)
+@click.pass_context
+def user_modules(ctx: click.Context, name: str):
+    """Managing project instances."""
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    context_dict["name"] = name
+    ctx.obj = context_dict
+
+
+@user_modules.command(name="create")
+@click.option("-n", "--name", required=True, help="Name of the service module.")
+@click.pass_context
+def create_user_module(ctx: click.Context, name: str):
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    prj_name = context_dict["name"]
+    ctf_mgr.prj_mgr.create_user_module(prj_name, name)
+
+
+@user_modules.command(name="ls")
+@click.pass_context
+def list_user_modules(ctx: click.Context):
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    name = context_dict["name"]
+    click.echo(json.dumps(ctf_mgr.prj_mgr.list_user_modules(name), indent=4))
+
+
+@user_modules.command(name="remove")
+@click.option("-n", "--name", required=True, help="Name of the service module.")
+@click.pass_context
+def remove_user_modules(ctx: click.Context, name: str):
+    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
+    prj_name = context_dict["name"]
+    ctf_mgr.prj_mgr.remove_user_modules(prj_name, name)

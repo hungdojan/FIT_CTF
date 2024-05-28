@@ -4,11 +4,9 @@ import logging
 import os
 import shutil
 import subprocess
-import tempfile
 from dataclasses import asdict, dataclass, field, fields
 from distutils import sys
 from pathlib import Path
-from pprint import pprint
 from subprocess import Popen
 from typing import Any
 
@@ -21,21 +19,16 @@ from fit_ctf_backend import (
     ProjectNotExistsException,
     SSHPortOutOfRangeException,
     UserNotAssignedToProjectException,
-    UserNotExistsException,
 )
 from fit_ctf_backend.exceptions import (
     MaxUserCountReachedException,
+    ModuleExistsException,
     PortUsageCollisionException,
 )
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_db_models.compose_objects import Module
 from fit_ctf_templates import TEMPLATE_FILES, get_template
-from fit_ctf_utils.podman_utils import (
-    podman_get_images,
-    podman_get_networks,
-    podman_rm_images,
-    podman_rm_networks,
-)
+from fit_ctf_utils.podman_utils import podman_get_networks, podman_rm_networks
 
 log = logging.getLogger()
 
@@ -156,23 +149,13 @@ class UserConfigManager(BaseManager[UserConfig]):
     def _get_user(self, user_or_username: str | _user.User):
         user = user_or_username
         if not isinstance(user, _user.User):
-            user = self._user_mgr.get_doc_by_filter(
-                username=user_or_username, active=True
-            )
-            if not user:
-                raise UserNotExistsException(
-                    f"User `{user_or_username}` does not exist."
-                )
+            user = self._user_mgr.get_user(user)
         return user
 
     def _get_project(self, project_or_name: str | _project.Project):
         prj = project_or_name
         if not isinstance(prj, _project.Project):
-            prj = self._prj_mgr.get_doc_by_filter(name=project_or_name, active=True)
-            if not prj:
-                raise ProjectNotExistsException(
-                    f"Project `{project_or_name}` does not exist."
-                )
+            prj = self._prj_mgr.get_project(prj)
         return prj
 
     def get_user_config(self, project: _project.Project, user: _user.User):
@@ -279,7 +262,7 @@ class UserConfigManager(BaseManager[UserConfig]):
             Path(project.config_root_dir) / project.volume_mount_dirname / user.username
         )
         os.makedirs(mount_dir)
-        os.chmod(mount_dir, 777)
+        os.chmod(mount_dir, 0o777)
 
         user_config = UserConfig(
             _id=ObjectId(),
@@ -512,8 +495,13 @@ class UserConfigManager(BaseManager[UserConfig]):
         user_config = self.get_user_config(project, user)
 
         # add and compile
+        if module.name in user_config.modules:
+            raise ModuleExistsException(
+                f"User `{user.username}` already has module `{module.name}`."
+            )
         user_config.modules[module.name] = module
         self._compile_uc(user_config, project, user)
+        self.update_doc(user_config)
 
     def remove_module(
         self,
@@ -529,6 +517,7 @@ class UserConfigManager(BaseManager[UserConfig]):
 
             # recompile
             self._compile_uc(user_config, project, user)
+            self.update_doc(user_config)
 
     # RUNNING INSTANCES
 
@@ -540,6 +529,12 @@ class UserConfigManager(BaseManager[UserConfig]):
         user = self._get_user(user_or_username)
         project = self._get_project(project_or_name)
         compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
+
+        # generate a compose file if not exist
+        if not compose_file.is_file():
+            user_config = self.get_user_config(project, user)
+            self._compile_uc(user_config, project, user)
+
         cmd = f"podman-compose -f {str(compose_file)} up -d"
         proc = subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
         return proc
@@ -614,6 +609,22 @@ class UserConfigManager(BaseManager[UserConfig]):
         project = self._get_project(project_or_name)
         self.start_user_instance(user, project)
         self.stop_user_instance(user, project)
+
+    def build_user_instance(
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
+    ):
+        user = self._get_user(user_or_username)
+        project = self._get_project(project_or_name)
+        compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
+        cmd = f"podman-compose -f {compose_file} build"
+        proc = subprocess.run(
+            cmd.split(),
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+        return proc
 
     def stop_all_user_instances(self, project: _project.Project):
         """Stop all running user instances."""

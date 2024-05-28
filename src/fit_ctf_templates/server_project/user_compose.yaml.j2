@@ -14,11 +14,9 @@ services:
     volumes:
       - {{ project.config_root_dir }}/{{ project.volume_mount_dirname }}/{{ user.username }}:/home/user:z
       - {{ user.shadow_path }}:/etc/shadow:z
-{% if modules in user_config %}
-  {% for module in user_config.modules %}
-  {% include module.path %}
-  {% endfor %}
-{% endif %}
+  {%- for _, module in user_config.modules.items() %}
+{% include module.root_dir ~ '/' ~ module.compose_template_path %}
+  {%- endfor %}
 
 networks:
   {{ project.name }}_main_net:

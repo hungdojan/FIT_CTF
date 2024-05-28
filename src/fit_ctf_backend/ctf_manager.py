@@ -5,7 +5,6 @@ import subprocess
 from pymongo import MongoClient
 from pymongo.database import Database
 
-from fit_ctf_backend.exceptions import CTFException, ProjectNotExistsException
 from fit_ctf_db_models import Project, ProjectManager, UserConfigManager, UserManager
 from fit_ctf_utils.podman_utils import podman_ps
 
@@ -57,31 +56,23 @@ class CTFManager:
         )
 
     def start_project(self, name: str) -> bool:
-        project = self.prj_mgr.get_doc_by_filter(name=name)
-        if not project:
-            raise ProjectNotExistsException(f"Project `{name}` does not exist.")
+        project = self.prj_mgr.get_project(name)
         proc = project.start()
         return proc.returncode != 0
 
     def stop_project(self, name: str) -> bool:
-        project = self.prj_mgr.get_doc_by_filter(name=name)
-        if not project:
-            raise ProjectNotExistsException(f"Project `{name}` does not exist.")
+        project = self.prj_mgr.get_project(name)
 
         self.user_config_mgr.stop_all_user_instances(project)
         proc = project.stop()
         return proc.returncode != 0
 
     def project_is_running(self, name: str) -> bool:
-        project = self.prj_mgr.get_doc_by_filter(name=name)
-        if not project:
-            raise ProjectNotExistsException(f"Project `{name}` does not exist.")
+        project = self.prj_mgr.get_project(name)
         return project.is_running()
 
     def project_status(self, name: str):
-        project = self.prj_mgr.get_doc_by_filter(name=name)
-        if not project:
-            raise ProjectNotExistsException(f"Project `{name}` does not exist.")
+        project = self.prj_mgr.get_project(name)
         return podman_ps(project.name)
 
     def start_user_instance(

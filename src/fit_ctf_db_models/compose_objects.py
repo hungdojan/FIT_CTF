@@ -4,10 +4,8 @@ from dataclasses import dataclass, field
 
 from bson import DBRef, ObjectId
 
-from fit_ctf_backend.constants import (
-    DEFAULT_MODULE_BUILD_DIRNAME,
-    DEFAULT_MODULE_COMPOSE_NAME,
-)
+from fit_ctf_backend.constants import DEFAULT_MODULE_BUILD_DIRNAME
+from fit_ctf_templates import TEMPLATE_FILES
 
 
 @dataclass
@@ -47,8 +45,8 @@ class Ports:
 
 
 @dataclass
-class Module:
+class Module(dict):
     name: str
-    module_root_dir: str
+    root_dir: str
     build_dir_name: str = field(default=DEFAULT_MODULE_BUILD_DIRNAME)
-    compose_template_path: str = field(default=DEFAULT_MODULE_COMPOSE_NAME)
+    compose_template_path: str = field(default=TEMPLATE_FILES["module_compose"])

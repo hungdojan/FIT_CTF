@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from dataclasses import asdict
 
@@ -7,9 +9,8 @@ from tabulate import tabulate
 import fit_ctf_backend.cli as _cli
 from fit_ctf_backend.constants import DEFAULT_PASSWORD_LENGTH
 from fit_ctf_backend.ctf_manager import CTFManager
-from fit_ctf_backend.exceptions import ProjectNotExistsException, UserNotExistsException
+from fit_ctf_db_models.compose_objects import Module
 from fit_ctf_db_models.user import UserManager
-from fit_ctf_db_models.user_config import UserConfigManager
 
 #######################
 ## User CLI commands ##
@@ -79,7 +80,6 @@ def create_user(
     "-dp",
     "--default-password",
     help="Set default passwords to all new users.",
-    required=True,
 )
 @click.argument("filename")
 @click.pass_context
@@ -104,7 +104,9 @@ def multiple_create(
 
 
 @user.command(name="ls")
-@click.option("-a", "--all", is_flag=True, help="Display all users (even inactive).")
+@click.option(
+    "-a", "--all", "_all", is_flag=True, help="Display all users (even inactive)."
+)
 @click.pass_context
 def list_users(ctx: click.Context, _all: bool):
     """Get a list of registered users in the database."""
@@ -112,6 +114,8 @@ def list_users(ctx: click.Context, _all: bool):
     filter = {} if _all else {"active": True}
 
     users = user_mgr.get_docs_raw(filter, {"password": 0, "shadow_hash": 0})
+    if not users:
+        return
     values = [list(i.values()) for i in users]
     header = list(users[0].keys())
     click.echo(tabulate(values, header))
@@ -288,3 +292,39 @@ def unassign_multiple_to_project(ctx: click.Context, project_name: str, filename
 def compile(ctx: click.Context, username: str, project_name: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     ctf_mgr.user_config_mgr.compile_compose(username, project_name)
+
+
+@user.command(name="build")
+@click.option("-u", "--username", required=True, help="Account username.")
+@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.pass_context
+def build(ctx: click.Context, username: str, project_name: str):
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    ctf_mgr.user_config_mgr.build_user_instance(username, project_name)
+
+
+@user.command(name="add-module")
+@click.option("-u", "--username", required=True, help="Account username.")
+@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-mn", "--module-name", required=True, help="Module's name.")
+@click.pass_context
+def add_module(ctx: click.Context, username: str, project_name: str, module_name: str):
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    prj = ctf_mgr.prj_mgr.get_project(project_name)
+    module = prj.user_modules.get(module_name)
+    if not module:
+        click.echo(f"Module `{module_name}` not found in `{project_name}`.")
+        return
+    ctf_mgr.user_config_mgr.add_module(username, project_name, Module(**module))
+
+
+@user.command(name="remove-module")
+@click.option("-u", "--username", required=True, help="Account username.")
+@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-mn", "--module-name", required=True, help="Module's name.")
+@click.pass_context
+def remove_module(
+    ctx: click.Context, username: str, project_name: str, module_name: str
+):
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    ctf_mgr.user_config_mgr.remove_module(username, project_name, module_name)

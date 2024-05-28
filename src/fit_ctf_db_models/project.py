@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import sys
 import zipfile
-from dataclasses import dataclass, field, fields
+from dataclasses import asdict, dataclass, field, fields
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Any
@@ -20,19 +20,30 @@ import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend import DirNotEmptyException, ProjectNotExistsException
 from fit_ctf_backend.constants import (
     DEFAULT_MODULE_BUILD_DIRNAME,
-    DEFAULT_MODULE_COMPOSE_NAME,
+    DEFAULT_PROJECT_MODULE_PREFIX,
     DEFAULT_STARTING_PORT,
+    DEFAULT_USER_MODULE_PREFIX,
 )
-from fit_ctf_backend.exceptions import DirNotExistsException
+from fit_ctf_backend.exceptions import (
+    DirNotExistsException,
+    ModuleExistsException,
+    ModuleNotExistsException,
+)
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_db_models.compose_objects import Module
-from fit_ctf_templates import TEMPLATE_DIRNAME, TEMPLATE_FILES, get_template
+from fit_ctf_templates import (
+    TEMPLATE_DIRNAME,
+    TEMPLATE_FILES,
+    TEMPLATE_PATHS,
+    get_template,
+)
 from fit_ctf_utils.podman_utils import (
     podman_compose_down,
     podman_compose_up,
     podman_ps,
     podman_rm_images,
     podman_rm_networks,
+    podman_shell,
     podman_stats,
 )
 
@@ -50,13 +61,15 @@ class Project(Base):
     starting_port_bind: int
     description: str = field(default="")
     active: bool = field(default=True)
-    modules: dict[str, Module] = field(default_factory=dict)
+    project_modules: dict[str, Module] = field(default_factory=dict)
+    user_modules: dict[str, Module] = field(default_factory=dict)
 
     def __init__(self, **kwargs):
         # set default values
         self.description = ""
         self.active = True
-        self.modules = dict()
+        self.project_modules = dict()
+        self.user_modules = dict()
         # ignore extra fields
         names = set([f.name for f in fields(self)])
         for k, v in kwargs.items():
@@ -126,9 +139,17 @@ class Project(Base):
         )
         return proc
 
-    def printable_format(self):
-        # TODO:
-        return f"{self.name} {self.config_root_dir} {self.description}"
+    def compile(self):
+        # create server_compose.yaml file
+        compose_filepath = Path(self.config_root_dir) / self.compose_file
+        with open(str(compose_filepath), "w") as f:
+            template = get_template(
+                TEMPLATE_FILES["server_compose"], self.config_root_dir
+            )
+            f.write(template.render(project=asdict(self), user={}))
+
+    def shell_admin(self):
+        podman_shell(str(self._compose_filepath), "admin", "bash")
 
 
 class ProjectManager(BaseManager[Project]):
@@ -337,12 +358,6 @@ class ProjectManager(BaseManager[Project]):
         src_dir = template_dir / "server_project"
         copy_tree(str(src_dir), str(destination))
 
-        # create server_compose.yaml file
-        compose_filepath = destination / compose_file
-        with open(str(compose_filepath), "w") as f:
-            template = get_template(TEMPLATE_FILES["server_compose"])
-            f.write(template.render(name=name))
-
         # store into the database
         prj = self.create_and_insert_doc(
             name=name,
@@ -352,8 +367,11 @@ class ProjectManager(BaseManager[Project]):
             starting_port_bind=starting_port_bind,
             description=description,
             volume_mount_dirname=volume_mount_dirname,
-            modules={},
+            user_modules={},
         )
+
+        # create server_compose.yaml file
+        prj.compile()
 
         return prj
 
@@ -380,7 +398,7 @@ class ProjectManager(BaseManager[Project]):
             f.write("#!/usr/bin/env bash\n\n")
             f.writelines(lof_cmd)
             f.write("firewall-cmd --zone=public --add-masquerade\n")
-        os.chmod(filename, 755)
+        os.chmod(filename, 0o755)
 
     def print_resource_usage(self, project_name: str):
         prj = self.get_project(project_name)
@@ -459,42 +477,97 @@ class ProjectManager(BaseManager[Project]):
         return [i for i in res]
 
     # MANAGE MODULES
-
-    def create_module(self, project_name: str, module_name: str):
+    def create_project_module(self, project_name: str, module_name: str):
         project = self.get_project(project_name)
+        if module_name in project.project_modules:
+            raise ModuleExistsException(
+                f"Project `{project.name}` already has `{module_name}` module."
+            )
 
         # create a destination directory and check if exists
-        module_root_dir = Path(project.config_root_dir) / "_modules" / module_name
-        os.makedirs(module_root_dir, exist_ok=True)
-        if len(os.listdir(module_root_dir)) > 0:
+        module_root_dir = f"_modules/{DEFAULT_PROJECT_MODULE_PREFIX}{module_name}"
+        module_dst = Path(project.config_root_dir) / module_root_dir
+        os.makedirs(module_dst, exist_ok=True)
+        if len(os.listdir(module_dst)) > 0:
             raise DirNotEmptyException(
-                f"Destination directory `{module_root_dir}` is not empty."
+                f"Destination directory `{module_dst}` is not empty."
             )
 
         # fill directory with templates
-        template_dir = Path(TEMPLATE_DIRNAME)
-        src_dir = template_dir / "module"
-        copy_tree(str(src_dir), str(module_root_dir))
+        copy_tree(TEMPLATE_PATHS["project_module"], str(module_dst))
 
         module = Module(
             name=module_name,
-            module_root_dir=str(module_root_dir.resolve()),
+            root_dir=module_root_dir,
             build_dir_name=DEFAULT_MODULE_BUILD_DIRNAME,
-            compose_template_path=DEFAULT_MODULE_COMPOSE_NAME,
+            compose_template_path=TEMPLATE_FILES["module_compose"],
         )
-        project.modules[module_name] = module
+        project.project_modules[module_name] = module
+        self.update_doc(project)
+        # TODO: compile
 
-    def list_modules(self, project_name: str):
+    def list_project_modules(self, project_name: str):
         project = self.get_project(project_name)
-        return project.modules
+        return list(project.project_modules.values())
 
-    def remove_modules(self, project_name: str, module_name: str):
+    def remove_project_modules(self, project_name: str, module_name: str):
         project = self.get_project(project_name)
 
-        if module_name not in project.modules:
-            return
+        if module_name not in project.project_modules:
+            raise ModuleNotExistsException(
+                f"Module `{module_name}` was not found in `{project.name}`."
+            )
+
+        # TODO: dataclasses cannot deserialize nested objects
+        module_info = Module(**project.project_modules.pop(module_name))
+        module_path = Path(project.config_root_dir) / module_info.root_dir
+        if module_path.exists():
+            shutil.rmtree(module_path)
+        self.update_doc(project)
+        project.compile()
+
+    def create_user_module(self, project_name: str, module_name: str):
+        project = self.get_project(project_name)
+        if module_name in project.user_modules:
+            raise ModuleExistsException(
+                f"Project `{project.name}` already has `{module_name}` module."
+            )
+
+        # create a destination directory and check if exists
+        module_root_dir = f"_modules/{DEFAULT_USER_MODULE_PREFIX}{module_name}"
+        module_dst = Path(project.config_root_dir) / module_root_dir
+        os.makedirs(module_dst, exist_ok=True)
+        if len(os.listdir(module_dst)) > 0:
+            raise DirNotEmptyException(
+                f"Destination directory `{module_dst}` is not empty."
+            )
+
+        # fill directory with templates
+        copy_tree(TEMPLATE_PATHS["user_module"], str(module_dst))
+
+        module = Module(
+            name=module_name,
+            root_dir=module_root_dir,
+            build_dir_name=DEFAULT_MODULE_BUILD_DIRNAME,
+            compose_template_path=TEMPLATE_FILES["module_compose"],
+        )
+        project.user_modules[module_name] = module
+        self.update_doc(project)
+
+    def list_user_modules(self, project_name: str):
+        project = self.get_project(project_name)
+        return list(project.user_modules.values())
+
+    def remove_user_modules(self, project_name: str, module_name: str):
+        project = self.get_project(project_name)
+
+        if module_name not in project.project_modules:
+            raise ModuleNotExistsException(
+                f"Module `{module_name}` was not found in `{project.name}`."
+            )
 
         # remove from all users
         lof_users = self.get_active_users_for_project(project)
         for user in lof_users:
             self._uc_mgr.remove_module(user, project, module_name)
+        self.update_doc(project)

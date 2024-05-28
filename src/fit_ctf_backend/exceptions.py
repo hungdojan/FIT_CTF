@@ -40,3 +40,11 @@ class MaxUserCountReachedException(CTFException):
 
 class PortUsageCollisionException(CTFException):
     pass
+
+
+class ModuleExistsException(CTFException):
+    pass
+
+
+class ModuleNotExistsException(CTFException):
+    pass
