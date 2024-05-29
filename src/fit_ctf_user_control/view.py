@@ -1,60 +1,78 @@
 from pytermgui import (
+    Button,
     Checkbox,
+    Container,
+    HorizontalAlignment,
+    InputField,
+    Label,
     Overflow,
+    Splitter,
     Window,
     WindowManager,
-    Button,
-    Label,
-    HorizontalAlignment,
-    Container,
-    InputField,
-    Splitter,
 )
+
+from fit_ctf_db_models.project import Project
 from fit_ctf_user_control.actions import Actions
 from fit_ctf_user_control.custom_widgets import (
-    PasswordField,
-    PopUpWindow,
+    ContentWidget,
     LoadingWindow,
-    ContentWidget
+    PasswordField,
 )
 
-RANDOM_TEXT = """ Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Nulla est. Pellentesque arcu. Praesent id justo in neque elementum ultrices. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Etiam posuere lacus quis dolor. Curabitur vitae diam non enim vestibulum interdum. Aenean fermentum risus id tortor. Morbi scelerisque luctus velit. Quisque tincidunt scelerisque libero. Integer malesuada. Aliquam ante. Nunc tincidunt ante vitae massa. Nulla non arcu lacinia neque faucibus fringilla. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos hymenaeos.
+IP_ADDRESS = "10.10.10.10"
 
-Etiam egestas wisi a erat. Morbi scelerisque luctus velit. Nam sed tellus id magna elementum tincidunt. Etiam dui sem, fermentum vitae, sagittis id, malesuada in, quam. Duis risus. Pellentesque pretium lectus id turpis. Quisque tincidunt scelerisque libero. Praesent in mauris eu tortor porttitor accumsan. In convallis. Fusce tellus odio, dapibus id fermentum quis, suscipit id erat. Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur? Suspendisse sagittis ultrices augue. Duis pulvinar. Nullam faucibus mi quis velit. In rutrum. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?
-
-Etiam neque. Praesent in mauris eu tortor porttitor accumsan. Maecenas fermentum, sem in pharetra pellentesque, velit turpis volutpat ante, in pharetra metus odio a lectus. Nunc auctor. Integer tempor. Duis viverra diam non justo. In sem justo, commodo ut, suscipit at, pharetra vitae, orci. Duis viverra diam non justo. Curabitur vitae diam non enim vestibulum interdum. Mauris suscipit, ligula sit amet pharetra semper, nibh ante cursus purus, vel sagittis velit mauris vel metus. Maecenas libero. Proin in tellus sit amet nibh dignissim sagittis. Donec ipsum massa, ullamcorper in, auctor et, scelerisque sed, est. Aliquam erat volutpat.
-"""
 
 class View:
     def __init__(self, act: Actions):
         self._actions = act
 
-    def _render_start_instance(self):
-        """Fire up an user's container.
+    def _render_start_user_instance(self, project: Project):
+        def stop_instance():
+            self._actions.stop_user_instance(project.name)
+            self._win_mgr.remove(_win)
 
-        Display additional information.
-        """
-        # waiting for the container to finish booting up
         _loading_win = LoadingWindow(self._win_mgr).display_window()
-        res, data = self._actions.start_user_instance()
+        data = self._actions.start_user_instance(project.name)
+        if data is None:
+            # TODO:
+            return
         self._win_mgr.remove(_loading_win)
 
-        if not res:
-            PopUpWindow("Something failed.", self._win_mgr).display_window()
-            return
-
-        # render a window with information
         _win = Window(
             "Start Instance",
             Container(
-                ContentWidget(RANDOM_TEXT),
+                ContentWidget(
+                    "Open a new terminal and run the following command:\n"
+                    f"ssh -p {data.forwarded_port} user@{IP_ADDRESS}\n"
+                    "After you are done working, stop your instance using the button below."
+                ),
                 height=12,
                 overflow=Overflow.SCROLL,
             ),
-            ["Close", lambda *_: self._win_mgr.remove(_win)],
-            width=60,
+            ["Stop the instance", lambda *_: stop_instance()],
         ).center()
 
+        _win.is_modal = True
+        _win.is_noresize = True
+        self._win_mgr.add(_win)
+
+    def _render_select_project(self):
+        def start_user_instance(project: Project):
+            self._render_start_user_instance(project)
+            self._win_mgr.remove(_win)
+
+        projects: list[Project] = self._actions.get_active_projects()
+        lof_names = [
+            Button(project.name, lambda *_: start_user_instance(project))
+            for project in projects
+        ]
+        _win = Window(
+            "Select Project",
+            Container(
+                *lof_names,
+            ),
+            ["Close", lambda *_: self._win_mgr.remove(_win)],
+        ).center()
         _win.is_modal = True
         _win.is_noresize = True
         self._win_mgr.add(_win)
@@ -84,10 +102,7 @@ class View:
             "Change Password",
             new_pass_field,
             confirm_pass_field,
-            Splitter(
-                "Show password",
-                show_pass_cb
-            ),
+            Splitter("Show password", show_pass_cb),
             warning_label,
             Splitter(
                 ["Change password", lambda *_: _submit_password()],
@@ -112,18 +127,24 @@ class View:
             self._win_mgr.remove(_win)
 
         # window elements
-        password_field = InputField(self._actions.generate_password(), prompt="Generated password: ")
+        password_field = InputField(
+            self._actions.generate_password(), prompt="Generated password: "
+        )
 
         # render window
-        _win = Window(
-            password_field,
-            Splitter(
-                ["Generate", lambda *_: _gen_pass()],
-                ["Accept", lambda *_: _submit_pass()],
-                ["Close", lambda *_: self._win_mgr.remove(_win)],
-            ),
-            width=50,
-        ).center().set_title("Generate a new password")
+        _win = (
+            Window(
+                password_field,
+                Splitter(
+                    ["Generate", lambda *_: _gen_pass()],
+                    ["Accept", lambda *_: _submit_pass()],
+                    ["Close", lambda *_: self._win_mgr.remove(_win)],
+                ),
+                width=50,
+            )
+            .center()
+            .set_title("Generate a new password")
+        )
         _win.is_modal = True
         _win.is_noresize = True
         self._win_mgr.add(_win)
@@ -164,6 +185,7 @@ class View:
             password = password_field._text
 
             if self._actions.check_login(username, password):
+                self._win_mgr.remove(_win)
                 self._render_menu()
             elif warning_label.value != "Login failed.":
                 warning_label.value = "Login failed."
@@ -181,11 +203,7 @@ class View:
             Window(
                 username_field,
                 password_field,
-                Splitter(
-                    "Show password",
-                    show_pass_cb,
-                    padding=10
-                ),
+                Splitter("Show password", show_pass_cb, padding=10),
                 warning_label,
                 Splitter(
                     Button("Login", lambda *_: _submit_login()),
@@ -213,7 +231,7 @@ class View:
                 Container(
                     Button(
                         "Start instance",
-                        lambda *_: self._render_start_instance(),
+                        lambda *_: self._render_select_project(),
                         parent_align=HorizontalAlignment.LEFT,
                     ),
                     Button(
