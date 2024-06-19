@@ -141,11 +141,11 @@ def get_user_info(ctx: click.Context, username: str):
 @click.option("-u", "--username", required=True, help="Account username.")
 @click.pass_context
 def active_projects(ctx: click.Context, username: str):
-    """Get a list of active projects that a user is assigned to."""
+    """Get a list of active projects that a user is enrolled to."""
     user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
     lof_prj = user_mgr.get_active_projects_for_user_raw(username)
     if not lof_prj:
-        click.echo("User has is not assigned to any project.")
+        click.echo("User has is not enrolled to any project.")
         return
 
     header = list(lof_prj[0].keys())
@@ -213,19 +213,19 @@ def user_is_running(ctx: click.Context, username: str, project_name: str):
     click.echo(ctf_mgr.user_instance_is_running(username, project_name))
 
 
-@user.command(name="assign")
+@user.command(name="enroll")
 @click.option("-u", "--username", required=True, help="Account username.")
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
-def assign_to_project(ctx: click.Context, username: str, project_name: str):
-    """Assign user to the project."""
+def enroll_to_project(ctx: click.Context, username: str, project_name: str):
+    """enroll user to the project."""
 
     context_dir: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dir["ctf_mgr"]
     user = ctf_mgr.user_mgr.get_user(username)
     prj = ctf_mgr.prj_mgr.get_project(project_name)
 
-    ctf_mgr.assign_users_to_project(user.username, prj.name)
+    ctf_mgr.enroll_users_to_project(user.username, prj.name)
     click.echo(f"User `{user.username}` was assigned to the project `{prj.name}`.")
 
 
@@ -252,22 +252,22 @@ def assign_multiple_to_project(ctx: click.Context, project_name: str, filename: 
         click.echo(f"Permission denied to access: {filename}")
 
 
-@user.command(name="unassign")
+@user.command(name="cancel")
 @click.option("-u", "--username", required=True, help="Account username.")
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.pass_context
-def unassign_to_project(ctx: click.Context, username: str, project_name: str):
+def cancel_from_project(ctx: click.Context, username: str, project_name: str):
     """Remove user from the project."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    ctf_mgr.user_config_mgr.unassign_user_from_project(username, project_name)
+    ctf_mgr.user_config_mgr.cancel_user_enrollment(username, project_name)
 
 
-@user.command(name="unassign-multiple")
+@user.command(name="cancel-multiple")
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.argument("filename")
 @click.pass_context
-def unassign_multiple_to_project(ctx: click.Context, project_name: str, filename: str):
-    """Unassign users to the project."""
+def cancel_multiple_enrollment(ctx: click.Context, project_name: str, filename: str):
+    """Remove multiple users from the project."""
 
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     try:
@@ -275,7 +275,7 @@ def unassign_multiple_to_project(ctx: click.Context, project_name: str, filename
         with open(filename, "r") as f:
             usernames = [line for line in f]
 
-        users = ctf_mgr.user_config_mgr.unassign_multiple_users_from_project(
+        users = ctf_mgr.user_config_mgr.cancel_multiple_enrollments(
             usernames, project_name
         )
         click.echo(users)

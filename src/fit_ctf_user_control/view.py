@@ -24,9 +24,19 @@ IP_ADDRESS = "10.10.10.10"
 
 class View:
     def __init__(self, act: Actions):
+        """Constructor method.
+
+        :param act: Initialized `Actions` object.
+        :type act: Actions
+        """
         self._actions = act
 
     def _render_start_user_instance(self, project: Project):
+        """Render `start user instance` window.
+
+        :param project: Project object.
+        :type project: Project
+        """
         def stop_instance():
             self._actions.stop_user_instance(project.name)
             self._win_mgr.remove(_win)
@@ -57,6 +67,7 @@ class View:
         self._win_mgr.add(_win)
 
     def _render_select_project(self):
+        """Render `Select project` window."""
         def start_user_instance(project: Project):
             self._render_start_user_instance(project)
             self._win_mgr.remove(_win)
@@ -78,7 +89,7 @@ class View:
         self._win_mgr.add(_win)
 
     def _render_update_password(self):
-        """Update user's password."""
+        """Render `Update user password` window."""
 
         def _submit_password():
             new_pass = new_pass_field._text
@@ -115,7 +126,7 @@ class View:
         self._win_mgr.add(_win)
 
     def _render_generate_new_password(self):
-        """Update user's password."""
+        """Render `Generate new password` window."""
 
         def _gen_pass():
             text = self._actions.generate_password()
@@ -149,20 +160,8 @@ class View:
         _win.is_noresize = True
         self._win_mgr.add(_win)
 
-    def _render_download_private_key(self):
-        _win = (
-            Window(
-                "Download private key", ["Close", lambda *_: self._win_mgr.remove(_win)]
-            )
-            .center()
-            .set_title("Download private key")
-        )
-        _win.is_modal = True
-        _win.is_static = True
-        _win.is_noresize = True
-        self._win_mgr.add(_win)
-
     def _render_upload_public_key(self):
+        """Render `Upload public key` help window."""
         # TODO: create a how-to window with
         _win = (
             Window(
@@ -177,7 +176,7 @@ class View:
         self._win_mgr.add(_win)
 
     def _render_login(self):
-        """Render a login window."""
+        """Render `Login` window."""
 
         def _submit_login():
             """Submit a login attempt and update the window accordingly."""
@@ -225,6 +224,7 @@ class View:
         self._win_mgr.add(_win)
 
     def _render_menu(self):
+        """Render `Main menu` window."""
         window = (
             Window(
                 Label("Basic operations"),
@@ -248,11 +248,6 @@ class View:
                 Label("How to login with SSH key"),
                 Container(
                     Button(
-                        "Download private key",
-                        lambda *_: self._render_download_private_key(),
-                        parent_align=HorizontalAlignment.LEFT,
-                    ),
-                    Button(
                         "Upload public key",
                         lambda *_: self._render_upload_public_key(),
                         parent_align=HorizontalAlignment.LEFT,
@@ -272,6 +267,7 @@ class View:
         self._win_mgr.add(window)
 
     def render_view(self):
+        """Initialize window manager and render all windows."""
         with WindowManager() as mgr:
             self._win_mgr = mgr
             self._render_login()

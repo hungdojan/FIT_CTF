@@ -3,7 +3,19 @@ from pytermgui import InputField, keys
 
 
 class PasswordField(InputField):
+    """A field for hiding/showing password string."""
     def __init__(self, value: str = "", prompt: str = "", hide: bool = True, **kwargs):
+        """Constructor method.
+
+        :param value: Initial value in the field. Defaults to \"\"
+        :type value: str, optional
+        :param prompt: A label that is displayed before the field element.
+            Defaults to \"\".
+        :type prompt: str, optional
+        :param hide: When `True` the password content is hidden behind `*` symbol.
+            Defaults to `True`.
+        :type hide: bool, optional
+        """
         super().__init__(value, prompt=prompt, multiline=False, tablength=0, **kwargs)
         self._hide = hide
         self._text = ""
@@ -21,6 +33,11 @@ class PasswordField(InputField):
         self._hide = new_val
 
     def toggle_show(self, value: bool):
+        """Switch between hide and show status.
+
+        :param value: New status value.
+        :type value: bool
+        """
         self.hide = not value
         if self.hide:
             self.delete_back(len(self.value))
@@ -32,11 +49,10 @@ class PasswordField(InputField):
     def handle_key(self, key: str) -> bool:
         """Rewrite a key handler function to hide text.
 
-        Args:
-            key (str): Input key.
-
-        Returns:
-            bool: Whether something happened (internal state has changed successfully).
+        :param key: Input key.
+        :type key: str
+        :return: Whether something happened (internal state has changed successfully).
+        :rtype: bool
         """
         if self.execute_binding(key, ignore_any=True):
             return True

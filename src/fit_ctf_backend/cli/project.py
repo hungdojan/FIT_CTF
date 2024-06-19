@@ -8,6 +8,7 @@ from tabulate import tabulate
 
 import fit_ctf_backend.cli as _cli
 from fit_ctf_backend.ctf_manager import CTFManager
+from fit_ctf_backend.exceptions import CTFException
 from fit_ctf_db_models.project import ProjectManager
 
 ##########################
@@ -99,19 +100,25 @@ def create_project(
     description: str,
     compose_file: str,
 ):
-    """Create and initialize a new project.\f"""
+    """Create and initialize a new project.
+
+    This command generate a basic project from the template and stores
+    it in the `dest_dir` directory. Make sure that `dest_dir` exists.\f"""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    prj = ctf_mgr.init_project(
-        name,
-        dest_dir,
-        max_nof_users,
-        starting_port_bind,
-        volume_mount_dirname,
-        dir_name,
-        description,
-        compose_file,
-    )
-    click.echo(prj)
+    try:
+        prj = ctf_mgr.init_project(
+            name,
+            dest_dir,
+            max_nof_users,
+            starting_port_bind,
+            volume_mount_dirname,
+            dir_name,
+            description,
+            compose_file,
+        )
+        click.echo(f"Project `{prj.name}` was successfully generated.")
+    except CTFException as e:
+        click.echo(e)
 
 
 @project.command(name="ls")
@@ -171,7 +178,7 @@ def get_config_path(ctx: click.Context, project_name: str):
 @click.argument("project_name")
 @click.pass_context
 def active_users(ctx: click.Context, project_name: str):
-    """Get list of active users that are assigned to the project.
+    """Get list of active users that are enrolled to the project.
 
     PROJECT_NAME    Project's name.\f
     """

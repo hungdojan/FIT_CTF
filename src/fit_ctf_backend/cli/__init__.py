@@ -2,10 +2,6 @@ from __future__ import annotations
 import os
 import sys
 
-from .user import user
-from .project import project
-from .other import testing
-
 
 def _get_db_info() -> tuple[str, str]:
     db_host = os.getenv("DB_HOST")

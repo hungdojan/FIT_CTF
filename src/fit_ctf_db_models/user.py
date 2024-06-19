@@ -17,12 +17,12 @@ from pymongo.database import Database
 
 import fit_ctf_db_models.project as _project
 import fit_ctf_db_models.user_config as _user_config
-from fit_ctf_backend import (
-    DEFAULT_PASSWORD_LENGTH,
+from fit_ctf_backend.constants import DEFAULT_PASSWORD_LENGTH
+from fit_ctf_backend.exceptions import (
     DirNotExistsException,
+    UserExistsException,
     UserNotExistsException,
 )
-from fit_ctf_backend.exceptions import UserExistsException
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_templates import TEMPLATE_FILES, get_template
 
@@ -31,17 +31,34 @@ log.disabled = False
 
 
 class UserRole(str, Enum):
+    """Enumeration of user roles."""
+
     USER = "user"
     ADMIN = "admin"
 
 
 @dataclass(init=False)
 class User(Base):
+    """A class that represents a user document.
+
+    :param username: A string used to identify a user chosen by the user.
+    :type username: str
+    :param password: A hashed password used for user authentication.
+    :type password: str
+    :param role: User role defines account's capabilities.
+    :type role: UserRole
+    :param shadow_path: A path to the user shadow file.
+    :type shadow_path: str
+    :param shadow_hash: A hash string that is passed to the shadow file.
+    :type shadow_hash: str
+    :param email: User email.
+    :type email: str
+    """
+
     username: str
     password: str
     role: UserRole
     shadow_path: str
-    active: bool = field(default=True)
     shadow_hash: str = field(default="")
     email: str = field(default="")
 
@@ -58,11 +75,23 @@ class User(Base):
 
 
 class UserManager(BaseManager[User]):
+    """A manager class that handles operations with `User` objects."""
+
     def __init__(self, db: Database):
+        """Constructor method.
+
+        :param db: A MongoDB database object.
+        :type db: Database
+        """
         super().__init__(db, db["user"])
 
     @property
-    def _uc_mgr(self):
+    def _uc_mgr(self) -> _user_config.UserConfigManager:
+        """Returns a user config manager.
+
+        :return: A user config manager initialized in UserManager.
+        :rtype: _user_config.UserConfigManager
+        """
         return _user_config.UserConfigManager(self._db)
 
     def get_doc_by_id(self, _id: ObjectId) -> User | None:
@@ -86,6 +115,14 @@ class UserManager(BaseManager[User]):
         return doc
 
     def get_user(self, username: str) -> User:
+        """Retrieve a user from the database.
+
+        :param username: User username.
+        :type username: str
+        :raises UserNotExistsException: User with the given username was not found.
+        :return: A found user object.
+        :rtype: User
+        """
         user = self.get_doc_by_filter(username=username, active=True)
         if not user:
             raise UserNotExistsException(f"User `{username}` does not exists.")
@@ -95,11 +132,10 @@ class UserManager(BaseManager[User]):
     def generate_password(len: int) -> str:
         """Generate a random password.
 
-        Params:
-            len (int): Number of characters.
-
-        Return:
-            str: Generated password.
+        :param len: The length of the final password.
+        :type len: int
+        :return: Generated password.
+        :rtype: str
         """
         alphabet = string.ascii_letters + string.digits
         password = "".join(secrets.choice(alphabet) for _ in range(len))
@@ -112,26 +148,55 @@ class UserManager(BaseManager[User]):
         Strong password is at least 8 characters long, has at least one upper,
         lower character and a digit.
 
-        Params:
-            password (str): Password to check.
-
-        Return:
-            bool: `True` if password met all the criteria.
+        :param password: Password to validate.
+        :type passowrd: str
+        :return: `True` if password meet all the criteria.
+        :rtype: bool
         """
         return re.search(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$", password) is not None
 
     @staticmethod
     def validate_username_format(username: str) -> bool:
+        """Validate the username format.
+
+        The username must not contain any special characters and has to be at least
+        4 characters long.
+
+        :param username: A username to validate.
+        :type username: str
+        :return: `True` if username meet all the criteria.
+        :rtype: bool
+        """
         return re.search(r"^[a-zA-Z0-9]{4,}$", username) is not None
 
     @staticmethod
     def get_password_hash(password: str) -> str:
-        """Calculates SHA256 hash of the given password."""
+        """Calculates SHA256 hash of the given password.
+
+        :param password: Base string from which the hash value is calculated.
+        :type password: str
+        :return: Generated hash digest.
+        :rtype: str
+        """
         hash_obj = hashlib.sha256(password.encode("utf-8"))
         return hash_obj.hexdigest()
 
     @staticmethod
     def _generate_shadow(username: str, password: str, shadow_path: str) -> str:
+        """Generate a shadow hash.
+
+        The function both calculates shadow hash and generated the shadow file.
+
+        :param username: User username.
+        :type username: str
+        :param password: User password (NOT its hash digest).
+        :type password: str
+        :param shadow_path: Path to the destination file where the shadow file will be
+            written.
+        :type shadow_path: str
+        :return: Calculated shadow hash.
+        :rtype: str
+        """
         crypt_hash = sha512_crypt.using(salt=username).hash(password)
         template = get_template(TEMPLATE_FILES["shadow"])
         with open(f"{shadow_path}", "w") as f:
@@ -140,9 +205,9 @@ class UserManager(BaseManager[User]):
 
     def validate_user_login(self, username: str, password: str) -> bool:
         """Validate user credentials."""
-        user = self.get_doc_by_filter(username=username)
-        # user not found
-        if not user:
+        try:
+            user = self.get_user(username)
+        except UserNotExistsException:
             return False
         return user.password == self.get_password_hash(password)
 
@@ -151,15 +216,13 @@ class UserManager(BaseManager[User]):
 
         Update password hash in the database and user's shadow file content.
 
-        Params:
-            username (str): User's username.
-            password (str): User's password.
-
-        Raises:
-            UserNotExistsException: Given user could not be found in the database.
-
-        Return:
-            User: Updated `User` object.
+        :param username: User username.
+        :type username: str
+        :param password: User password.
+        :type password: str
+        :raises UserNotExistsException: Given user could not be found in the database.
+        :return: Updated `User` object.
+        :rtype: User
         """
         user = self.get_user(username)
 
@@ -182,18 +245,18 @@ class UserManager(BaseManager[User]):
         If user already exists function will return an instance of the old user
         account (searches by username).
 
-        Params:
-            username (str): User's username.
-            password (str): User's password.
-            shadow_dir (str): Destination directory where a shadow file will be generated.
-            email (str): User's email.
-
-        Raises:
-            DirNotExistsException: `shadow_dir` does not exists.
-            UserExistsException: A user with given `username` already exists.
-
-        Return:
-            User: Newly created user object.
+        :param username: User's username.
+        :type username: str
+        :param password: User's password.
+        :type password: str
+        :param shadow_dir: Destination directory where a shadow file will be generated.
+        :type shadow_dir: str
+        :param email: User's email.
+        :type email: str
+        :raises DirNotExistsException: `shadow_dir` does not exists.
+        :raises UserExistsException: A user with given `username` already exists.
+        :return: Newly created user object.
+        :rtype: User
         """
         user = self.get_doc_by_filter(username=username, active=True)
         if user:
@@ -235,13 +298,12 @@ class UserManager(BaseManager[User]):
 
         Ignores usernames that already has an account.
 
-        Params:
-            lof_username (list[str]): List of usernames.
-            shadow_dir (str): Path to a directory with shadow files.
-
-        Return:
-            dict[str, str]: Dictionary of usernames and passwords
-                            in raw format (not a hash).
+        :param lof_username: List of usernames.
+        :type lof_username: list[str]
+        :param shadow_dir: Path to a directory with shadow files.
+        :type shadow_dir: str
+        :return: Dictionary of usernames and passwords in raw format (not a hash).
+        :rtype: dict[str, str]
         """
         # eliminate duplicates
         existing_users = [
@@ -270,7 +332,14 @@ class UserManager(BaseManager[User]):
         return users
 
     def get_active_projects_for_user(self, username: str) -> list[_project.Project]:
-        """Return list of projects that a user is assigned to."""
+        """Return list of projects that a user has enrolled to.
+
+        :param username: User username.
+        :type username: str
+        :raises UserNotExistsException: Given user could not be found in the database.
+        :return: A list of enrolled projects for the given user.
+        :rtype: list[_project.Project]
+        """
         user = self.get_user(username)
 
         uc_coll = _user_config.UserConfigManager(self._db).collection
@@ -299,7 +368,15 @@ class UserManager(BaseManager[User]):
         return [_project.Project(**i["project"]) for i in uc_coll.aggregate(pipeline)]
 
     def get_active_projects_for_user_raw(self, username: str) -> list[dict[str, Any]]:
-        """Return list of projects that a user is assigned to."""
+        """Return list of projects that a user has enrolled to.
+
+        The output of the function is in raw format
+        :param username: User username.
+        :type username: str
+        :raises UserNotExistsException: Given user could not be found in the database.
+        :return: A list of enrolled projects for the given user.
+        :rtype: list[dict[str, Any]]
+        """
         user = self.get_user(username)
 
         uc_coll = _user_config.UserConfigManager(self._db).collection
@@ -350,11 +427,9 @@ class UserManager(BaseManager[User]):
     def delete_a_user(self, username: str):
         """Delete the given user.
 
-        Params:
-            username: Account's username.
-
-        Raises:
-            UserNotExistsException: Given user could not be found in the database.
+        :param username: Account's username.
+        :type username: str
+        :raises UserNotExistsException: Given user could not be found in the database.
         """
         user = self.get_user(username)
 
@@ -363,7 +438,7 @@ class UserManager(BaseManager[User]):
         for project in lof_projects:
             self._uc_mgr.stop_user_instance(user, project)
 
-        self._uc_mgr.unassign_user_from_all_projects(user)
+        self._uc_mgr.cancel_user_enrollments_from_all_projects(user)
 
         # remove shadow file
         Path(user.shadow_path).unlink()
@@ -374,11 +449,8 @@ class UserManager(BaseManager[User]):
     def delete_users(self, lof_usernames: list[str]):
         """Deletes users from the list.
 
-        Params:
-            lof_usernames (list[str]): List of usernames to delete.
-
-        Return:
-            int: Number of deleted users.
+        :param lof_usernames: List of usernames to delete.
+        :type lof_usernames: list[str]
         """
 
         users = self.get_docs(username={"$in": lof_usernames}, active=True)
@@ -390,7 +462,7 @@ class UserManager(BaseManager[User]):
             for project in projects:
                 self._uc_mgr.stop_user_instance(user, project)
 
-            self._uc_mgr.unassign_user_from_all_projects(user)
+            self._uc_mgr.cancel_user_enrollments_from_all_projects(user)
 
             # remove shadow file
             Path(user.shadow_path).unlink()

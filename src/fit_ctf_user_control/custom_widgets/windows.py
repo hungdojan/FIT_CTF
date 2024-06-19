@@ -1,6 +1,7 @@
 from pytermgui import Button, Window, WindowManager
 
 class LoadingWindow(Window):
+    """A loading window."""
 
     def __init__(self, mgr: WindowManager):
         super().__init__(
@@ -18,6 +19,7 @@ class LoadingWindow(Window):
 
 
 class PopUpWindow(Window):
+    """A popup window."""
 
     def __init__(self, message: str, mgr: WindowManager, title: str="", ):
         super().__init__(
