@@ -282,7 +282,7 @@ def flush_db(ctx: click.Context):
 @click.option("-n", "--name", help="Project's name", required=True)
 @click.pass_context
 def server(ctx: click.Context, name: str):
-    """Managing project instances."""
+    """Manage project instances."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     context_dict["name"] = name
     ctx.obj = context_dict
@@ -344,10 +344,10 @@ def is_running(ctx: click.Context):
     click.echo(ctf_mgr.project_is_running(name))
 
 
-@server.command(name="update")
+@server.command(name="build")
 @click.pass_context
 def update_project(ctx: click.Context):
-    """Update project's images.
+    """Build or update project's images.
 
     Params:
         ctx (click.Context): Context of the argument manager.
@@ -421,11 +421,18 @@ def shell_admin(ctx: click.Context):
 # MODULES
 
 
-@project.group(name="project-modules")
+@project.group(name="module")
+@click.pass_context
+def module(ctx: click.Context):
+    """Manage modules."""
+    ctx.obj = ctx.parent.obj  # pyright: ignore
+
+
+@module.group(name="project")
 @click.option("-n", "--name", help="Project's name", required=True)
 @click.pass_context
 def project_modules(ctx: click.Context, name: str):
-    """Managing project server node instances."""
+    """Manage project modules."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     context_dict["name"] = name
     ctx.obj = context_dict
@@ -460,11 +467,11 @@ def remove_project_module(ctx: click.Context, name: str):
     ctf_mgr.prj_mgr.remove_project_modules(prj_name, name)
 
 
-@project.group(name="user-modules")
+@module.group(name="user")
 @click.option("-n", "--name", help="Project's name", required=True)
 @click.pass_context
 def user_modules(ctx: click.Context, name: str):
-    """Managing user login node instances."""
+    """Manage user modules."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     context_dict["name"] = name
     ctx.obj = context_dict
@@ -497,3 +504,10 @@ def remove_user_modules(ctx: click.Context, name: str):
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     prj_name = context_dict["name"]
     ctf_mgr.prj_mgr.remove_user_modules(prj_name, name)
+
+
+@module.group(name="general")
+@click.pass_context
+def general_module_ops(ctx: click.Context):
+
+    raise NotImplemented()

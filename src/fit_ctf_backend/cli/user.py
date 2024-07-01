@@ -303,7 +303,13 @@ def build(ctx: click.Context, username: str, project_name: str):
     ctf_mgr.user_config_mgr.build_user_instance(username, project_name)
 
 
-@user.command(name="add-module")
+@user.group(name="module")
+@click.pass_context
+def module(ctx: click.Context):
+    ctx.obj = ctx.parent.obj  # pyright: ignore
+
+
+@module.command(name="add")
 @click.option("-u", "--username", required=True, help="Account username.")
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.option("-mn", "--module-name", required=True, help="Module's name.")
@@ -317,8 +323,15 @@ def add_module(ctx: click.Context, username: str, project_name: str, module_name
         return
     ctf_mgr.user_config_mgr.add_module(username, project_name, Module(**module))
 
+@module.command(name="ls")
+@click.option("-u", "--username", required=True, help="Account username.")
+@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.pass_context
+def list_modules(ctx: click.Context, username: str, project_name: str):
+    raise NotImplemented()
 
-@user.command(name="remove-module")
+
+@module.command(name="remove")
 @click.option("-u", "--username", required=True, help="Account username.")
 @click.option("-pn", "--project_name", required=True, help="Project's name.")
 @click.option("-mn", "--module-name", required=True, help="Module's name.")

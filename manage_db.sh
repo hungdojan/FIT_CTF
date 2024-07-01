@@ -1,6 +1,6 @@
 #/bin/bash
 
-mkdir -p ./db/data/{mongo,redis}
+mkdir -p ./db/data/mongo
 
 if [[ ! -f ".env" ]]; then
     echo "Missing .env file"
@@ -17,14 +17,14 @@ case "$1" in
     "validate")
         cd db && podman-compose --env-file ../.env config
         ;;
-    "mongosh")
+    "shell")
         source ./.env
         podman exec -it ctf-database-mongo mongosh -u ${DB_USERNAME} -p ${DB_PASSWORD}
         ;;
     *)
         echo "Missing argument!"
         echo "Usage:"
-        echo "./manage_db.sh (start|stop|validate|mongosh)"
+        echo "./manage_db.sh (start|stop|validate|shell)"
         exit 1
         ;;
 esac
