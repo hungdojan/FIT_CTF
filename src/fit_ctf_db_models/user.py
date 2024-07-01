@@ -149,7 +149,7 @@ class UserManager(BaseManager[User]):
         lower character and a digit.
 
         :param password: Password to validate.
-        :type passowrd: str
+        :type password: str
         :return: `True` if password meet all the criteria.
         :rtype: bool
         """

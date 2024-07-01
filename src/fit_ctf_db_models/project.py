@@ -355,7 +355,7 @@ class ProjectManager(BaseManager[Project]):
             for i in uc_coll.aggregate(pipeline)
         ]
 
-    def _get_avaiable_starting_port(self) -> int:
+    def _get_available_starting_port(self) -> int:
         """A function that calculates an available starting SSH port.
 
         :return: A vacant port.
@@ -462,10 +462,10 @@ class ProjectManager(BaseManager[Project]):
             raise DirNotExistsException("A destination directory does not exists.")
 
         if starting_port_bind < 0:
-            starting_port_bind = self._get_avaiable_starting_port()
+            starting_port_bind = self._get_available_starting_port()
 
         if not dir_name:
-            dir_name = name.lower().replace(" ", "_")
+            dir_name = name.replace(" ", "_")
         # append trailing slash
         destination = Path(dest_dir) / dir_name
 

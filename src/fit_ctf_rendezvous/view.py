@@ -12,8 +12,8 @@ from pytermgui import (
 )
 
 from fit_ctf_db_models.project import Project
-from fit_ctf_user_control.actions import Actions
-from fit_ctf_user_control.custom_widgets import (
+from fit_ctf_rendezvous.actions import Actions
+from fit_ctf_rendezvous.custom_widgets import (
     ContentWidget,
     LoadingWindow,
     PasswordField,
@@ -37,6 +37,7 @@ class View:
         :param project: Project object.
         :type project: Project
         """
+
         def stop_instance():
             self._actions.stop_user_instance(project.name)
             self._win_mgr.remove(_win)
@@ -68,6 +69,7 @@ class View:
 
     def _render_select_project(self):
         """Render `Select project` window."""
+
         def start_user_instance(project: Project):
             self._render_start_user_instance(project)
             self._win_mgr.remove(_win)

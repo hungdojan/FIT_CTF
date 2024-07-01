@@ -242,7 +242,7 @@ def assign_multiple_to_project(ctx: click.Context, project_name: str, filename: 
         with open(filename, "r") as f:
             usernames = [line for line in f]
 
-        users = ctf_mgr.user_config_mgr.assign_multiple_users_to_project(
+        users = ctf_mgr.user_config_mgr.enroll_multiple_users_to_project(
             usernames, project_name
         )
         click.echo(users)

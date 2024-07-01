@@ -39,7 +39,7 @@ def podman_get_images(contains: str | list[str] | None = None) -> list[str]:
 def podman_get_networks(contains: str | list[str] | None = None) -> list[str]:
     """Get a list of container network names using `podman` command.
 
-    :param conatins: A substring search filter. Defaults to `None`.
+    :param contains: A substring search filter. Defaults to `None`.
     :type contains: str | list[str] | None
     :return: A list of found network names.
     :rtype: list[str]

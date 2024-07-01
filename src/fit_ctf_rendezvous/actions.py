@@ -115,7 +115,7 @@ class Actions:
     def change_password(self, password: str):
         """Change user password.
 
-        :param passowrd: New password.
+        :param password: New password.
         :type password: str
         """
         if not self._user:
