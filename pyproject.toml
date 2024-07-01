@@ -7,12 +7,12 @@ readme = "README.md"
 repository = "https://github.com/hungdojan/FIT_CTF"
 packages = [
     { include = "fit_ctf_backend", from = "src" },
-    { include = "fit_ctf_user_control", from = "src" },
+    { include = "fit_ctf_rendezvous", from = "src" },
     { include = "fit_ctf_db_models", from = "src" }
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 jinja2 = "^3.1.3"
 passlib = "^1.7.4"
 pymongo = "^4.6.2"
@@ -35,6 +35,9 @@ pytest-picked = "^0.5.0"
 pytest-sugar = "^1.0.0"
 
 
+[tool.poetry.group.dev.dependencies]
+sphinx = "^7.3.7"
+
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
@@ -46,4 +49,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 ctf_backend = "fit_ctf_backend.__main__:main"
-user_control = "fit_ctf_user_control.__main__:main"
+ctf_rendezvous = "fit_ctf_rendezvous.__main__:main"
