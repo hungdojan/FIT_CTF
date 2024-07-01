@@ -7,4 +7,5 @@ RUN bash /tmp/init_script.sh \
     && rm -rf /var/cache/yum \
     && rm /tmp/init_script.sh
 
-CMD "/bin/bash"
+# make this container run continuously for debugging puroposes
+ENTRYPOINT ["tail", "-f", "/dev/null"]

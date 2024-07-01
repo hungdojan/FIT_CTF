@@ -150,7 +150,7 @@ class UserManager(BaseManager[User]):
 
         :param password: Password to validate.
         :type password: str
-        :return: `True` if password meet all the criteria.
+        :return: `True` if password meets all the criteria.
         :rtype: bool
         """
         return re.search(r"^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$", password) is not None
@@ -159,15 +159,15 @@ class UserManager(BaseManager[User]):
     def validate_username_format(username: str) -> bool:
         """Validate the username format.
 
-        The username must not contain any special characters and has to be at least
-        4 characters long.
+        The username must be at least 4 characters long and can only contain lowercase
+        characters, underscore, or digits.
 
         :param username: A username to validate.
         :type username: str
-        :return: `True` if username meet all the criteria.
+        :return: `True` if username meets all the criteria.
         :rtype: bool
         """
-        return re.search(r"^[a-zA-Z0-9]{4,}$", username) is not None
+        return re.search(r"^[a-z0-9_]{4,}$", username) is not None
 
     @staticmethod
     def get_password_hash(password: str) -> str:

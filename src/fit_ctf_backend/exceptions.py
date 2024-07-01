@@ -4,6 +4,18 @@ class CTFException(Exception):
     pass
 
 
+class ProjectNamingFormatException(CTFException):
+    """Given project name does not follow the allowed format."""
+
+    pass
+
+
+class UsernameFormatException(CTFException):
+    """Given username does not follow the allowed format."""
+
+    pass
+
+
 class ProjectNotExistException(CTFException):
     """A project with the given name does not exist."""
 

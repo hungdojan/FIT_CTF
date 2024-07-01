@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -17,7 +18,11 @@ from pymongo.database import Database
 
 import fit_ctf_db_models.user as _user
 import fit_ctf_db_models.user_config as _user_config
-from fit_ctf_backend import DirNotEmptyException, ProjectNotExistException
+from fit_ctf_backend import (
+    DirNotEmptyException,
+    ProjectNotExistException,
+    ProjectNamingFormatException,
+)
 from fit_ctf_backend.constants import (
     DEFAULT_MODULE_BUILD_DIRNAME,
     DEFAULT_PROJECT_MODULE_PREFIX,
@@ -402,6 +407,19 @@ class ProjectManager(BaseManager[Project]):
         ]
         return [i for i in self._coll.aggregate(pipeline)]
 
+    @staticmethod
+    def validate_project_name(project_name: str) -> bool:
+        """Validate the project name format.
+
+        The username can only contain lowercase characters, underscore, or digits.
+
+        :param username: A username to validate.
+        :type username: str
+        :return: `True` if given project name meets all the criteria.
+        :rtype: bool
+        """
+        return re.search(r"^[a-z0-9_]*$", project_name) is not None
+
     def init_project(
         self,
         name: str,
@@ -424,7 +442,8 @@ class ProjectManager(BaseManager[Project]):
                       -- <home_volumes_for_each_user>
         Once the project is generated, the compose file is compiled.
 
-        :param name: Project's name.
+        :param name: Project's name. The support format for the name is `^[a-z0-9_]*$`.
+            Uppercase or special characters are not allowed.
         :type name: str
         :param dest_dir: A destination directory where project data will be stored.
         :type name: str
@@ -447,6 +466,8 @@ class ProjectManager(BaseManager[Project]):
             "server_compose.yaml".
         :type compose_file: str, optional
 
+        :raises ProjectNamingFormatException: Project name does not follow the naming
+            convention.
         :raises ProjectExistsException: Project with the given name already exist.
         :raises DirNotExistsException: A path to `dest_dir` does not exist.
         :raises DirNotExistsException: A `dest_dir` directory is not empty.
@@ -454,6 +475,10 @@ class ProjectManager(BaseManager[Project]):
         :return: A created project object.
         :rtype: class `Project`
         """
+        if not self.validate_project_name(name):
+            raise ProjectNamingFormatException(
+                f"Given name `{name}` is not allowed. Only lowercase characters, underscore and numbers are allowed. "
+            )
         # check if project already exists
         prj = self.get_doc_by_filter(name=name, active=True)
         if prj:
@@ -465,7 +490,7 @@ class ProjectManager(BaseManager[Project]):
             starting_port_bind = self._get_available_starting_port()
 
         if not dir_name:
-            dir_name = name.replace(" ", "_")
+            dir_name = name
         # append trailing slash
         destination = Path(dest_dir) / dir_name
 

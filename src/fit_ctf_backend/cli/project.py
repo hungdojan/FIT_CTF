@@ -425,7 +425,7 @@ def shell_admin(ctx: click.Context):
 @click.option("-n", "--name", help="Project's name", required=True)
 @click.pass_context
 def project_modules(ctx: click.Context, name: str):
-    """Managing project instances."""
+    """Managing project server node instances."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     context_dict["name"] = name
     ctx.obj = context_dict
@@ -464,7 +464,7 @@ def remove_project_module(ctx: click.Context, name: str):
 @click.option("-n", "--name", help="Project's name", required=True)
 @click.pass_context
 def user_modules(ctx: click.Context, name: str):
-    """Managing project instances."""
+    """Managing user login node instances."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     context_dict["name"] = name
     ctx.obj = context_dict
