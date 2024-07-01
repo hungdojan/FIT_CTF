@@ -9,12 +9,6 @@ services:
       dockerfile: Containerfile
     networks:
       - {{ project.name }}_main_net
-  http:
-    build:
-      context: ./http
-      dockerfile: Containerfile
-    networks:
-      - {{ project.name }}_main_net
   {%- for _, module in project.project_modules.items() %}
 {% include module.root_dir ~ '/' ~ module.compose_template_path %}
   {%- endfor %}
