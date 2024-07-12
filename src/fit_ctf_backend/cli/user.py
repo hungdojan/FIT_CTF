@@ -175,7 +175,7 @@ def delete_user(ctx: click.Context, usernames: list[str]):
 
 @user.command(name="start")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def start_user(ctx: click.Context, username: str, project_name: str):
     """Start user instance."""
@@ -185,7 +185,7 @@ def start_user(ctx: click.Context, username: str, project_name: str):
 
 @user.command(name="stop")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def stop_user(ctx: click.Context, username: str, project_name: str):
     """Stop user instance."""
@@ -195,7 +195,7 @@ def stop_user(ctx: click.Context, username: str, project_name: str):
 
 @user.command(name="restart")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def restart_user(ctx: click.Context, username: str, project_name: str):
     """Restart user instance."""
@@ -205,7 +205,7 @@ def restart_user(ctx: click.Context, username: str, project_name: str):
 
 @user.command(name="is-running")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def user_is_running(ctx: click.Context, username: str, project_name: str):
     """Check if user instance is running."""
@@ -215,7 +215,7 @@ def user_is_running(ctx: click.Context, username: str, project_name: str):
 
 @user.command(name="enroll")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def enroll_to_project(ctx: click.Context, username: str, project_name: str):
     """enroll user to the project."""
@@ -230,7 +230,7 @@ def enroll_to_project(ctx: click.Context, username: str, project_name: str):
 
 
 @user.command(name="assign-multiple")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.argument("filename")
 @click.pass_context
 def assign_multiple_to_project(ctx: click.Context, project_name: str, filename: str):
@@ -254,7 +254,7 @@ def assign_multiple_to_project(ctx: click.Context, project_name: str, filename: 
 
 @user.command(name="cancel")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def cancel_from_project(ctx: click.Context, username: str, project_name: str):
     """Remove user from the project."""
@@ -263,7 +263,7 @@ def cancel_from_project(ctx: click.Context, username: str, project_name: str):
 
 
 @user.command(name="cancel-multiple")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.argument("filename")
 @click.pass_context
 def cancel_multiple_enrollment(ctx: click.Context, project_name: str, filename: str):
@@ -287,7 +287,7 @@ def cancel_multiple_enrollment(ctx: click.Context, project_name: str, filename: 
 
 @user.command(name="compile")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def compile(ctx: click.Context, username: str, project_name: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
@@ -296,7 +296,7 @@ def compile(ctx: click.Context, username: str, project_name: str):
 
 @user.command(name="build")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def build(ctx: click.Context, username: str, project_name: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
@@ -311,7 +311,7 @@ def module(ctx: click.Context):
 
 @module.command(name="add")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.option("-mn", "--module-name", required=True, help="Module's name.")
 @click.pass_context
 def add_module(ctx: click.Context, username: str, project_name: str, module_name: str):
@@ -323,9 +323,10 @@ def add_module(ctx: click.Context, username: str, project_name: str, module_name
         return
     ctf_mgr.user_config_mgr.add_module(username, project_name, Module(**module))
 
+
 @module.command(name="ls")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def list_modules(ctx: click.Context, username: str, project_name: str):
     raise NotImplemented()
@@ -333,7 +334,7 @@ def list_modules(ctx: click.Context, username: str, project_name: str):
 
 @module.command(name="remove")
 @click.option("-u", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project_name", required=True, help="Project's name.")
+@click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.option("-mn", "--module-name", required=True, help="Module's name.")
 @click.pass_context
 def remove_module(

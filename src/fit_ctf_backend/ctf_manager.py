@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 
-from pymongo import MongoClient
+import pymongo
 from pymongo.database import Database
 
 from fit_ctf_backend.exceptions import ProjectNotExistException
@@ -19,7 +19,7 @@ class CTFManager:
         :param db_name: Name of the database that contain CTF data.
         :type db_name: str
         """
-        self._client = MongoClient(host)
+        self._client = pymongo.MongoClient(host)
         self._ctf_db: Database = self._client[db_name]
         self._managers = {
             "project": ProjectManager(self._ctf_db),

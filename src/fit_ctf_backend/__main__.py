@@ -9,6 +9,7 @@ load_dotenv()
 
 @click.group("cli")
 def cli():
+    """A tool for CTF competition management."""
     pass
 
 

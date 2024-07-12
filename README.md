@@ -58,7 +58,7 @@ poetry run ctf_backend user create \
 # enroll user to the project
 poetry run ctf_backend user enroll \
     --username "user1" \
-    --project_name "DemoProject"
+    --project-name "demo_project"
 
 # compile and start project (server nodes)
 poetry run ctf_backend project server \
@@ -113,7 +113,7 @@ Commands:
 ```
 
 ## Modules
-By default, the server consists of only a single `admin` server node which is an [*Universal Base Image*](https://catalog.redhat.com/software/containers/ubi8/ubi/5c359854d70cc534b3a3784e?architecture=amd64&image=65cad35e0dac818fbda7a79c) provided by Red Hat. The version of this base image can be updated in the future version of the tool.
+By default, the server consists of only a single `admin` server node which is an [*Universal Base Image*](https://catalog.redhat.com/software/containers/ubi8/ubi/5c359854d70cc534b3a3784e?architecture=amd64&image=65cad35e0dac818fbda7a79c) provided by Red Hat. The version of the base image will be updated in the future version of this tool.
 
 The tool supports creating and deploying new server nodes and login node instances. Run following commands to create a server or login node, resp.:
 ```sh
@@ -148,7 +148,7 @@ More information can be found on the wiki page.
 ## Deployment
 It is expected that the CTF architecture will run inside a VM. The whole architecture can be seen in the following figure:
 
-<img alt="Architecture Design" src="./docs/architecture_schema.png" width="75%"
+<img alt="Architecture Design" src="./docs/resources/architecture_schema.png" width="75%"
 style="display: block; margin: auto"/>
 
 There are two things to set during the deployment:
@@ -176,6 +176,10 @@ cp ./config/setup/99-ctf-rule.conf 99-ctf-rule.conf
 # edit the new config file
 
 sudo cp 99-ctf-rule.conf /etc/ssh/sshd_config.d/
+# as written in /etc/ssh/sshd_config, if your system uses SELinux, you need to
+# tell the it to also support a different port
+semanage port -a -t ssh_port_t -p tcp 22
+semanage port -a -t ssh_port_t -p tcp 5555
 # validate sshd configurations
 sudo sshd -t
 # restart sshd and apply changes

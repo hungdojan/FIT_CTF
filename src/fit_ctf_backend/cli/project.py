@@ -19,7 +19,7 @@ from fit_ctf_db_models.project import ProjectManager
 @click.group(name="project")
 @click.pass_context
 def project(ctx: click.Context):
-    """A command that manages projects."""
+    """A command for project management."""
     db_host, db_name = _cli._get_db_info()
     ctf_mgr = CTFManager(db_host, db_name)
 
@@ -131,10 +131,21 @@ def create_project(
 )
 @click.pass_context
 def list_projects(ctx: click.Context, _all: bool):
-    """Display existing projects."""
+    """Display existing projects.
+
+    This command by default displays only active projects. Use `-a` flag to
+    display inactive projects.
+
+    Displays following states:
+        - active state
+        - project name
+        - max number of users
+        - number of active users enrolled to the project\f
+    """
     prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
     lof_prj = prj_mgr.get_projects(ignore_inactive=_all)
     if not lof_prj:
+        click.echo("No project found!")
         return
     headers = list(lof_prj[0].keys())
     values = [list(i.values()) for i in lof_prj]
@@ -145,12 +156,13 @@ def list_projects(ctx: click.Context, _all: bool):
 @click.argument("project_name")
 @click.pass_context
 def get_project_info(ctx: click.Context, project_name: str):
-    """Get project info.
+    """Display project PROJECT_NAME's information.
 
-    PROJECT_NAME    Project's name.\f
+    Dumps all information about a selected project.\f
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     prj = ctf_mgr.get_project_info(project_name)
+    # TODO: format
     if prj:
         pprint.pprint(asdict(prj))
     else:
@@ -161,10 +173,7 @@ def get_project_info(ctx: click.Context, project_name: str):
 @click.argument("project_name")
 @click.pass_context
 def get_config_path(ctx: click.Context, project_name: str):
-    """Return directory containing project configuration files.
-
-    PROJECT_NAME    Project's name.\f
-    """
+    """Return path to PROJECT_NAME's configuration directory."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     prj = ctf_mgr.get_project_info(project_name)
     if not prj:
@@ -178,13 +187,22 @@ def get_config_path(ctx: click.Context, project_name: str):
 @click.argument("project_name")
 @click.pass_context
 def active_users(ctx: click.Context, project_name: str):
-    """Get list of active users that are enrolled to the project.
+    """Get list of active users that are enrolled to the PROJECT_NAME.
 
-    PROJECT_NAME    Project's name.\f
+    Displays following states:
+        - user ID
+        - active state
+        - account username
+        - account role
+        - path to the shadow file
+        - email
+        - path to home mounting directory/volume
+        - forwarded port (visible from the outside)\f
     """
     prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
     lof_active_users = prj_mgr.get_active_users_for_project_raw(project_name)
     if not lof_active_users:
+        click.echo("No active users found.")
         return
     header = list(lof_active_users[0].keys())
     values = [list(i.values()) for i in lof_active_users]
@@ -202,7 +220,9 @@ def active_users(ctx: click.Context, project_name: str):
 @click.argument("project_name")
 @click.pass_context
 def firewall_rules(ctx: click.Context, project_name: str, ip_addr: str, output: str):
-    """Generate port forwarding rules for `firewalld`.\f
+    """Generate a BASH script with port forwarding rules for PROJECT_NAME.
+
+    The command used in the script are written for `firewalld` application.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
@@ -215,10 +235,13 @@ def firewall_rules(ctx: click.Context, project_name: str, ip_addr: str, output: 
 @project.command(name="reserved-ports")
 @click.pass_context
 def used_ports(ctx: click.Context):
-    """Returns list of reserved ports."""
+    """Returns list of reserved ports.
+
+    Displays a list of projects and their reserved port range."""
     prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
     lof_prj = prj_mgr.get_reserved_ports()
     if not lof_prj:
+        click.echo("No project found!")
         return
     header = list(lof_prj[0].keys())
     values = [list(i.values()) for i in lof_prj]
@@ -229,13 +252,16 @@ def used_ports(ctx: click.Context):
 @click.argument("project_name")
 @click.pass_context
 def resources_usage(ctx: click.Context, project_name: str):
-    """Display project resources.\f
+    """Display PROJECT_NAME current resource usage.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
     """
     prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
-    prj_mgr.print_resource_usage(project_name)
+    try:
+        prj_mgr.print_resource_usage(project_name)
+    except CTFException as e:
+        click.echo(e)
 
 
 @project.command(name="export")
@@ -245,18 +271,26 @@ def resources_usage(ctx: click.Context, project_name: str):
 @click.argument("project_name")
 @click.pass_context
 def export_project(ctx: click.Context, project_name: str, output: str):
-    """Export project configurations."""
+    """Export PROJECT_NAME configurations.
+
+    Generates a ZIP file containing all the project configuration files, including
+    mounts and modules.
+    """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    ctf_mgr.prj_mgr.export_project(project_name, output)
+    try:
+        ctf_mgr.prj_mgr.export_project(project_name, output)
+    except CTFException as e:
+        click.echo(e)
 
 
 @project.command("delete")
 @click.argument("project_name")
 @click.pass_context
 def delete_project(ctx: click.Context, project_name: str):
-    """Delete existing project.
+    """Delete an existing project PROJECT_NAME.
 
-    PROJECT_NAME    Project's name.\f
+    Deletes all project configuration files and sets project activity
+    state to `inactive`.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
@@ -282,7 +316,11 @@ def flush_db(ctx: click.Context):
 @click.option("-n", "--name", help="Project's name", required=True)
 @click.pass_context
 def server(ctx: click.Context, name: str):
-    """Manage project instances."""
+    """Manage project instances.
+
+    The server command manages server nodes. User can start and stop nodes,
+    check if it's running or build a new image and compile compose files.
+    """
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     context_dict["name"] = name
     ctx.obj = context_dict
@@ -291,7 +329,7 @@ def server(ctx: click.Context, name: str):
 @server.command(name="start")
 @click.pass_context
 def start_project(ctx: click.Context):
-    """Turn on the project server.\f
+    """Start server nodes.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
@@ -299,13 +337,13 @@ def start_project(ctx: click.Context):
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
-    ctf_mgr.start_project(name)
+    return ctf_mgr.start_project(name)
 
 
 @server.command(name="stop")
 @click.pass_context
 def stop_project(ctx: click.Context):
-    """Turn off the project server.\f
+    """Stop server nodes.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
@@ -319,7 +357,9 @@ def stop_project(ctx: click.Context):
 @server.command(name="status")
 @click.pass_context
 def status_project(ctx: click.Context):
-    """Turn off the project server.\f
+    """Check server nodes status.
+
+    Print output of `podman ps` command.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
@@ -346,8 +386,11 @@ def is_running(ctx: click.Context):
 
 @server.command(name="build")
 @click.pass_context
-def update_project(ctx: click.Context):
+def build_project(ctx: click.Context):
     """Build or update project's images.
+
+    Run this command when you changed any server node image. If the image is not found
+    try recompiling the compose file first.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
@@ -365,7 +408,7 @@ def update_project(ctx: click.Context):
 @server.command(name="restart")
 @click.pass_context
 def restart_project(ctx: click.Context):
-    """Restart the project server.\f
+    """Stop login nodes and restart server nodes.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
@@ -393,7 +436,7 @@ def health_check(ctx: click.Context):
 @server.command(name="compile")
 @click.pass_context
 def compile_project(ctx: click.Context):
-    """Restart the project server.\f
+    """Recompile project compose file.\f
 
     Params:
         ctx (click.Context): Context of the argument manager.
@@ -411,6 +454,7 @@ def compile_project(ctx: click.Context):
 @server.command(name="shell_admin")
 @click.pass_context
 def shell_admin(ctx: click.Context):
+    """Shell into the admin container."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name: str = context_dict["name"]
@@ -442,6 +486,7 @@ def project_modules(ctx: click.Context, name: str):
 @click.option("-n", "--name", required=True, help="Name of the service module.")
 @click.pass_context
 def create_project_module(ctx: click.Context, name: str):
+    """Create a new module."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     prj_name = context_dict["name"]
@@ -451,6 +496,7 @@ def create_project_module(ctx: click.Context, name: str):
 @project_modules.command(name="ls")
 @click.pass_context
 def list_project_modules(ctx: click.Context):
+    """List all available modules."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
@@ -461,6 +507,7 @@ def list_project_modules(ctx: click.Context):
 @click.option("-n", "--name", required=True, help="Name of the service module.")
 @click.pass_context
 def remove_project_module(ctx: click.Context, name: str):
+    """Remove a module."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     prj_name = context_dict["name"]
@@ -481,6 +528,7 @@ def user_modules(ctx: click.Context, name: str):
 @click.option("-n", "--name", required=True, help="Name of the service module.")
 @click.pass_context
 def create_user_module(ctx: click.Context, name: str):
+    """Create a module."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     prj_name = context_dict["name"]
@@ -490,6 +538,7 @@ def create_user_module(ctx: click.Context, name: str):
 @user_modules.command(name="ls")
 @click.pass_context
 def list_user_modules(ctx: click.Context):
+    """List available modules."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
@@ -500,6 +549,7 @@ def list_user_modules(ctx: click.Context):
 @click.option("-n", "--name", required=True, help="Name of the service module.")
 @click.pass_context
 def remove_user_modules(ctx: click.Context, name: str):
+    """Remove a module."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     prj_name = context_dict["name"]
@@ -509,5 +559,5 @@ def remove_user_modules(ctx: click.Context, name: str):
 @module.group(name="general")
 @click.pass_context
 def general_module_ops(ctx: click.Context):
-
+    """A set of general module operations."""
     raise NotImplemented()

@@ -595,6 +595,7 @@ class ProjectManager(BaseManager[Project]):
         :raises ProjectNotExistException: Project was not found.
         """
         prj = self.get_project(project_name)
+        # TODO: fix mount permissions
         with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as zf:
             # this code snippet originates from: https://stackoverflow.com/a/46604244
             for dirpath, _, filenames in os.walk(prj.config_root_dir):
