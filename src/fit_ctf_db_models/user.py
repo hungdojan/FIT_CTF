@@ -13,6 +13,7 @@ from typing import Any
 
 from bson import ObjectId
 from passlib.hash import sha512_crypt
+from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 from pymongo.database import Database
 
 import fit_ctf_db_models.project as _project
@@ -77,13 +78,15 @@ class User(Base):
 class UserManager(BaseManager[User]):
     """A manager class that handles operations with `User` objects."""
 
-    def __init__(self, db: Database):
+    def __init__(self, db: Database, c_client: type[BaseContainerClient]):
         """Constructor method.
 
         :param db: A MongoDB database object.
         :type db: Database
+        :param c_client: A container client class for calling container engine API.
+        :type c_client: type[BaseContainerClient]
         """
-        super().__init__(db, db["user"])
+        super().__init__(db, db["user"], c_client)
 
     @property
     def _uc_mgr(self) -> _user_config.UserConfigManager:
@@ -92,7 +95,7 @@ class UserManager(BaseManager[User]):
         :return: A user config manager initialized in UserManager.
         :rtype: _user_config.UserConfigManager
         """
-        return _user_config.UserConfigManager(self._db)
+        return _user_config.UserConfigManager(self._db, self.c_client)
 
     def get_doc_by_id(self, _id: ObjectId) -> User | None:
         res = self._coll.find_one({"_id": _id})
@@ -342,7 +345,7 @@ class UserManager(BaseManager[User]):
         """
         user = self.get_user(username)
 
-        uc_coll = _user_config.UserConfigManager(self._db).collection
+        uc_coll = self._uc_mgr.collection
         pipeline = [
             {
                 # search only user_config for the given user
@@ -379,7 +382,7 @@ class UserManager(BaseManager[User]):
         """
         user = self.get_user(username)
 
-        uc_coll = _user_config.UserConfigManager(self._db).collection
+        uc_coll = self._uc_mgr.collection
         project_pipeline = [
             {"$match": {"active": True}},
             {

@@ -20,8 +20,8 @@ import fit_ctf_db_models.user as _user
 import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend import (
     DirNotEmptyException,
-    ProjectNotExistException,
     ProjectNamingFormatException,
+    ProjectNotExistException,
 )
 from fit_ctf_backend.constants import (
     DEFAULT_MODULE_BUILD_DIRNAME,
@@ -43,15 +43,7 @@ from fit_ctf_templates import (
     TEMPLATE_PATHS,
     get_template,
 )
-from fit_ctf_utils.podman_utils import (
-    podman_compose_down,
-    podman_compose_up,
-    podman_ps,
-    podman_rm_images,
-    podman_rm_networks,
-    podman_shell,
-    podman_stats,
-)
+from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 
 log = logging.getLogger()
 CURR_FILE = os.path.realpath(__file__)
@@ -103,7 +95,7 @@ class Project(Base):
                 setattr(self, k, v)
 
     @property
-    def _compose_filepath(self) -> Path:
+    def compose_filepath(self) -> Path:
         """Reconstruct path to compose file.
 
         :return: Path to compose file.
@@ -111,90 +103,19 @@ class Project(Base):
         """
         return Path(self.config_root_dir) / self.compose_file
 
-    def start(self) -> subprocess.CompletedProcess:
-        """Boot the project server.
-
-        Run `podman-compose up` in the sub-shell.
-
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
-        """
-        return podman_compose_up(str(self._compose_filepath))
-
-    def restart(self):
-        """Restart project server.
-
-        Run `podman-compose up` in the sub-shell.
-
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
-        """
-        self.stop()
-        self.start()
-
-    def stop(self) -> subprocess.CompletedProcess:
-        """Stop the project server.
-
-        Run `podman-compose down` in the sub-shell.
-
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
-        """
-        return podman_compose_down(str(self._compose_filepath))
-
-    def is_running(self) -> bool:
-        """Check if the project server is running.
-
-        :return: Returns `True` if the server is running; `False` otherwise.
-        :rtype: bool
-        """
-        cmd = f"podman ps -a --format=json --filter=name=^{self.name}"
-        proc = subprocess.run(cmd.split(), capture_output=True, text=True)
-        data = json.loads(proc.stdout)
-        return len(data) > 0
-
-    def build(self) -> subprocess.CompletedProcess:
-        """Rebuild project images.
-
-        Run `podman-compose down` in the sub-shell.
-
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
-        """
-
-        cmd = f"podman-compose -f {self._compose_filepath} build"
-        proc = subprocess.run(
-            cmd.split(),
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-        )
-        return proc
-
-    def compile(self):
-        """Compile a compose file."""
-        # create server_compose.yaml file
-        compose_filepath = Path(self.config_root_dir) / self.compose_file
-        with open(str(compose_filepath), "w") as f:
-            template = get_template(
-                TEMPLATE_FILES["server_compose"], self.config_root_dir
-            )
-            f.write(template.render(project=asdict(self), user={}))
-
-    def shell_admin(self):
-        """Shell user into the admin container."""
-        podman_shell(str(self._compose_filepath), "admin", "bash")
-
 
 class ProjectManager(BaseManager[Project]):
     """A manager class that handles operations with `Project` objects."""
 
-    def __init__(self, db: Database):
+    def __init__(self, db: Database, c_client: type[BaseContainerClient]):
         """Constructor method.
 
         :param db: A MongoDB database object.
         :type db: Database
+        :param c_client: A container client class for calling container engine API.
+        :type c_client: type[BaseContainerClient]
         """
-        super().__init__(db, db["project"])
+        super().__init__(db, db["project"], c_client)
 
     @property
     def _uc_mgr(self) -> _user_config.UserConfigManager:
@@ -203,7 +124,7 @@ class ProjectManager(BaseManager[Project]):
         :return: A user config manager initialized in ProjectManager.
         :rtype: _user_config.UserConfigManager
         """
-        return _user_config.UserConfigManager(self._db)
+        return _user_config.UserConfigManager(self._db, self.c_client)
 
     def get_doc_by_id(self, _id: ObjectId) -> Project | None:
         res = self._coll.find_one({"_id": _id})
@@ -522,7 +443,7 @@ class ProjectManager(BaseManager[Project]):
         )
 
         # create server_compose.yaml file
-        prj.compile()
+        self.compile_project(prj)
 
         return prj
 
@@ -561,6 +482,97 @@ class ProjectManager(BaseManager[Project]):
             f.write("firewall-cmd --zone=public --add-masquerade\n")
         os.chmod(filename, 0o755)
 
+    def start_project(self, project: Project) -> subprocess.CompletedProcess:
+        """Boot the project server.
+
+        Run `podman-compose up` in the sub-shell.
+
+        :param project: A project object.
+        :type project: Project
+        :return: A completed process object.
+        :rtype: subprocess.CompletedProcess
+        """
+        return self.c_client.compose_up(str(project.compose_filepath))
+
+    def restart_project(self, project: Project):
+        """Restart project server.
+
+        Run `podman-compose up` in the sub-shell.
+
+        :param project: A project object.
+        :type project: Project
+        :return: A completed process object.
+        :rtype: subprocess.CompletedProcess
+        """
+        self.stop_project(project)
+        self.start_project(project)
+
+    def stop_project(self, project: Project) -> subprocess.CompletedProcess:
+        """Stop the project server.
+
+        Run `podman-compose down` in the sub-shell.
+
+        :param project: A project object.
+        :type project: Project
+        :return: A completed process object.
+        :rtype: subprocess.CompletedProcess
+        """
+        return self.c_client.compose_down(str(project.compose_filepath))
+
+    def is_running(self, project: Project) -> bool:
+        """Check if the project server is running.
+
+        :param project: A project object.
+        :type project: Project
+        :return: Returns `True` if the server is running; `False` otherwise.
+        :rtype: bool
+        """
+        cmd = f"podman ps -a --format=json --filter=name=^{project.name}"
+        proc = subprocess.run(cmd.split(), capture_output=True, text=True)
+        data = json.loads(proc.stdout)
+        return len(data) > 0
+
+    def build(self, project: Project) -> subprocess.CompletedProcess:
+        """Rebuild project images.
+
+        Run `podman-compose down` in the sub-shell.
+
+        :param project: A project object.
+        :type project: Project
+        :return: A completed process object.
+        :rtype: subprocess.CompletedProcess
+        """
+
+        cmd = f"podman-compose -f {project.compose_filepath} build"
+        proc = subprocess.run(
+            cmd.split(),
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+        return proc
+
+    def compile_project(self, project: Project):
+        """Compile a compose file.
+
+        :param project: A project object.
+        :type project: Project
+        """
+        # create server_compose.yaml file
+        compose_filepath = Path(project.config_root_dir) / project.compose_file
+        with open(str(compose_filepath), "w") as f:
+            template = get_template(
+                TEMPLATE_FILES["server_compose"], project.config_root_dir
+            )
+            f.write(template.render(project=asdict(project), user={}))
+
+    def shell_admin(self, project: Project):
+        """Shell user into the admin container.
+
+        :param project: A project object.
+        :type project: Project
+        """
+        self.c_client.shell(str(project.compose_filepath), "admin", "bash")
+
     def print_resource_usage(self, project_name: str):
         """Get project resource usage using `podman` command.
 
@@ -570,7 +582,8 @@ class ProjectManager(BaseManager[Project]):
         """
         prj = self.get_project(project_name)
         # TODO: return as string
-        podman_stats(prj.name)
+        # podman_stats(prj.name)
+        self.c_client.stats(prj.name)
 
     def print_ps(self, project_name: str):
         """Get running containers of a project using `podman` command.
@@ -581,7 +594,7 @@ class ProjectManager(BaseManager[Project]):
         """
         prj = self.get_project(project_name)
         # TODO: return as string
-        podman_ps(prj.name)
+        self.c_client.ps(prj.name)
 
     def export_project(self, project_name: str, output_file: str):
         """Export project configuration files.
@@ -625,15 +638,15 @@ class ProjectManager(BaseManager[Project]):
             return
 
         # stop project if running
-        if prj.is_running():
-            prj.stop()
+        if self.is_running(prj):
+            self.stop_project(prj)
 
         # cancel all users enrollments
         self._uc_mgr.stop_all_user_instances(prj)
         self._uc_mgr.cancel_all_project_enrollments(prj)
 
-        podman_rm_images(f"{prj.name}_")
-        podman_rm_networks(f"{prj.name}_")
+        self.c_client.rm_images(f"{prj.name}_")
+        self.c_client.rm_networks(f"{prj.name}_")
 
         # remove everything from the directory
         shutil.rmtree(prj.config_root_dir)
@@ -763,7 +776,7 @@ class ProjectManager(BaseManager[Project]):
         if module_path.exists():
             shutil.rmtree(module_path)
         self.update_doc(project)
-        project.compile()
+        self.compile_project(project)
 
     def create_user_module(self, project_name: str, module_name: str):
         """Create a new user module.

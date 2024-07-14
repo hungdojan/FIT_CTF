@@ -9,6 +9,8 @@ from bson import ObjectId
 from pymongo.collection import Collection
 from pymongo.database import Database
 
+from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
+
 log = logging.getLogger()
 
 
@@ -36,16 +38,20 @@ T = TypeVar("T", bound=Base)
 
 class BaseManager(ABC, Generic[T]):
     """A base manager class that all CTF managers derive from."""
-    def __init__(self, db: Database, coll: Collection):
+
+    def __init__(self, db: Database, coll: Collection, c_client: type[BaseContainerClient]):
         """Constructor method.
 
         :param db: MongoDB database object.
         :type db: Database
         :param coll: MongoDB collection object.
         :type coll: Collection
+        :param c_client: A container client class for calling container engine API.
+        :type c_client: type[BaseContainerClient]
         """
         self._db = db
         self._coll = coll
+        self.c_client = c_client
 
     @property
     def collection(self) -> Collection:

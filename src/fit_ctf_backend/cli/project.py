@@ -27,7 +27,6 @@ def project(ctx: click.Context):
         "db_host": db_host,
         "db_name": db_name,
         "ctf_mgr": ctf_mgr,
-        "prj_mgr": ctf_mgr.prj_mgr,
     }
 
 
@@ -142,7 +141,7 @@ def list_projects(ctx: click.Context, _all: bool):
         - max number of users
         - number of active users enrolled to the project\f
     """
-    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     lof_prj = prj_mgr.get_projects(ignore_inactive=_all)
     if not lof_prj:
         click.echo("No project found!")
@@ -199,7 +198,7 @@ def active_users(ctx: click.Context, project_name: str):
         - path to home mounting directory/volume
         - forwarded port (visible from the outside)\f
     """
-    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     lof_active_users = prj_mgr.get_active_users_for_project_raw(project_name)
     if not lof_active_users:
         click.echo("No active users found.")
@@ -228,7 +227,7 @@ def firewall_rules(ctx: click.Context, project_name: str, ip_addr: str, output: 
         ctx (click.Context): Context of the argument manager.
         project_name (str): Project's name.
     """
-    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     prj_mgr.generate_port_forwarding_script(project_name, ip_addr, output)
 
 
@@ -238,7 +237,7 @@ def used_ports(ctx: click.Context):
     """Returns list of reserved ports.
 
     Displays a list of projects and their reserved port range."""
-    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     lof_prj = prj_mgr.get_reserved_ports()
     if not lof_prj:
         click.echo("No project found!")
@@ -257,7 +256,7 @@ def resources_usage(ctx: click.Context, project_name: str):
     Params:
         ctx (click.Context): Context of the argument manager.
     """
-    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     try:
         prj_mgr.print_resource_usage(project_name)
     except CTFException as e:
@@ -305,7 +304,7 @@ def delete_project(ctx: click.Context, project_name: str):
 @click.pass_context
 def flush_db(ctx: click.Context):
     """Removes all inactive projects from the database."""
-    prj_mgr: ProjectManager = ctx.parent.obj["prj_mgr"]  # pyright: ignore
+    prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     prj_mgr.remove_doc_by_filter(active=False)
 
 
@@ -402,7 +401,7 @@ def build_project(ctx: click.Context):
     if not prj:
         click.echo(f"Project `{name}` not found.")
         return
-    click.echo(prj.build())
+    click.echo(ctf_mgr.prj_mgr.build(prj))
 
 
 @server.command(name="restart")
@@ -421,7 +420,7 @@ def restart_project(ctx: click.Context):
         click.echo(f"Project `{name}` not found.")
         return
     ctf_mgr.user_config_mgr.stop_all_user_instances(prj)
-    click.echo(prj.restart())
+    click.echo(ctf_mgr.prj_mgr.restart_project(prj))
 
 
 @server.command(name="health_check")
@@ -448,7 +447,7 @@ def compile_project(ctx: click.Context):
     if not prj:
         click.echo(f"Project `{name}` not found.")
         return
-    prj.compile()
+    ctf_mgr.prj_mgr.compile_project(prj)
 
 
 @server.command(name="shell_admin")
@@ -459,7 +458,7 @@ def shell_admin(ctx: click.Context):
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name: str = context_dict["name"]
     prj = ctf_mgr.prj_mgr.get_project(name)
-    prj.shell_admin()
+    ctf_mgr.prj_mgr.shell_admin(prj)
 
 
 # MODULES

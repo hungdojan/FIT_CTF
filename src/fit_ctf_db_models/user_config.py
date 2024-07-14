@@ -25,7 +25,7 @@ from fit_ctf_backend.exceptions import (
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_db_models.compose_objects import Module
 from fit_ctf_templates import TEMPLATE_FILES, get_template
-from fit_ctf_utils.podman_utils import podman_get_networks, podman_rm_networks
+from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 
 log = logging.getLogger()
 
@@ -74,13 +74,15 @@ class UserConfig(Base):
 class UserConfigManager(BaseManager[UserConfig]):
     """A manager class that handles operations with `UserConfig` objects."""
 
-    def __init__(self, db: Database):
+    def __init__(self, db: Database, c_client: type[BaseContainerClient]):
         """Constructor method.
 
         :param db: A MongoDB database object.
         :type db: Database
+        :param c_client: A container client class for calling container engine API.
+        :type c_client: type[BaseContainerClient]
         """
-        super().__init__(db, db["user_config"])
+        super().__init__(db, db["user_config"], c_client)
 
     @property
     def _prj_mgr(self) -> _project.ProjectManager:
@@ -89,7 +91,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :return: A project manager initialized in UserConfigManager.
         :rtype: _project.ProjectManager
         """
-        return _project.ProjectManager(self._db)
+        return _project.ProjectManager(self._db, self.c_client)
 
     @property
     def _user_mgr(self) -> _user.UserManager:
@@ -98,7 +100,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :return: A user manager initialized in UserConfigManager.
         :rtype: _user.UserManager
         """
-        return _user.UserManager(self._db)
+        return _user.UserManager(self._db, self.c_client)
 
     def _multiple_users_pipeline(
         self, project: _project.Project, lof_usernames: list[str]
@@ -531,7 +533,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         if mount_dir.exists() and mount_dir.is_dir() and len(str(mount_dir)) > 0:
             shutil.rmtree(mount_dir)
 
-        podman_rm_networks(f"{project.name}_{user.username}_")
+        self.c_client.rm_networks(f"{project.name}_{user.username}_")
 
         user_config.active = False
         self.update_doc(user_config)
@@ -569,7 +571,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         lof_prefix_name = list(
             map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
         )
-        lof_network_names = podman_get_networks(lof_prefix_name)
+        lof_network_names = self.c_client.get_networks(lof_prefix_name)
         if lof_network_names:
             cmd = ["podman", "network", "rm"] + lof_network_names
             subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
@@ -605,7 +607,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         lof_prefix_name = list(
             map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
         )
-        lof_network_names = podman_get_networks(lof_prefix_name)
+        lof_network_names = self.c_client.get_networks(lof_prefix_name)
         if lof_network_names:
             cmd = ["podman", "network", "rm"] + lof_network_names
             subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
@@ -659,7 +661,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         )
 
         # delete networks
-        lof_network_names = podman_get_networks(lof_prefix_name)
+        lof_network_names = self.c_client.get_networks(lof_prefix_name)
         if lof_network_names:
             cmd = ["podman", "network", "rm"] + lof_network_names
             subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)

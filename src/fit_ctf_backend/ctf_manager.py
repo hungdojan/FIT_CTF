@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import subprocess
 
+import os
 import pymongo
 from pymongo.database import Database
 
 from fit_ctf_backend.exceptions import ProjectNotExistException
 from fit_ctf_db_models import Project, ProjectManager, UserConfigManager, UserManager
 from fit_ctf_utils.podman_utils import podman_ps
+from fit_ctf_utils import get_c_client_by_name
 
 
 class CTFManager:
@@ -21,10 +23,11 @@ class CTFManager:
         """
         self._client = pymongo.MongoClient(host)
         self._ctf_db: Database = self._client[db_name]
+        c_client = get_c_client_by_name(os.getenv("CONTAINER_CLIENT", ""))
         self._managers = {
-            "project": ProjectManager(self._ctf_db),
-            "user": UserManager(self._ctf_db),
-            "user_config": UserConfigManager(self._ctf_db),
+            "project": ProjectManager(self._ctf_db, c_client),
+            "user": UserManager(self._ctf_db, c_client),
+            "user_config": UserConfigManager(self._ctf_db, c_client),
         }
 
     @property
@@ -121,7 +124,7 @@ class CTFManager:
             project = self.prj_mgr.get_project(name)
         except ProjectNotExistException:
             return -1
-        proc = project.start()
+        proc = self.prj_mgr.start_project(project)
         return proc.returncode
 
     def stop_project(self, name: str) -> int:
@@ -138,7 +141,7 @@ class CTFManager:
             return -1
 
         self.user_config_mgr.stop_all_user_instances(project)
-        proc = project.stop()
+        proc = self.prj_mgr.stop_project(project)
         return proc.returncode
 
     def project_is_running(self, name: str) -> bool:
@@ -153,7 +156,7 @@ class CTFManager:
             project = self.prj_mgr.get_project(name)
         except ProjectNotExistException:
             return False
-        return project.is_running()
+        return self.prj_mgr.is_running(project)
 
     def project_status(self, name: str) -> subprocess.CompletedProcess:
         """Print a result of `podman ps` command.

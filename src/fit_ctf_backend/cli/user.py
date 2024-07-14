@@ -28,7 +28,6 @@ def user(ctx: click.Context):
         "db_host": db_host,
         "db_name": db_name,
         "ctf_mgr": ctf_mgr,
-        "user_mgr": ctf_mgr.user_mgr,
     }
 
 
@@ -53,7 +52,7 @@ def create_user(
     email: str,
 ):
     """Create a new user."""
-    user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
+    user_mgr: UserManager = ctx.parent.obj["ctf_mgr"].user_mgr  # pyright: ignore
     if password:
         if not user_mgr.validate_password_strength(password):
             click.echo("Password is not strong enough!")
@@ -110,7 +109,7 @@ def multiple_create(
 @click.pass_context
 def list_users(ctx: click.Context, _all: bool):
     """Get a list of registered users in the database."""
-    user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
+    user_mgr: UserManager = ctx.parent.obj["ctf_mgr"].user_mgr  # pyright: ignore
     filter = {} if _all else {"active": True}
 
     users = user_mgr.get_docs_raw(filter, {"password": 0, "shadow_hash": 0})
@@ -142,7 +141,7 @@ def get_user_info(ctx: click.Context, username: str):
 @click.pass_context
 def active_projects(ctx: click.Context, username: str):
     """Get a list of active projects that a user is enrolled to."""
-    user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
+    user_mgr: UserManager = ctx.parent.obj["ctf_mgr"].user_mgr  # pyright: ignore
     lof_prj = user_mgr.get_active_projects_for_user_raw(username)
     if not lof_prj:
         click.echo("User has is not enrolled to any project.")
@@ -169,7 +168,7 @@ def change_password(ctx: click.Context, username: str, password: str):
 @click.pass_context
 def delete_user(ctx: click.Context, usernames: list[str]):
     """Remove user from the database."""
-    user_mgr: UserManager = ctx.parent.obj["user_mgr"]  # pyright: ignore
+    user_mgr: UserManager = ctx.parent.obj["ctf_mgr"].user_mgr  # pyright: ignore
     user_mgr.delete_users(usernames)
 
 
