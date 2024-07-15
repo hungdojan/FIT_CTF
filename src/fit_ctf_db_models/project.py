@@ -20,8 +20,8 @@ import fit_ctf_db_models.user as _user
 import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend import (
     DirNotEmptyException,
-    ProjectNotExistException,
     ProjectNamingFormatException,
+    ProjectNotExistException,
 )
 from fit_ctf_backend.constants import (
     DEFAULT_MODULE_BUILD_DIRNAME,
@@ -477,7 +477,7 @@ class ProjectManager(BaseManager[Project]):
         """
         if not self.validate_project_name(name):
             raise ProjectNamingFormatException(
-                f"Given name `{name}` is not allowed. Only lowercase characters, underscore and numbers are allowed. "
+                f"Given name `{name}` is not allowed. Only lowercase characters, underscore and numbers are allowed."
             )
         # check if project already exists
         prj = self.get_doc_by_filter(name=name, active=True)
@@ -640,7 +640,7 @@ class ProjectManager(BaseManager[Project]):
         prj.active = False
         self.update_doc(prj)
 
-    def get_projects(self, ignore_inactive: bool = False) -> list[dict[str, Any]]:
+    def get_projects(self, include_inactive: bool = False) -> list[dict[str, Any]]:
         """Get list of all projects.
 
         The final directory has the following format:
@@ -651,14 +651,14 @@ class ProjectManager(BaseManager[Project]):
             "active": <active_status>
         }
 
-        :param ignore_inactive: When `True` is set, function will also return `inactive`
+        :param include_inactive: When `True` is set, function will also return `inactive`
         projects, defaults to False.
-        :type ignore_inactive: bool, optional
+        :type include_inactive: bool, optional
         :return: A list of found projects in raw format.
         :rtype: list[dict[str, Any]]
         """
         _filter = {}
-        if not ignore_inactive:
+        if not include_inactive:
             _filter["active"] = True
 
         res = self._coll.aggregate(
@@ -685,6 +685,13 @@ class ProjectManager(BaseManager[Project]):
             ]
         )
         return [i for i in res]
+
+    def delete_all(self):
+        """Remove all projects from the host system and clear database."""
+        projects = self.get_projects()
+        for prj in projects:
+            self.delete_project(prj["name"])
+        self.remove_docs_by_filter()
 
     # MANAGE MODULES
     def create_project_module(self, project_name: str, module_name: str):

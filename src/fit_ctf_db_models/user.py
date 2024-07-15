@@ -424,6 +424,77 @@ class UserManager(BaseManager[User]):
         ]
         return [i["project"] for i in uc_coll.aggregate(pipeline)]
 
+    def get_users(self, include_inactive: bool = False) -> list[dict[str, Any]]:
+        """Get list of all users.
+
+        Creates a query that look up all users in the database and their assigned project
+        names.
+
+        The final directory has the following format:
+        {
+            "name": <username>,
+            "projects": [
+                {"name": <project1_name>},
+                {"name": <project2_name>},
+                ...
+            ],
+            "active": <active_state>
+        }
+
+        :param include_inactive: When set to `True`, the query result will also
+            include inactive users.
+        :type include_inactive: bool
+        :return: A list of users with aditional information.
+        :rtype: list[dict[str, Any]]
+        """
+        _filter = {}
+        if not include_inactive:
+            _filter["active"] = True
+
+        res = self._coll.aggregate(
+            [
+                # get active/all users
+                {"$match": _filter},
+                {
+                    # get all the projects that they are enrolled to
+                    "$lookup": {
+                        "from": "user_config",
+                        "localField": "_id",
+                        "foreignField": "user_id.$id",
+                        "as": "user_configs",
+                        "pipeline": [
+                            # get only enrolled projects and their names
+                            {"$match": {"active": True}},
+                            {"$project": {"project_id": 1, "_id": 0}},
+                        ],
+                    }
+                },
+                {
+                    # look up the project information
+                    "$lookup": {
+                        "from": "project",
+                        "localField": "user_configs.project_id.$id",
+                        "foreignField": "_id",
+                        "as": "projects",
+                        "pipeline": [
+                            # get only project name
+                            {"$project": {"name": 1, "_id": 0}}
+                        ],
+                    }
+                },
+                {
+                    # list field to display
+                    "$project": {
+                        "username": 1,
+                        "_id": 0,
+                        "projects": 1,
+                        "active": 1,
+                    }
+                },
+            ]
+        )
+        return [i for i in res]
+
     def delete_a_user(self, username: str):
         """Delete the given user.
 
@@ -468,3 +539,9 @@ class UserManager(BaseManager[User]):
             Path(user.shadow_path).unlink()
 
         self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
+
+    def delete_all(self):
+        """Remove all users from the host system and clear the database."""
+        users = [u["name"] for u in self.get_users()]
+        self.delete_users(users)
+        self.remove_docs_by_filter()

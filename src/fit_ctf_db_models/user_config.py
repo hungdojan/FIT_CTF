@@ -665,6 +665,10 @@ class UserConfigManager(BaseManager[UserConfig]):
             subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
         self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
 
+    def clear_database(self):
+        """Remove all canceled user enrollments."""
+        self.remove_docs_by_filter(active=False)
+
     # MANAGE MODULES
 
     def add_module(

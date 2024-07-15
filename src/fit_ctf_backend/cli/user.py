@@ -226,15 +226,15 @@ def enroll_to_project(ctx: click.Context, username: str, project_name: str):
     prj = ctf_mgr.prj_mgr.get_project(project_name)
 
     ctf_mgr.enroll_users_to_project(user.username, prj.name)
-    click.echo(f"User `{user.username}` was assigned to the project `{prj.name}`.")
+    click.echo(f"User `{user.username}` was enrolled to the project `{prj.name}`.")
 
 
-@user.command(name="assign-multiple")
+@user.command(name="enroll-multiple")
 @click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.argument("filename")
 @click.pass_context
-def assign_multiple_to_project(ctx: click.Context, project_name: str, filename: str):
-    """Assign users to the project."""
+def enroll_multiple_to_project(ctx: click.Context, project_name: str, filename: str):
+    """Enroll multiple users to the project."""
 
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     try:
