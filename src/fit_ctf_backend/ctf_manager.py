@@ -1,14 +1,13 @@
 from __future__ import annotations
 
+import os
 import subprocess
 
-import os
 import pymongo
 from pymongo.database import Database
 
 from fit_ctf_backend.exceptions import ProjectNotExistException
 from fit_ctf_db_models import Project, ProjectManager, UserConfigManager, UserManager
-from fit_ctf_utils.podman_utils import podman_ps
 from fit_ctf_utils import get_c_client_by_name
 
 
@@ -21,7 +20,12 @@ class CTFManager:
         :param db_name: Name of the database that contain CTF data.
         :type db_name: str
         """
-        self._client = pymongo.MongoClient(host)
+        self._client = pymongo.MongoClient(
+            host, serverSelectionTimeoutMS=int(os.getenv("DB_CONNECTION_TIMEOUT", "30"))
+        )
+        # test connection
+        self._client.server_info()
+
         self._ctf_db: Database = self._client[db_name]
         c_client = get_c_client_by_name(os.getenv("CONTAINER_CLIENT", ""))
         self._managers = {
@@ -168,7 +172,7 @@ class CTFManager:
         :rtype: subprocess.CompletedProcess
         """
         project = self.prj_mgr.get_project(name)
-        return podman_ps(project.name)
+        return self.prj_mgr.c_client.ps(project.name)
 
     def start_user_instance(
         self, username: str, project_name: str

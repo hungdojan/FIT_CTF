@@ -20,6 +20,7 @@ import fit_ctf_db_models.project as _project
 import fit_ctf_db_models.user_config as _user_config
 from fit_ctf_backend.constants import DEFAULT_PASSWORD_LENGTH
 from fit_ctf_backend.exceptions import (
+    ComposeFileNotExist,
     DirNotExistsException,
     UserExistsException,
     UserNotExistsException,
@@ -137,9 +138,12 @@ class UserManager(BaseManager[User]):
 
         :param len: The length of the final password.
         :type len: int
+        :raises ValueError: The `len` value cannot be less than 0.
         :return: Generated password.
         :rtype: str
         """
+        if len < 0:
+            raise ValueError("The length of the password cannot be less than 0.")
         alphabet = string.ascii_letters + string.digits
         password = "".join(secrets.choice(alphabet) for _ in range(len))
         return password
@@ -245,8 +249,7 @@ class UserManager(BaseManager[User]):
     ) -> tuple[User, dict[str, str]]:
         """Create a new user.
 
-        If user already exists function will return an instance of the old user
-        account (searches by username).
+        If user already exists function will raise an exception.
 
         :param username: User's username.
         :type username: str
@@ -534,17 +537,21 @@ class UserManager(BaseManager[User]):
         for user in users:
             projects = self.get_active_projects_for_user(user.username)
             for project in projects:
-                self._uc_mgr.stop_user_instance(user, project)
+                try:
+                    self._uc_mgr.stop_user_instance(user, project)
+                except ComposeFileNotExist:
+                    pass
 
             self._uc_mgr.cancel_user_enrollments_from_all_projects(user)
 
             # remove shadow file
-            Path(user.shadow_path).unlink()
+            Path(user.shadow_path).unlink(missing_ok=True)
 
         self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
 
     def delete_all(self):
         """Remove all users from the host system and clear the database."""
-        users = [u["name"] for u in self.get_users()]
+
+        users = [u["username"] for u in self.get_users()]
         self.delete_users(users)
         self.remove_docs_by_filter()

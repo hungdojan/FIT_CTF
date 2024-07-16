@@ -16,6 +16,7 @@ from pymongo.database import Database
 import fit_ctf_db_models.project as _project
 import fit_ctf_db_models.user as _user
 from fit_ctf_backend.exceptions import (
+    ComposeFileNotExist,
     MaxUserCountReachedException,
     ModuleExistsException,
     PortUsageCollisionException,
@@ -786,6 +787,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :type project_or_name: str | _project.Project
         :raises UserNotExistsException: User with the given username was not found.
         :raises ProjectNotExistException: Project data was not found in the database.
+        :raises ComposeFileNotExist: Compose file for the given user not found.
         :raises UserNotEnrolledToProjectException: Given user is not enrolled to the
             project.
         :return: A completed process data.
@@ -799,6 +801,10 @@ class UserConfigManager(BaseManager[UserConfig]):
             )
 
         compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
+        if not compose_file.is_file():
+            raise ComposeFileNotExist(
+                "A compose file for the given user does not exist."
+            )
         cmd = f"podman-compose -f {str(compose_file)} down"
         proc = subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
         return proc
@@ -911,8 +917,8 @@ class UserConfigManager(BaseManager[UserConfig]):
             raise UserNotEnrolledToProjectException(
                 f"User `{user.username}` is not enrolled to the project `{project.name}`."
             )
-        self.start_user_instance(user, project)
         self.stop_user_instance(user, project)
+        self.start_user_instance(user, project)
 
     def build_user_instance(
         self,
@@ -972,6 +978,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         cmds = [
             f"podman-compose -f {str(root_path)}/{user.username}_compose.yaml down"
             for user in lof_users
+            if (root_path / f"{user.username}_compose.yaml").is_file()
         ]
         procs = [Popen(i.split()) for i in cmds]
         for p in procs:

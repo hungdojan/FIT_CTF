@@ -43,7 +43,7 @@ sphinx = "^7.3.7"
 click-man = "^0.4.1"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-env = ["CONTAINER_CLIENT=mock"]
+env = ["CONTAINER_CLIENT=mock", "DB_CONNECTION_TIMEOUT=5"]
 addopts = "-vs"
 
 [tool.coverage.html]
@@ -52,9 +52,6 @@ directory = "tests/reports/htmlcov"
 [tool.coverage.run]
 omit = ["tests/*", "/tmp/*"]
 command_line = "-m pytest -vv"
-
-[tool.coverage.report]
-command_line = "-m"
 
 [build-system]
 requires = ["poetry-core"]

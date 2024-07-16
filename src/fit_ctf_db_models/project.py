@@ -253,7 +253,7 @@ class ProjectManager(BaseManager[Project]):
                     "as": "user",
                     "pipeline": [
                         {"$match": {"active": True}},
-                        {"$project": {"password": 0, "shadow_hash": 0}},
+                        {"$project": {"password": 0, "shadow_hash": 0, "_id": 0}},
                     ],
                 }
             },
@@ -582,7 +582,6 @@ class ProjectManager(BaseManager[Project]):
         """
         prj = self.get_project(project_name)
         # TODO: return as string
-        # podman_stats(prj.name)
         self.c_client.stats(prj.name)
 
     def print_ps(self, project_name: str):
@@ -608,8 +607,10 @@ class ProjectManager(BaseManager[Project]):
         :raises ProjectNotExistException: Project was not found.
         """
         prj = self.get_project(project_name)
-        # TODO: fix mount permissions
         with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as zf:
+            # add a file containing list of enrolled users
+            zf.writestr("enrolled_users.json", json.dumps(self.get_active_users_for_project_raw(prj)))
+
             # this code snippet originates from: https://stackoverflow.com/a/46604244
             for dirpath, _, filenames in os.walk(prj.config_root_dir):
                 for filename in filenames:
@@ -621,6 +622,10 @@ class ProjectManager(BaseManager[Project]):
                     arcname = os.path.join(
                         os.path.basename(prj.config_root_dir), parentpath
                     )
+
+                    # omit mounts for permissions issues
+                    if parentpath.startswith("_mounts"):
+                        continue
 
                     zf.write(filepath, arcname)
 
