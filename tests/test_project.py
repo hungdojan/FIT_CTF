@@ -184,6 +184,9 @@ def test_delete_project(
     assert len(prj_mgr.get_docs(active=True)) == 1
     assert len(prj_mgr.get_docs()) == 2
 
+    query_prj = prj_mgr.get_doc_by_id(deleted_prj.id)
+    assert query_prj and not query_prj.active
+
 
 def test_delete_all(project_data: tuple[CTFManager, Path, list[Project], list[User]]):
     ctf_mgr, tmp_path, prjs, _ = project_data

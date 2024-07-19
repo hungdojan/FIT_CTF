@@ -39,7 +39,9 @@ T = TypeVar("T", bound=Base)
 class BaseManager(ABC, Generic[T]):
     """A base manager class that all CTF managers derive from."""
 
-    def __init__(self, db: Database, coll: Collection, c_client: type[BaseContainerClient]):
+    def __init__(
+        self, db: Database, coll: Collection, c_client: type[BaseContainerClient]
+    ):
         """Constructor method.
 
         :param db: MongoDB database object.
@@ -63,7 +65,7 @@ class BaseManager(ABC, Generic[T]):
         return self._coll
 
     @abstractmethod
-    def get_doc_by_id(self, _id: ObjectId) -> T | None:
+    def get_doc_by_id(self, _id: ObjectId) -> T | None:  # pragma: no cover
         """Search for a document using ObjectId.
 
         :param _id: ID of the document.
@@ -74,7 +76,7 @@ class BaseManager(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_doc_by_id_raw(self, _id: ObjectId):
+    def get_doc_by_id_raw(self, _id: ObjectId):  # pragma: no cover
         """Search for a document using ObjectId in raw format.
 
         :param _id: ID of the document.
@@ -84,7 +86,7 @@ class BaseManager(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_doc_by_filter(self, **kw) -> T | None:
+    def get_doc_by_filter(self, **kw) -> T | None:  # pragma: no cover
         """Search for a document with filter.
 
         :return: A document object (subclass of `Base`) if found.
@@ -93,7 +95,7 @@ class BaseManager(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def get_docs(self, **filter) -> list[T]:
+    def get_docs(self, **filter) -> list[T]:  # pragma: no cover
         """Search for all documents using filter.
 
         :return: A list of found documents.
@@ -102,7 +104,7 @@ class BaseManager(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def create_and_insert_doc(self, **kw) -> T:
+    def create_and_insert_doc(self, **kw) -> T:  # pragma no cover
         """Insert a document of a given class.
 
         :return: A new document.

@@ -167,14 +167,14 @@ class UserManager(BaseManager[User]):
         """Validate the username format.
 
         The username must be at least 4 characters long and can only contain lowercase
-        characters, underscore, or digits.
+        characters, or digits.
 
         :param username: A username to validate.
         :type username: str
         :return: `True` if username meets all the criteria.
         :rtype: bool
         """
-        return re.search(r"^[a-z0-9_]{4,}$", username) is not None
+        return re.search(r"^[a-z0-9]{4,}$", username) is not None
 
     @staticmethod
     def get_password_hash(password: str) -> str:
@@ -281,17 +281,15 @@ class UserManager(BaseManager[User]):
             username, password, str(shadow_file.resolve())
         )
 
-        user = User(
-            _id=ObjectId(),
+        user = self.create_and_insert_doc(
             username=username,
             password=self.get_password_hash(password),
             role=UserRole.USER,
             shadow_path=str(shadow_file.resolve()),
             shadow_hash=crypt_hash,
             email=email,
-        )
 
-        self.insert_doc(user)
+        )
         return user, {"username": username, "password": password}
 
     def create_multiple_users(
@@ -333,7 +331,7 @@ class UserManager(BaseManager[User]):
         # create new users
         for username, password in lof_user_info.items():
             user, data = self.create_new_user(username, password, shadow_dir)
-            users[user.username] = data
+            users[user.username] = data["password"]
 
         return users
 
@@ -513,7 +511,10 @@ class UserManager(BaseManager[User]):
         # stop instances
         lof_projects = self.get_active_projects_for_user(user.username)
         for project in lof_projects:
-            self._uc_mgr.stop_user_instance(user, project)
+            try:
+                self._uc_mgr.stop_user_instance(user, project)
+            except ComposeFileNotExist:
+                continue
 
         self._uc_mgr.cancel_user_enrollments_from_all_projects(user)
 

@@ -74,7 +74,7 @@ def project_data(
     # fill mgr with data
     data = {
         "dest_dir": str(tmp_path.resolve()),
-        "max_nof_users": 5,
+        "max_nof_users": 3,
     }
     prjs = [prj_mgr.init_project(name=f"prj{i+1}", **data) for i in range(2)]
 
@@ -152,7 +152,7 @@ def unconnected_data(
 
     data = {
         "dest_dir": str(tmp_path.resolve()),
-        "max_nof_users": 5,
+        "max_nof_users": 3,
     }
     prjs = [prj_mgr.init_project(name=f"prj{i+1}", **data) for i in range(2)]
 
@@ -190,6 +190,41 @@ def connected_data(
     user_config_mgr.enroll_multiple_users_to_project(
         [u.username for u in usrs[:-1]], prjs[1].name
     )
+
+    # yield data
+    yield ctf_mgr, tmp_path, prjs, usrs
+
+@pytest.fixture
+def deleted_data(
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+) -> Iterator[tuple[CTFManager, Path, list[Project], list[User]]]:
+    """Yield a CTFManager with 2 projects, 3 users, and destination directory.
+
+    The manager contains following objects:
+        Projects [enrolled]:
+            - prj1 - [] - deleted
+            - prj2 - [user2]
+        Users [enrolled]:
+            - user1 - [] - deleted
+            - user2 - [prj2]
+            - user3 - []
+
+    :return: A CTFManager object, a path to the temporary directory,
+    list of projects and users.
+    :rtype: Iterator[tuple[CTFManager, Path, list[Project], list[User]]]
+    """
+    # init testing env
+    ctf_mgr, tmp_path, prjs, usrs = connected_data
+    prj_mgr = ctf_mgr.prj_mgr
+    user_mgr = ctf_mgr.user_mgr
+
+    # fill mgr with data
+    prj_mgr.delete_project("prj1")
+    user_mgr.delete_a_user("user1")
+
+    # update list of objects
+    usrs = user_mgr.get_docs()
+    prjs = prj_mgr.get_docs()
 
     # yield data
     yield ctf_mgr, tmp_path, prjs, usrs

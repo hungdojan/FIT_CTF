@@ -532,7 +532,7 @@ class ProjectManager(BaseManager[Project]):
         data = json.loads(proc.stdout)
         return len(data) > 0
 
-    def build(self, project: Project) -> subprocess.CompletedProcess:
+    def build_project(self, project: Project) -> subprocess.CompletedProcess:
         """Rebuild project images.
 
         Run `podman-compose down` in the sub-shell.
