@@ -100,6 +100,17 @@ class PodmanClient(BaseContainerClient):
         return [data.lstrip('"').rstrip('"') for data in proc.stdout.rsplit()]
 
     @classmethod
+    def compose_build(cls, file: str) -> subprocess.CompletedProcess:
+        cmd = f"podman-compose -f {file} build"
+        # TODO: redirect outputs
+        proc = subprocess.run(
+            cmd.split(),
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
+        return proc
+
+    @classmethod
     def stats(cls, project_name: str) -> subprocess.CompletedProcess:
         cmd = "podman ps -a --format={{.Names}} " f"--filter=name=^{project_name}"
         proc = subprocess.run(cmd.split(), capture_output=True, text=True)

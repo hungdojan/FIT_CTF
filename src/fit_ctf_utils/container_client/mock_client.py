@@ -43,6 +43,10 @@ class MockClient(BaseContainerClient):
         return []
 
     @classmethod
+    def compose_build(cls, file: str) -> subprocess.CompletedProcess:
+        return subprocess.CompletedProcess(args=["compose", "build"], returncode=0)
+
+    @classmethod
     def stats(cls, project_name: str) -> subprocess.CompletedProcess:
         # TODO:
         return subprocess.CompletedProcess(args=["stats"], returncode=0)

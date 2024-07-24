@@ -313,6 +313,38 @@ class UserConfigManager(BaseManager[UserConfig]):
         self._coll.insert_one(asdict(doc))
         return doc
 
+    def filter_users_not_in_project(
+        self, project_or_name: str | _project.Project, lof_usernames: list[str]
+    ):
+        prj = self._get_project(project_or_name)
+        pipeline = [
+            {"$match": {"project_id.$id": prj.id, "active": True}},
+            {
+                "$lookup": {
+                    "from": "user",
+                    "localField": "user_id.$id",
+                    "foreignField": "_id",
+                    "as": "user",
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "active": True,
+                                "username": {"$in": lof_usernames},
+                            }
+                        },
+                        {"$project": {"_id": 0, "username": 1}},
+                    ],
+                }
+            },
+            {"$unwind": "$user"},
+            {"$project": {"_id": 0, "username": "$user.username"}},
+        ]
+        return list(
+            set(lof_usernames).difference(
+                set([i["username"] for i in self._coll.aggregate(pipeline)])
+            )
+        )
+
     # ASSIGN USER TO PROJECTS
 
     def enroll_user_to_project(
@@ -428,17 +460,17 @@ class UserConfigManager(BaseManager[UserConfig]):
         nof_existing_users = len(
             self._prj_mgr.get_active_users_for_project_raw(project)
         )
-        nof_new_users = len(lof_usernames)
-        if nof_existing_users + nof_new_users > project.max_nof_users:
+        new_users = self.filter_users_not_in_project(project, lof_usernames)
+        if nof_existing_users + len(new_users) > project.max_nof_users:
             raise MaxUserCountReachedException(
                 f"Project `{project.name}` has already reached the maximum number of users."
             )
 
         min_sshport = self.get_min_available_sshport(project)
-        if min_sshport + nof_new_users - 1 > 65_535:
+        if min_sshport + len(new_users) - 1 > 65_535:
             raise SSHPortOutOfRangeException("Not enough available ports.")
 
-        users = self._user_mgr.get_docs(username={"$in": lof_usernames}, active=True)
+        users = self._user_mgr.get_docs(username={"$in": new_users}, active=True)
         mount_dir = Path(project.config_root_dir) / project.volume_mount_dirname
         user_configs = []
         # TODO: collision_test
@@ -527,7 +559,7 @@ class UserConfigManager(BaseManager[UserConfig]):
                 f"User `{username}` is not enrolled to the project `{project_name}`"
             )
 
-        # create volume dir
+        # remove mount dirs and compose files
         mount_dir = (
             Path(project.config_root_dir) / project.volume_mount_dirname / user.username
         )
@@ -535,6 +567,9 @@ class UserConfigManager(BaseManager[UserConfig]):
             shutil.rmtree(mount_dir)
 
         self.c_client.rm_networks(f"{project.name}_{user.username}_")
+        (Path(project.config_root_dir) / f"{username}_compose.yaml").unlink(
+            missing_ok=True
+        )
 
         user_config.active = False
         self.update_doc(user_config)
@@ -559,16 +594,6 @@ class UserConfigManager(BaseManager[UserConfig]):
         if not user_configs:
             return
 
-        # remove mount dirs
-        for uc in user_configs:
-            mount_dir = (
-                Path(project.config_root_dir)
-                / project.volume_mount_dirname
-                / uc.get("username")
-            )
-            if mount_dir.exists() and mount_dir.is_dir():
-                shutil.rmtree(mount_dir)
-
         lof_prefix_name = list(
             map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
         )
@@ -576,6 +601,14 @@ class UserConfigManager(BaseManager[UserConfig]):
         if lof_network_names:
             cmd = ["podman", "network", "rm"] + lof_network_names
             subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
+        # remove mount dirs and compose files
+        for uc in user_configs:
+            _root = Path(project.config_root_dir)
+            mount_dir = _root / project.volume_mount_dirname / uc.get("username")
+            if mount_dir.exists() and mount_dir.is_dir():
+                shutil.rmtree(mount_dir)
+            (_root / f"{uc.get('username')}_compose.yaml").unlink(missing_ok=True)
 
         uc_ids = [uc["_id"] for uc in user_configs]
         self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": False}})
@@ -595,16 +628,6 @@ class UserConfigManager(BaseManager[UserConfig]):
         if not user_configs:
             return
 
-        # remove mount dirs
-        for uc in user_configs:
-            mount_dir = (
-                Path(project.config_root_dir)
-                / project.volume_mount_dirname
-                / uc.get("username")
-            )
-            if mount_dir.exists() and mount_dir.is_dir():
-                shutil.rmtree(mount_dir)
-
         lof_prefix_name = list(
             map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
         )
@@ -612,6 +635,14 @@ class UserConfigManager(BaseManager[UserConfig]):
         if lof_network_names:
             cmd = ["podman", "network", "rm"] + lof_network_names
             subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
+        # remove mount dirs and compose files
+        for uc in user_configs:
+            _root = Path(project.config_root_dir)
+            mount_dir = _root / project.volume_mount_dirname / uc.get("username")
+            if mount_dir.exists() and mount_dir.is_dir():
+                shutil.rmtree(mount_dir)
+            (_root / f"{uc.get('username')}_compose.yaml").unlink(missing_ok=True)
 
         uc_ids = [uc["_id"] for uc in user_configs]
         self._coll.update_many({"_id": {"$in": uc_ids}}, {"$set": {"active": False}})
@@ -638,23 +669,14 @@ class UserConfigManager(BaseManager[UserConfig]):
                 }
             },
             {"$unwind": "$project"},
+            {"$project": {"_id": 1, "project": 1}},
         ]
-        agg = self._coll.aggregate(pipeline)
+        agg = [i for i in self._coll.aggregate(pipeline)]
         # get infos from the aggregation result
         lof_projects = [_project.Project(**i["project"]) for i in agg]
         if not lof_projects:
             return
         ids = [uc["_id"] for uc in agg]
-
-        # remove mount dirs
-        for project in lof_projects:
-            mount_dir = (
-                Path(project.config_root_dir)
-                / project.volume_mount_dirname
-                / user.username
-            )
-            if mount_dir.exists() and mount_dir.is_dir():
-                shutil.rmtree(mount_dir)
 
         # create podman prefixes
         lof_prefix_name = list(
@@ -666,6 +688,16 @@ class UserConfigManager(BaseManager[UserConfig]):
         if lof_network_names:
             cmd = ["podman", "network", "rm"] + lof_network_names
             subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
+        # remove mount dirs and compose files
+        for project in lof_projects:
+            _root = Path(project.config_root_dir)
+            mount_dir = _root / project.volume_mount_dirname / user.username
+            if mount_dir.exists() and mount_dir.is_dir():
+                shutil.rmtree(mount_dir)
+
+            (_root / f"{user.username}_compose.yaml").unlink(missing_ok=True)
+
         self._coll.update_many({"_id": {"$in": ids}}, {"$set": {"active": False}})
 
     def clear_database(self):
@@ -770,9 +802,7 @@ class UserConfigManager(BaseManager[UserConfig]):
             user_config = self.get_user_config(project, user)
             self._compile_uc(user_config, project, user)
 
-        cmd = f"podman-compose -f {str(compose_file)} up -d"
-        proc = subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
-        return proc
+        return self.c_client.compose_up(str(compose_file.resolve()))
 
     def stop_user_instance(
         self,
@@ -805,9 +835,9 @@ class UserConfigManager(BaseManager[UserConfig]):
             raise ComposeFileNotExist(
                 "A compose file for the given user does not exist."
             )
-        cmd = f"podman-compose -f {str(compose_file)} down"
-        proc = subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
-        return proc
+        if not self.user_instance_is_running(user, project):
+            return subprocess.CompletedProcess(args=["compose", "up"], returncode=0)
+        return self.c_client.compose_down(str(compose_file.resolve()))
 
     def user_instance_is_running(
         self,
@@ -835,21 +865,7 @@ class UserConfigManager(BaseManager[UserConfig]):
             )
 
         compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
-        cmd = [
-            "podman-compose",
-            "-f",
-            str(compose_file),
-            "ps",
-            "--format",
-            '"{{ .Names }}"',
-        ]
-        proc = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-        )
-        data = proc.stdout.rsplit()
-        return len(data) > 0
+        return len(self.c_client.compose_ps(str(compose_file.resolve()))) > 0
 
     def _compile_uc(
         self, user_config: UserConfig, project: _project.Project, user: _user.User
@@ -943,13 +959,7 @@ class UserConfigManager(BaseManager[UserConfig]):
                 f"User `{user.username}` is not enrolled to the project `{project.name}`."
             )
         compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
-        cmd = f"podman-compose -f {compose_file} build"
-        proc = subprocess.run(
-            cmd.split(),
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-        )
-        return proc
+        return self.c_client.compose_build(str(compose_file.resolve()))
 
     def stop_all_user_instances(self, project: _project.Project):
         """Stop all login nodes.

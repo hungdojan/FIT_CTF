@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Iterator
 
 import pymongo.errors
 import pytest
+from _pytest.fixtures import FixtureRequest
 from dotenv import load_dotenv
 
 from fit_ctf_backend.ctf_manager import CTFManager
@@ -17,14 +17,22 @@ load_dotenv()
 
 @pytest.fixture
 def empty_data(
+    request: FixtureRequest,
     tmp_path: Path,
-) -> Iterator[tuple[CTFManager, Path, list[Project], list[User]]]:
+) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield an empty CTFManager object.
 
     :return: A CTFManager object, a path to the temporary directory,
     list of projects and users.
     :rtype: Iterator[tuple[CTFManager, Path, list[Project], list[User]]]
     """
+
+    def teardown():
+        # teardown ctf_mgr
+        ctf_mgr.user_mgr.delete_all()
+        ctf_mgr.prj_mgr.delete_all()
+        ctf_mgr.user_config_mgr.clear_database()
+
     # get data
     db_host = os.getenv("DB_HOST")
     db_name = os.getenv("DB_TEST_NAME", "test-ctf-db")
@@ -43,18 +51,15 @@ def empty_data(
 
     # make a shadow dir
     (tmp_path / "shadow").mkdir()
-    yield ctf_mgr, tmp_path, [], []
+    request.addfinalizer(teardown)
+    return ctf_mgr, tmp_path, [], []
 
-    # teardown ctf_mgr
-    ctf_mgr.user_mgr.delete_all()
-    ctf_mgr.prj_mgr.delete_all()
-    ctf_mgr.user_config_mgr.clear_database()
 
 
 @pytest.fixture
 def project_data(
     empty_data: tuple[CTFManager, Path, list[Project], list[User]]
-) -> Iterator[tuple[CTFManager, Path, list[Project], list[User]]]:
+) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects and destination directory.
 
     The manager contains following objects:
@@ -79,13 +84,13 @@ def project_data(
     prjs = [prj_mgr.init_project(name=f"prj{i+1}", **data) for i in range(2)]
 
     # yield data
-    yield ctf_mgr, tmp_path, prjs, usrs
+    return ctf_mgr, tmp_path, prjs, usrs
 
 
 @pytest.fixture
 def user_data(
     empty_data: tuple[CTFManager, Path, list[Project], list[User]]
-) -> Iterator[tuple[CTFManager, Path, list[Project], list[User]]]:
+) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 3 users and destination directory.
 
     The manager contains following objects:
@@ -113,13 +118,13 @@ def user_data(
     ]
 
     # yield data
-    yield ctf_mgr, tmp_path, prjs, usrs
+    return ctf_mgr, tmp_path, prjs, usrs
 
 
 @pytest.fixture
 def unconnected_data(
     empty_data: tuple[CTFManager, Path, list[Project], list[User]]
-) -> Iterator[tuple[CTFManager, Path, list[Project], list[User]]]:
+) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects, 3 users, and destination directory.
 
     The manager contains following objects:
@@ -157,13 +162,13 @@ def unconnected_data(
     prjs = [prj_mgr.init_project(name=f"prj{i+1}", **data) for i in range(2)]
 
     # yield data
-    yield ctf_mgr, tmp_path, prjs, usrs
+    return ctf_mgr, tmp_path, prjs, usrs
 
 
 @pytest.fixture
 def connected_data(
     unconnected_data: tuple[CTFManager, Path, list[Project], list[User]]
-) -> Iterator[tuple[CTFManager, Path, list[Project], list[User]]]:
+) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects, 3 users, and destination directory.
 
     The manager contains following objects:
@@ -191,13 +196,16 @@ def connected_data(
         [u.username for u in usrs[:-1]], prjs[1].name
     )
 
+    [user_config_mgr.compile_compose(u, prjs[0]) for u in usrs[1:]]
+    [user_config_mgr.compile_compose(u, prjs[1]) for u in usrs[:-1]]
+
     # yield data
-    yield ctf_mgr, tmp_path, prjs, usrs
+    return ctf_mgr, tmp_path, prjs, usrs
 
 @pytest.fixture
 def deleted_data(
     connected_data: tuple[CTFManager, Path, list[Project], list[User]]
-) -> Iterator[tuple[CTFManager, Path, list[Project], list[User]]]:
+) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects, 3 users, and destination directory.
 
     The manager contains following objects:
@@ -227,4 +235,4 @@ def deleted_data(
     prjs = prj_mgr.get_docs()
 
     # yield data
-    yield ctf_mgr, tmp_path, prjs, usrs
+    return ctf_mgr, tmp_path, prjs, usrs

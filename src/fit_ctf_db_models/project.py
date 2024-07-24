@@ -240,7 +240,7 @@ class ProjectManager(BaseManager[Project]):
                     "from": "project",
                     "localField": "project_id.$id",
                     "foreignField": "_id",
-                    "pipeline": [{"$project": {"config_root_dir": 1, "_id": 0}}],
+                    "pipeline": [{"$project": {"config_root_dir": 1, "_id": 0, "volume_mount_dirname": 1}}],
                     "as": "project",
                 }
             },
@@ -269,7 +269,13 @@ class ProjectManager(BaseManager[Project]):
                     "_id": 0,
                     "forwarded_port": 1,
                     "mount": {
-                        "$concat": ["$project.config_root_dir", "/", "$user.username"]
+                        "$concat": [
+                            "$project.config_root_dir",
+                            "/",
+                            "$project.volume_mount_dirname",
+                            "/",
+                            "$user.username",
+                        ]
                     },
                 }
             },
@@ -609,7 +615,10 @@ class ProjectManager(BaseManager[Project]):
         prj = self.get_project(project_name)
         with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as zf:
             # add a file containing list of enrolled users
-            zf.writestr("enrolled_users.json", json.dumps(self.get_active_users_for_project_raw(prj)))
+            zf.writestr(
+                "enrolled_users.json",
+                json.dumps(self.get_active_users_for_project_raw(prj)),
+            )
 
             # this code snippet originates from: https://stackoverflow.com/a/46604244
             for dirpath, _, filenames in os.walk(prj.config_root_dir):

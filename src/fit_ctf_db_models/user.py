@@ -350,7 +350,7 @@ class UserManager(BaseManager[User]):
         pipeline = [
             {
                 # search only user_config for the given user
-                "$match": {"user_id.$id": user.id}
+                "$match": {"user_id.$id": user.id, "active": True}
             },
             {
                 # get project info

@@ -1,9 +1,9 @@
 import json
-from pathlib import Path
+import re
 import zipfile
+from pathlib import Path
 
 import pytest
-import re
 
 from fit_ctf_backend.ctf_manager import CTFManager
 from fit_ctf_backend.exceptions import (
@@ -223,15 +223,30 @@ def test_get_active_users_for_project(
     raw_data = prj_mgr.get_active_users_for_project_raw(prjs[0])
     assert len(raw_data) == 2
     assert set([d["mount"] for d in raw_data]) == set(
-        [prjs[0].config_root_dir + "/" + d["username"] for d in raw_data]
+        [
+            prjs[0].config_root_dir
+            + "/"
+            + prjs[0].volume_mount_dirname
+            + "/"
+            + d["username"]
+            for d in raw_data
+        ]
     )
     assert all([d.get("forwarded_port") for d in raw_data])
     assert set([d["username"] for d in raw_data]) == set([u.username for u in usrs[1:]])
+    assert all(Path(d["mount"]).is_dir() for d in raw_data)
 
     raw_data = prj_mgr.get_active_users_for_project_raw(prjs[1].name)
     assert len(raw_data) == 2
     assert set([d["mount"] for d in raw_data]) == set(
-        [prjs[1].config_root_dir + "/" + d["username"] for d in raw_data]
+        [
+            prjs[1].config_root_dir
+            + "/"
+            + prjs[1].volume_mount_dirname
+            + "/"
+            + d["username"]
+            for d in raw_data
+        ]
     )
     assert all([d.get("forwarded_port") for d in raw_data])
     assert set([d["username"] for d in raw_data]) == set(
@@ -248,9 +263,7 @@ def test_generate_port_forwarding_script(
     script_path = (tmp_path / "script.sh").resolve()
     ip_addr = "127.0.0.1"
 
-    prj_mgr.generate_port_forwarding_script(
-        prjs[0].name, ip_addr, str(script_path)
-    )
+    prj_mgr.generate_port_forwarding_script(prjs[0].name, ip_addr, str(script_path))
 
     assert script_path.is_file()
     with open(script_path, "r") as f:
@@ -261,7 +274,9 @@ def test_generate_port_forwarding_script(
             assert re.match(
                 r"firewall-cmd\s+--zone=public\s+"
                 r"--add-forward-port="
-                rf"port=\d+:proto=tcp:toport=\d+:toaddr={ip_addr}", lines.pop(0))
+                rf"port=\d+:proto=tcp:toport=\d+:toaddr={ip_addr}",
+                lines.pop(0),
+            )
         assert lines.pop(0) == "firewall-cmd --zone=public --add-masquerade"
 
 
@@ -296,6 +311,7 @@ def test_export_project(
     # test after compiling all users compose files
 
     # test after starting all user login nodes
+
 
 # static methods
 

@@ -94,6 +94,18 @@ class BaseContainerClient(ABC):
 
     @classmethod
     @abstractmethod
+    def compose_build(cls, file: str) -> subprocess.CompletedProcess:
+        """Build container images using `podman-compose` command.
+
+        :param file: Path to the compose file.
+        :type file: str
+        :return: A completed process object.
+        :rtype: subprocess.CompletedProcess
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
     def stats(cls, project_name: str) -> subprocess.CompletedProcess:
         """Get containers' resource usage using `podman stats` command.
 
