@@ -103,6 +103,38 @@ class Project(Base):
         """
         return Path(self.config_root_dir) / self.compose_file
 
+    def get_project_module(self, module_name: str) -> Module:
+        """Get a project module instance.
+
+        :param module_name: Module name.
+        :type module_name: str
+        :raises ModuleNotExistsException: The given project does not contain selected module.
+        :return: A retrieved module instance.
+        :rtype: Module
+        """
+        module = self.project_modules.get(module_name)
+        if not module:
+            raise ModuleNotExistsException(
+                f"The project `{self.name}` does not contain a module `{module_name}`."
+            )
+        return Module(**module)
+
+    def get_user_module(self, module_name: str) -> Module:
+        """Get a user module instance.
+
+        :param module_name: Module name.
+        :type module_name: str
+        :raises ModuleNotExistsException: The given project does not contain selected module.
+        :return: A retrieved module instance.
+        :rtype: Module
+        """
+        module = self.user_modules.get(module_name)
+        if not module:
+            raise ModuleNotExistsException(
+                f"The project `{self.name}` does not contain a module `{module_name}`."
+            )
+        return Module(**module)
+
 
 class ProjectManager(BaseManager[Project]):
     """A manager class that handles operations with `Project` objects."""
@@ -240,7 +272,15 @@ class ProjectManager(BaseManager[Project]):
                     "from": "project",
                     "localField": "project_id.$id",
                     "foreignField": "_id",
-                    "pipeline": [{"$project": {"config_root_dir": 1, "_id": 0, "volume_mount_dirname": 1}}],
+                    "pipeline": [
+                        {
+                            "$project": {
+                                "config_root_dir": 1,
+                                "_id": 0,
+                                "volume_mount_dirname": 1,
+                            }
+                        }
+                    ],
                     "as": "project",
                 }
             },
@@ -721,7 +761,7 @@ class ProjectManager(BaseManager[Project]):
         self.remove_docs_by_filter()
 
     # MANAGE MODULES
-    def create_project_module(self, project_name: str, module_name: str):
+    def create_project_module(self, project_name: str, module_name: str) -> Module:
         """Create a new project module.
 
         :param project_name: Project name.
@@ -731,6 +771,8 @@ class ProjectManager(BaseManager[Project]):
         :raises ProjectNotExistException: Project was not found.
         :raises ModuleExistsException: Module with the given name already exists.
         :raises DirNotEmptyException: Given directory is not empty.
+        :return: Created instance of module object.
+        :rtype: Module
         """
         project = self.get_project(project_name)
         if module_name in project.project_modules:
@@ -759,6 +801,7 @@ class ProjectManager(BaseManager[Project]):
         project.project_modules[module_name] = module
         self.update_doc(project)
         # TODO: compile
+        return module
 
     def list_project_modules(self, project_name: str) -> list[Module]:
         """Get a list of project modules.
@@ -770,9 +813,9 @@ class ProjectManager(BaseManager[Project]):
         :rtype: list[Module]
         """
         project = self.get_project(project_name)
-        return list(project.project_modules.values())
+        return [Module(**m) for m in list(project.project_modules.values())]
 
-    def remove_project_modules(self, project_name: str, module_name: str):
+    def remove_project_module(self, project_name: str, module_name: str):
         """Remove a project module from the project.
 
         After the successful removal the compose file will be automatically recompiled.
@@ -799,7 +842,7 @@ class ProjectManager(BaseManager[Project]):
         self.update_doc(project)
         self.compile_project(project)
 
-    def create_user_module(self, project_name: str, module_name: str):
+    def create_user_module(self, project_name: str, module_name: str) -> Module:
         """Create a new user module.
 
         :param project_name: Project name.
@@ -809,6 +852,8 @@ class ProjectManager(BaseManager[Project]):
         :raises ProjectNotExistException: Project was not found.
         :raises ModuleExistsException: Module with the given name already exists.
         :raises DirNotEmptyException: Given directory is not empty.
+        :return: Created instance of module object.
+        :rtype: Module
         """
         project = self.get_project(project_name)
         if module_name in project.user_modules:
@@ -836,8 +881,9 @@ class ProjectManager(BaseManager[Project]):
         )
         project.user_modules[module_name] = module
         self.update_doc(project)
+        return module
 
-    def list_user_modules(self, project_name: str):
+    def list_user_modules(self, project_name: str) -> list[Module]:
         """Get a list of user modules.
 
         :param project_name: Project name.
@@ -847,9 +893,9 @@ class ProjectManager(BaseManager[Project]):
         :rtype: list[Module]
         """
         project = self.get_project(project_name)
-        return list(project.user_modules.values())
+        return [Module(**m) for m in list(project.user_modules.values())]
 
-    def remove_user_modules(self, project_name: str, module_name: str):
+    def remove_user_module(self, project_name: str, module_name: str):
         """Remove a user module from the project.
 
         After the successful removal the compose file will be automatically recompiled.
@@ -863,7 +909,7 @@ class ProjectManager(BaseManager[Project]):
         """
         project = self.get_project(project_name)
 
-        if module_name not in project.project_modules:
+        if module_name not in project.user_modules:
             raise ModuleNotExistsException(
                 f"Module `{module_name}` was not found in `{project.name}`."
             )
@@ -872,4 +918,8 @@ class ProjectManager(BaseManager[Project]):
         lof_users = self.get_active_users_for_project(project)
         for user in lof_users:
             self._uc_mgr.remove_module(user, project, module_name)
+        module_info = Module(**project.user_modules.pop(module_name))
+        module_path = Path(project.config_root_dir) / module_info.root_dir
+        if module_path.exists():
+            shutil.rmtree(module_path)
         self.update_doc(project)

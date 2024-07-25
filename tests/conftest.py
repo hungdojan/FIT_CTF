@@ -55,7 +55,6 @@ def empty_data(
     return ctf_mgr, tmp_path, [], []
 
 
-
 @pytest.fixture
 def project_data(
     empty_data: tuple[CTFManager, Path, list[Project], list[User]]
@@ -201,6 +200,68 @@ def connected_data(
 
     # yield data
     return ctf_mgr, tmp_path, prjs, usrs
+
+
+@pytest.fixture
+def modules_data(
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+) -> tuple[CTFManager, Path, list[Project], list[User]]:
+    """Yield a CTFManager with 2 projects, 3 users, and destination directory.
+
+    The manager contains following objects:
+        Projects [enrolled] [modules]:
+            - prj1 - [user2, user3] [prj1_prj_module1, prj1_prj_module2]
+            - prj2 - [user1, user2] [prj2_prj_module1, prj2_prj_module2]
+        Users [enrolled] [modules]:
+            - user1 - [prj2]        [prj2_module1]
+            - user2 - [prj1, prj2]  [prj2_module1, prj2_module2, prj1_module1]
+            - user3 - [prj1]        [prj1_module1, prj1_module2]
+
+    :return: A CTFManager object, a path to the temporary directory,
+    list of projects and users.
+    :rtype: Iterator[tuple[CTFManager, Path, list[Project], list[User]]]
+    """
+    # init testing env
+    ctf_mgr, tmp_path, prjs, usrs = connected_data
+    prj_mgr = ctf_mgr.prj_mgr
+    user_mgr = ctf_mgr.user_mgr
+    user_config_mgr = ctf_mgr.user_config_mgr
+
+    # fill mgr with data
+    for prj in prjs:
+        for i in range(2):
+            prj_mgr.create_project_module(prj.name, f"{prj.name}_prj_module{i+1}")
+            prj_mgr.create_user_module(prj.name, f"{prj.name}_module{i+1}")
+
+    usrs = user_mgr.get_docs()
+    prjs = prj_mgr.get_docs()
+
+    user_config_mgr.add_module(
+        usrs[0], prjs[1], prjs[1].get_user_module(f"{prjs[1].name}_module1")
+    )
+    user_config_mgr.add_module(
+        usrs[1], prjs[1], prjs[1].get_user_module(f"{prjs[1].name}_module1")
+    )
+    user_config_mgr.add_module(
+        usrs[1], prjs[1], prjs[1].get_user_module(f"{prjs[1].name}_module2")
+    )
+
+    user_config_mgr.add_module(
+        usrs[1], prjs[0], prjs[0].get_user_module(f"{prjs[0].name}_module1")
+    )
+    user_config_mgr.add_module(
+        usrs[2], prjs[0], prjs[0].get_user_module(f"{prjs[0].name}_module1")
+    )
+    user_config_mgr.add_module(
+        usrs[2], prjs[0], prjs[0].get_user_module(f"{prjs[0].name}_module2")
+    )
+
+    [user_config_mgr.compile_compose(u, prjs[0]) for u in usrs[1:]]
+    [user_config_mgr.compile_compose(u, prjs[1]) for u in usrs[:-1]]
+
+    # yield data
+    return ctf_mgr, tmp_path, prjs, usrs
+
 
 @pytest.fixture
 def deleted_data(

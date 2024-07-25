@@ -142,7 +142,7 @@ def list_projects(ctx: click.Context, _all: bool):
         - number of active users enrolled to the project\f
     """
     prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
-    lof_prj = prj_mgr.get_projects(ignore_inactive=_all)
+    lof_prj = prj_mgr.get_projects(include_inactive=_all)
     if not lof_prj:
         click.echo("No project found!")
         return
@@ -401,7 +401,7 @@ def build_project(ctx: click.Context):
     if not prj:
         click.echo(f"Project `{name}` not found.")
         return
-    click.echo(ctf_mgr.prj_mgr.build(prj))
+    click.echo(ctf_mgr.prj_mgr.build_project(prj))
 
 
 @server.command(name="restart")
@@ -510,7 +510,7 @@ def remove_project_module(ctx: click.Context, name: str):
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     prj_name = context_dict["name"]
-    ctf_mgr.prj_mgr.remove_project_modules(prj_name, name)
+    ctf_mgr.prj_mgr.remove_project_module(prj_name, name)
 
 
 @module.group(name="user")
@@ -552,7 +552,7 @@ def remove_user_modules(ctx: click.Context, name: str):
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     prj_name = context_dict["name"]
-    ctf_mgr.prj_mgr.remove_user_modules(prj_name, name)
+    ctf_mgr.prj_mgr.remove_user_module(prj_name, name)
 
 
 @module.group(name="general")

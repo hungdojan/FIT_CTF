@@ -24,7 +24,6 @@ tabulate = "^0.9.0"
 
 
 setuptools = "^70.0.0"
-pytest-env = "^1.1.3"
 [tool.poetry.group.test.dependencies]
 pytest = "^8.0.2"
 coverage = "^7.4.3"
@@ -36,14 +35,19 @@ pytest-picked = "^0.5.0"
 pytest-sugar = "^1.0.0"
 
 
-mongomock = "^4.1.2"
+pyyaml = "^6.0.1"
+pytest-env = "^1.1.3"
 [tool.poetry.group.dev.dependencies]
 sphinx = "^7.3.7"
 
 click-man = "^0.4.1"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-env = ["CONTAINER_CLIENT=mock", "DB_CONNECTION_TIMEOUT=5"]
+env = [
+    "CONTAINER_CLIENT=mock",
+    "DB_CONNECTION_TIMEOUT=5",
+    "ENABLE_PODMAN_CLIENT_TESTING=0"
+]
 addopts = "-vs"
 
 [tool.coverage.html]

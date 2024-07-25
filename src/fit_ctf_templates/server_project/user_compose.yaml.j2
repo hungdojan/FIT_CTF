@@ -9,6 +9,7 @@ services:
       dockerfile: Containerfile
     networks:
       - {{ project.name }}_main_net
+      - {{ project.name }}_{{ user.username }}_private_net
     ports:
       - "{{ user_config.ssh_port }}:22"
     volumes:
