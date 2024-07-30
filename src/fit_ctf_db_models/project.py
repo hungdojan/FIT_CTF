@@ -6,7 +6,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 import zipfile
 from dataclasses import asdict, dataclass, field, fields
 from distutils.dir_util import copy_tree
@@ -181,15 +180,21 @@ class ProjectManager(BaseManager[Project]):
     def get_project_info(self) -> dict[str, Any]:
         return {p.name: p for p in self.get_docs()}
 
-    def get_project(self, name: str) -> Project:
+    def get_project(self, name_or_project: str | Project) -> Project:
         """Retrieve project data from the database.
 
-        :param name: Project name.
-        :type name: str
+        If the given argument is a Project instance, it will simple return
+        the argument.
+
+        :param name_or_project: Project name or the instance.
+        :type name: str | Project
         :raises ProjectNotExistException: Project data was not found in the database.
         :return: The retrieved project object.
         :rtype: Project
         """
+        if isinstance(name_or_project, Project):
+            return name_or_project
+        name = name_or_project
         prj = self.get_doc_by_filter(name=name, active=True)
         if not prj:
             raise ProjectNotExistException(f"Project `{name}` does not exists.")
@@ -206,9 +211,7 @@ class ProjectManager(BaseManager[Project]):
         :return: A list of enrolled users.
         :rtype: list[_user.User]
         """
-        project = project_or_name
-        if not isinstance(project, Project):
-            project = self.get_project(project)
+        project = self.get_project(project_or_name)
 
         uc_coll = self._uc_mgr.collection
         pipeline = [
@@ -257,9 +260,7 @@ class ProjectManager(BaseManager[Project]):
         :return: A list of raw results.
         :rtype: list[dict[str, Any]]
         """
-        project = project_or_name
-        if not isinstance(project, Project):
-            project = self.get_project(project)
+        project = self.get_project(project_or_name)
 
         uc_coll = self._uc_mgr.collection
         pipeline = [
@@ -494,19 +495,20 @@ class ProjectManager(BaseManager[Project]):
         return prj
 
     def generate_port_forwarding_script(
-        self, project_name: str, dest_ip_addr: str, filename: str
+        self, project_or_name: str | Project, dest_ip_addr: str, filename: str
     ):
         """Generate a port forwarding script.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :param dest_ip_addr: IP address of the destination machine/server.
         :type dest_ip_addr: str
         :param filename: And output filename.
         :type filename: str
         :raises ProjectExistsException: Project with the given name already exist.
         """
-        prj = self.get_project(project_name)
+        prj = self.get_project(project_or_name)
+
         lof_user_configs = self._uc_mgr.get_docs_raw(
             filter={"project_id.$id": prj.id, "active": True},
             projection={"_id": 0, "ssh_port": 1, "forwarded_port": 1},
@@ -565,7 +567,7 @@ class ProjectManager(BaseManager[Project]):
         """
         return self.c_client.compose_down(str(project.compose_filepath))
 
-    def is_running(self, project: Project) -> bool:
+    def project_is_running(self, project: Project) -> bool:
         """Check if the project server is running.
 
         :param project: A project object.
@@ -573,29 +575,20 @@ class ProjectManager(BaseManager[Project]):
         :return: Returns `True` if the server is running; `False` otherwise.
         :rtype: bool
         """
-        cmd = f"podman ps -a --format=json --filter=name=^{project.name}"
-        proc = subprocess.run(cmd.split(), capture_output=True, text=True)
-        data = json.loads(proc.stdout)
-        return len(data) > 0
+        return len(self.c_client.compose_ps(str(project.compose_filepath))) > 0
 
     def build_project(self, project: Project) -> subprocess.CompletedProcess:
         """Rebuild project images.
 
-        Run `podman-compose down` in the sub-shell.
-
-        :param project: A project object.
-        :type project: Project
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
+                Run `podman-compose down` in the sub-shell.
+        "pod_prj1" i
+                :param project: A project object.
+                :type project: Project
+                :return: A completed process object.
+                :rtype: subprocess.CompletedProcess
         """
 
-        cmd = f"podman-compose -f {project.compose_filepath} build"
-        proc = subprocess.run(
-            cmd.split(),
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-        )
-        return proc
+        return self.c_client.compose_build(str(project.compose_filepath.resolve()))
 
     def compile_project(self, project: Project):
         """Compile a compose file.
@@ -617,42 +610,46 @@ class ProjectManager(BaseManager[Project]):
         :param project: A project object.
         :type project: Project
         """
-        self.c_client.shell(str(project.compose_filepath), "admin", "bash")
+        self.c_client.compose_shell(str(project.compose_filepath), "admin", "bash")
 
-    def print_resource_usage(self, project_name: str):
-        """Get project resource usage using `podman` command.
+    def get_resource_usage(
+        self, project_or_name: str | Project
+    ) -> list[dict[str, str]]:
+        """Get project resource usage using `podman-compose` command.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :raises ProjectExistsException: Project with the given name already exist.
+        :return: List of each pod statistics.
+        :rtype: list[dict[str, str]]
         """
-        prj = self.get_project(project_name)
-        # TODO: return as string
-        self.c_client.stats(prj.name)
+        prj = self.get_project(project_or_name)
+        return self.c_client.stats(prj.name)
 
-    def print_ps(self, project_name: str):
+    def get_ps_data(self, project_or_name: str | Project) -> list[str]:
         """Get running containers of a project using `podman` command.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :raises ProjectExistsException: Project with the given name already exist.
+        :return: List of stdout.
+        :rtype: list[str]
         """
-        prj = self.get_project(project_name)
-        # TODO: return as string
-        self.c_client.ps(prj.name)
+        prj = self.get_project(project_or_name)
+        return self.c_client.ps(prj.name)
 
-    def export_project(self, project_name: str, output_file: str):
+    def export_project(self, project_or_name: str | Project, output_file: str):
         """Export project configuration files.
 
         Generate a ZIP archive.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :param output_file: Output filename.
         :type output_file: str
         :raises ProjectNotExistException: Project was not found.
         """
-        prj = self.get_project(project_name)
+        prj = self.get_project(project_or_name)
         with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as zf:
             # add a file containing list of enrolled users
             zf.writestr(
@@ -678,21 +675,21 @@ class ProjectManager(BaseManager[Project]):
 
                     zf.write(filepath, arcname)
 
-    def delete_project(self, project_name: str):
+    def delete_project(self, project_or_name: str | Project):
         """Delete a project.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         """
         # also deletes everything
         try:
-            prj = self.get_project(project_name)
+            prj = self.get_project(project_or_name)
         except ProjectNotExistException:
             # TODO: log that project does not exist
             return
 
         # stop project if running
-        if self.is_running(prj):
+        if self.project_is_running(prj):
             self.stop_project(prj)
 
         # cancel all users enrollments
@@ -761,11 +758,13 @@ class ProjectManager(BaseManager[Project]):
         self.remove_docs_by_filter()
 
     # MANAGE MODULES
-    def create_project_module(self, project_name: str, module_name: str) -> Module:
+    def create_project_module(
+        self, project_or_name: str | Project, module_name: str
+    ) -> Module:
         """Create a new project module.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :param module_name: Module name.
         :type module_name: str
         :raises ProjectNotExistException: Project was not found.
@@ -774,7 +773,7 @@ class ProjectManager(BaseManager[Project]):
         :return: Created instance of module object.
         :rtype: Module
         """
-        project = self.get_project(project_name)
+        project = self.get_project(project_or_name)
         if module_name in project.project_modules:
             raise ModuleExistsException(
                 f"Project `{project.name}` already has `{module_name}` module."
@@ -803,31 +802,31 @@ class ProjectManager(BaseManager[Project]):
         # TODO: compile
         return module
 
-    def list_project_modules(self, project_name: str) -> list[Module]:
+    def list_project_modules(self, project_or_name: str | Project) -> list[Module]:
         """Get a list of project modules.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :raises ProjectNotExistException: Project was not found.
         :return: A list of found modules.
         :rtype: list[Module]
         """
-        project = self.get_project(project_name)
+        project = self.get_project(project_or_name)
         return [Module(**m) for m in list(project.project_modules.values())]
 
-    def remove_project_module(self, project_name: str, module_name: str):
+    def remove_project_module(self, project_or_name: str | Project, module_name: str):
         """Remove a project module from the project.
 
         After the successful removal the compose file will be automatically recompiled.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :param module_name: Module name.
         :type module_name: str
         :raises ProjectNotExistException: Project was not found.
         :raises ModuleNotExistsException: Module with given name was not found.
         """
-        project = self.get_project(project_name)
+        project = self.get_project(project_or_name)
 
         if module_name not in project.project_modules:
             raise ModuleNotExistsException(
@@ -842,11 +841,13 @@ class ProjectManager(BaseManager[Project]):
         self.update_doc(project)
         self.compile_project(project)
 
-    def create_user_module(self, project_name: str, module_name: str) -> Module:
+    def create_user_module(
+        self, project_or_name: str | Project, module_name: str
+    ) -> Module:
         """Create a new user module.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :param module_name: Module name.
         :type module_name: str
         :raises ProjectNotExistException: Project was not found.
@@ -855,7 +856,7 @@ class ProjectManager(BaseManager[Project]):
         :return: Created instance of module object.
         :rtype: Module
         """
-        project = self.get_project(project_name)
+        project = self.get_project(project_or_name)
         if module_name in project.user_modules:
             raise ModuleExistsException(
                 f"Project `{project.name}` already has `{module_name}` module."
@@ -883,31 +884,31 @@ class ProjectManager(BaseManager[Project]):
         self.update_doc(project)
         return module
 
-    def list_user_modules(self, project_name: str) -> list[Module]:
+    def list_user_modules(self, project_or_name: str | Project) -> list[Module]:
         """Get a list of user modules.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :raises ProjectNotExistException: Project was not found.
         :return: A list of found modules.
         :rtype: list[Module]
         """
-        project = self.get_project(project_name)
+        project = self.get_project(project_or_name)
         return [Module(**m) for m in list(project.user_modules.values())]
 
-    def remove_user_module(self, project_name: str, module_name: str):
+    def remove_user_module(self, project_or_name: str | Project, module_name: str):
         """Remove a user module from the project.
 
         After the successful removal the compose file will be automatically recompiled.
 
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_name: Project name or the instance.
+        :type project_name: str | Project
         :param module_name: Module name.
         :type module_name: str
         :raises ProjectNotExistException: Project was not found.
         :raises ModuleNotExistsException: Module with given name was not found.
         """
-        project = self.get_project(project_name)
+        project = self.get_project(project_or_name)
 
         if module_name not in project.user_modules:
             raise ModuleNotExistsException(

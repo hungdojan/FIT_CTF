@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
+from typing import Any
 
 from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 
@@ -73,7 +75,7 @@ class PodmanClient(BaseContainerClient):
     def compose_up(cls, file: str) -> subprocess.CompletedProcess:
         # TODO: eliminate whitespaces
         cmd = f"podman-compose -f {file} up -d"
-        # TODO redirect outputs
+        # TODO redirect outputs; store to log file
         proc = subprocess.run(
             cmd.split(),
             stdout=sys.stdout,
@@ -83,6 +85,10 @@ class PodmanClient(BaseContainerClient):
 
     @classmethod
     def compose_down(cls, file: str) -> subprocess.CompletedProcess:
+        if len(cls.compose_ps(file)) == 0:
+            return subprocess.CompletedProcess(
+                args=["podman-compose", "down"], returncode=0
+            )
         # TODO: eliminate whitespaces
         cmd = f"podman-compose -f {file} down"
         # TODO: redirect outputs
@@ -100,6 +106,13 @@ class PodmanClient(BaseContainerClient):
         return [data.lstrip('"').rstrip('"') for data in proc.stdout.rsplit()]
 
     @classmethod
+    def compose_ps_json(cls, file: str) -> dict[str, Any]:
+        cmd = ["podman-compose", "-f", file, "ps", "--format", "json"]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        data = json.loads(proc.stdout)
+        return data
+
+    @classmethod
     def compose_build(cls, file: str) -> subprocess.CompletedProcess:
         cmd = f"podman-compose -f {file} build"
         # TODO: redirect outputs
@@ -111,24 +124,28 @@ class PodmanClient(BaseContainerClient):
         return proc
 
     @classmethod
-    def stats(cls, project_name: str) -> subprocess.CompletedProcess:
-        cmd = "podman ps -a --format={{.Names}} " f"--filter=name=^{project_name}"
-        proc = subprocess.run(cmd.split(), capture_output=True, text=True)
+    def compose_shell(
+        cls, file: str, service: str, command: str
+    ) -> subprocess.CompletedProcess:
+        cmd = f"podman-compose -f {file} exec {service} {command}"
+        return subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
 
-        container_names = [
-            data.rstrip('"').lstrip('"') for data in proc.stdout.rsplit()
-        ]
+    @classmethod
+    def stats(cls, project_name: str) -> list[dict[str, str]]:
         cmd = [
             "podman",
             "stats",
             "--no-stream",
             "--format",
-            "table {{.Name}} {{.CPUPerc}} {{.MemUsage}} {{.UpTime}}",
-        ] + container_names
-        return subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+            # "table {{.Name}} {{.CPUPerc}} {{.MemUsage}} {{.UpTime}}",
+            "json",
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        data = json.loads(proc.stdout)
+        return [d for d in data if d["name"].startswith(project_name)]
 
     @classmethod
-    def ps(cls, project_name: str) -> subprocess.CompletedProcess:
+    def ps(cls, project_name: str) -> list[str]:
         cmd = [
             "podman",
             "ps",
@@ -137,11 +154,21 @@ class PodmanClient(BaseContainerClient):
             "table {{.Names}} {{.Networks}} {{.Ports}} {{.State}} {{.CreatedHuman}}",
             f"--filter=name=^{project_name}",
         ]
-        return subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        return [
+            data.lstrip('"').rstrip('"') for data in proc.stdout.rsplit("\n") if data
+        ]
 
     @classmethod
-    def shell(
-        cls, file: str, service: str, command: str
-    ) -> subprocess.CompletedProcess:
-        cmd = f"podman-compose -f {file} exec {service} {command}"
-        return subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
+    def ps_json(cls, project_name: str) -> dict[str, Any]:
+        cmd = [
+            "podman",
+            "ps",
+            "-a",
+            "--format",
+            "json",
+            f"--filter=name=^{project_name}",
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        data = json.loads(proc.stdout)
+        return data

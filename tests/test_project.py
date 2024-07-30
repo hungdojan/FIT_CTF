@@ -134,6 +134,16 @@ def test_creating_project_errors(
 #     ctf_mgr, _, prjs, _ = project_data
 #     prj_mgr = ctf_mgr.prj_mgr
 
+def test_get_project_info(
+    project_data: tuple[CTFManager, Path, list[Project], list[User]]
+):
+    ctf_mgr, _, prjs, _ = project_data
+    prj_mgr = ctf_mgr.prj_mgr
+
+    projects = prj_mgr.get_project_info()
+    assert len(projects) == len(prjs)
+    assert set([p.id for p in prjs]) == set([p.id for p in projects.values()])
+    assert set(list(projects.keys())) == set([p.name for p in prjs])
 
 def test_get_projects(project_data: tuple[CTFManager, Path, list[Project], list[User]]):
     ctf_mgr, _, prjs, _ = project_data

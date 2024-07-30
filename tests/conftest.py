@@ -37,7 +37,7 @@ def empty_data(
     db_host = os.getenv("DB_HOST")
     db_name = os.getenv("DB_TEST_NAME", "test-ctf-db")
     if not db_host:
-        pytest.exit("DB_HOST enviroment variable is not set!")
+        pytest.exit("DB_HOST environment variable is not set!")
 
     # init testing env and clear database (just in case)
     try:

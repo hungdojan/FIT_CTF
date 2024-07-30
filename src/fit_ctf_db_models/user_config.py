@@ -205,7 +205,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :rtype: tuple[_user.User, _project.Project]
         """
         user = self._user_mgr.get_user(username=username)
-        project = self._prj_mgr.get_project(name=project_name)
+        project = self._prj_mgr.get_project(project_name)
 
         return user, project
 
@@ -427,15 +427,12 @@ class UserConfigManager(BaseManager[UserConfig]):
         os.makedirs(mount_dir)
         os.chmod(mount_dir, 0o777)
 
-        user_config = UserConfig(
-            _id=ObjectId(),
+        user_config = self.create_and_insert_doc(
             user_id=DBRef("user", user.id),
             project_id=DBRef("project", project.id),
             ssh_port=ssh_port,
             forwarded_port=forwarded_port,
         )
-
-        self.insert_doc(user_config)
         return user_config
 
     def enroll_multiple_users_to_project(

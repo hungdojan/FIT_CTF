@@ -366,7 +366,9 @@ def status_project(ctx: click.Context):
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
-    ctf_mgr.prj_mgr.print_ps(name)
+    data = ctf_mgr.prj_mgr.get_ps_data(name)
+    for line in data:
+        click.echo(line)
 
 
 @server.command(name="is-running")

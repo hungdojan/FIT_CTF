@@ -160,19 +160,19 @@ class CTFManager:
             project = self.prj_mgr.get_project(name)
         except ProjectNotExistException:
             return False
-        return self.prj_mgr.is_running(project)
+        return self.prj_mgr.project_is_running(project)
 
-    def project_status(self, name: str) -> subprocess.CompletedProcess:
+    def project_status(self, name: str) -> list[str]:
         """Print a result of `podman ps` command.
 
         :param name: Project name.
         :type name: str
-        :return: A completed process object.
         :raises ProjectNotExistException: Project with the given name was not found.
-        :rtype: subprocess.CompletedProcess
+        :return: Lines from stdout.
+        :rtype: list[str]
         """
         project = self.prj_mgr.get_project(name)
-        return self.prj_mgr.c_client.ps(project.name)
+        return self.prj_mgr.c_client.compose_ps(project.name)
 
     def start_user_instance(
         self, username: str, project_name: str

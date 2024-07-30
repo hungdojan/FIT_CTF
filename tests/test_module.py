@@ -1,10 +1,11 @@
 from pathlib import Path
+import shutil
 
 import pytest
 import yaml
 
 from fit_ctf_backend.ctf_manager import CTFManager
-from fit_ctf_backend.exceptions import ModuleExistsException, ModuleNotExistsException
+from fit_ctf_backend.exceptions import DirNotEmptyException, ModuleExistsException, ModuleNotExistsException
 from fit_ctf_db_models.project import Project
 from fit_ctf_db_models.user import User
 
@@ -36,6 +37,16 @@ def test_create_project_module(
     )
 
     module_name = "module1"
+    module_dir = _root / "_modules" / f"prj_{module_name}"
+
+    module_dir.mkdir(parents=True)
+    (module_dir / "file").touch()
+
+    with pytest.raises(DirNotEmptyException):
+        module = prj_mgr.create_project_module(prjs[0].name, module_name)
+
+    shutil.rmtree(module_dir)
+
     module = prj_mgr.create_project_module(prjs[0].name, module_name)
     assert module.name == module_name
     _root_dir = Path(prjs[0].config_root_dir) / module.root_dir
@@ -106,6 +117,16 @@ def test_create_user_module(
     )
 
     module_name = "module1"
+    module_dir = _root / "_modules" / f"usr_{module_name}"
+
+    module_dir.mkdir(parents=True)
+    (module_dir / "file").touch()
+
+    with pytest.raises(DirNotEmptyException):
+        module = prj_mgr.create_user_module(prjs[0].name, module_name)
+
+    shutil.rmtree(module_dir)
+
     module = prj_mgr.create_user_module(prjs[0].name, module_name)
     assert module.name == module_name
     _root_dir = Path(prjs[0].config_root_dir) / module.root_dir

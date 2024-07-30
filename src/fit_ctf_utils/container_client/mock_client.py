@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+from typing import Any
 
 from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 
@@ -43,24 +44,34 @@ class MockClient(BaseContainerClient):
         return []
 
     @classmethod
+    def compose_ps_json(cls, file: str) -> dict[str, Any]:
+        # TODO:
+        return {}
+
+    @classmethod
     def compose_build(cls, file: str) -> subprocess.CompletedProcess:
         return subprocess.CompletedProcess(args=["compose", "build"], returncode=0)
 
     @classmethod
-    def stats(cls, project_name: str) -> subprocess.CompletedProcess:
-        # TODO:
-        return subprocess.CompletedProcess(args=["stats"], returncode=0)
-
-    @classmethod
-    def ps(cls, project_name: str) -> subprocess.CompletedProcess:
-        # TODO:
-        return subprocess.CompletedProcess(args=["ps", "-a"], returncode=0)
-
-    @classmethod
-    def shell(
+    def compose_shell(
         cls, file: str, service: str, command: str
     ) -> subprocess.CompletedProcess:
         # TODO:
         return subprocess.CompletedProcess(
             args=["compose", "exec", "bash"], returncode=0
         )
+
+    @classmethod
+    def stats(cls, project_name: str) -> list[dict[str, str]]:
+        # TODO:
+        return []
+
+    @classmethod
+    def ps(cls, project_name: str) -> list[str]:
+        # TODO:
+        return []
+
+    @classmethod
+    def ps_json(cls, project_name: str) -> dict[str, Any]:
+        # TODO:
+        return {}
