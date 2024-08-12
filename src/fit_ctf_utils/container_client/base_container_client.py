@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any
 
 
@@ -67,11 +68,13 @@ class BaseContainerClient(ABC):
 
     @classmethod
     @abstractmethod
-    def compose_up(cls, file: str) -> subprocess.CompletedProcess:  # pragma: no cover
+    def compose_up(
+        cls, file: str | Path
+    ) -> subprocess.CompletedProcess:  # pragma: no cover
         """Run `podman-compose up` for the given file.
 
         :param file: Path to the compose file.
-        :type file: str
+        :type file: str | Path
         :return: A completed process object.
         :rtype: subprocess.CompletedProcess
         """
@@ -79,11 +82,13 @@ class BaseContainerClient(ABC):
 
     @classmethod
     @abstractmethod
-    def compose_down(cls, file: str) -> subprocess.CompletedProcess:  # pragma: no cover
+    def compose_down(
+        cls, file: str | Path
+    ) -> subprocess.CompletedProcess:  # pragma: no cover
         """Run `podman-compose down` for the given file.
 
         :param file: Path to the compose file.
-        :type file: str
+        :type file: str | Path
         :return: A completed process object.
         :rtype: subprocess.CompletedProcess
         """
@@ -91,11 +96,11 @@ class BaseContainerClient(ABC):
 
     @classmethod
     @abstractmethod
-    def compose_ps(cls, file: str) -> list[str]:  # pragma: no cover
+    def compose_ps(cls, file: str | Path) -> list[str]:  # pragma: no cover
         """Get container states using `podman-compose` command.
 
         :param file: Path to the compose file.
-        :type file: str
+        :type file: str | Path
         :return: A status info for each found container.
         :rtype: list[str]
         """
@@ -103,25 +108,27 @@ class BaseContainerClient(ABC):
 
     @classmethod
     @abstractmethod
-    def compose_ps_json(cls, file: str) -> dict[str, Any]:  # pragma: no cover
+    def compose_ps_json(
+        cls, file: str | Path
+    ) -> list[dict[str, Any]]:  # pragma: no cover
         """Get container states in JSON format using `podman-compose` command.
 
         :param file: Path to the compose file.
-        :type file: str
+        :type file: str | Path
         :return: A status info for each found container.
-        :rtype: dict[str, Any]
+        :rtype: list[dict[str, Any]]
         """
         pass
 
     @classmethod
     @abstractmethod
     def compose_build(
-        cls, file: str
+        cls, file: str | Path
     ) -> subprocess.CompletedProcess:  # pragma: no cover
         """Build container images using `podman-compose` command.
 
         :param file: Path to the compose file.
-        :type file: str
+        :type file: str | Path
         :return: A completed process object.
         :rtype: subprocess.CompletedProcess
         """
@@ -130,12 +137,12 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def compose_shell(
-        cls, file: str, service: str, command: str
-    ) -> subprocess.CompletedProcess:
+        cls, file: str | Path, service: str, command: str
+    ) -> subprocess.CompletedProcess:  # pragma: no cover
         """Shell into the container using `podman-compose` command.
 
         :param file: A path to the compose file.
-        :type file: str
+        :type file: str | Path
         :param service: Name of the service within the compose file.
         :type service: str
         :param command: A command that will be executed.
@@ -171,12 +178,12 @@ class BaseContainerClient(ABC):
 
     @classmethod
     @abstractmethod
-    def ps_json(cls, project_name: str) -> dict[str, Any]:  # pragma: no cover
+    def ps_json(cls, project_name: str) -> list[dict[str, Any]]:  # pragma: no cover
         """Get containers' states in JSON format using `podman ps` command.
 
         :param project_name: Project name.
         :type: str
         :return: A dict with Podman process data.
-        :rtype: dict[str, Any]
+        :rtype: list[dict[str, Any]]
         """
         pass

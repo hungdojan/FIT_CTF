@@ -565,7 +565,7 @@ class ProjectManager(BaseManager[Project]):
         :return: A completed process object.
         :rtype: subprocess.CompletedProcess
         """
-        return self.c_client.compose_down(str(project.compose_filepath))
+        return self.c_client.compose_down(project.compose_filepath)
 
     def project_is_running(self, project: Project) -> bool:
         """Check if the project server is running.
@@ -604,7 +604,7 @@ class ProjectManager(BaseManager[Project]):
             )
             f.write(template.render(project=asdict(project), user={}))
 
-    def shell_admin(self, project: Project):
+    def shell_admin(self, project: Project):  # pragma: no cover
         """Shell user into the admin container.
 
         :param project: A project object.

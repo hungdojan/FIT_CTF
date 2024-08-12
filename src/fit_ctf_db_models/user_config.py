@@ -143,9 +143,7 @@ class UserConfigManager(BaseManager[UserConfig]):
             },
             {
                 # transform to the final internet format
-                "$project": {
-                    "username": "$user.username",
-                }
+                "$project": {"username": "$user.username", "user_id": "$user._id"}
             },
         ]
 
@@ -191,21 +189,23 @@ class UserConfigManager(BaseManager[UserConfig]):
         ]
 
     def _get_user_and_project(
-        self, username: str, project_name: str
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
     ) -> tuple[_user.User, _project.Project]:
-        """_summary_
+        """Retrieve both `User` and `Project` objects.
 
-        :param username: User username.
-        :type username: str
-        :param project_name: Project name.
-        :type project_name: str
+        :param user_or_username: User username or user object.
+        :type user_or_username: str | _user.User
+        :param project_or_name: Project name or project object.
+        :type project_or_name: str | _project.Project
         :raises UserNotExistsException: User with the given username was not found.
         :raises ProjectNotExistException: Project data was not found in the database.
         :return: A found pair of `User` and `Project` objects.
         :rtype: tuple[_user.User, _project.Project]
         """
-        user = self._user_mgr.get_user(username=username)
-        project = self._prj_mgr.get_project(project_name)
+        user = self._user_mgr.get_user(user_or_username)
+        project = self._prj_mgr.get_project(project_or_name)
 
         return user, project
 
@@ -465,7 +465,9 @@ class UserConfigManager(BaseManager[UserConfig]):
 
         min_sshport = self.get_min_available_sshport(project)
         if min_sshport + len(new_users) - 1 > 65_535:
-            raise SSHPortOutOfRangeException("Not enough available ports.")
+            raise SSHPortOutOfRangeException(
+                "Not enough available ports."
+            )  # pragma: no cover
 
         users = self._user_mgr.get_docs(username={"$in": new_users}, active=True)
         mount_dir = Path(project.config_root_dir) / project.volume_mount_dirname
@@ -529,19 +531,23 @@ class UserConfigManager(BaseManager[UserConfig]):
 
     # CANCEL USER ENROLLMENTS
 
-    def cancel_user_enrollment(self, username: str, project_name: str):
+    def cancel_user_enrollment(
+        self,
+        user_or_username: str | _user.User,
+        project_or_name: str | _project.Project,
+    ):
         """Cancel user enrollment.
 
-        :param username: User username.
-        :type username: str
-        :param project_name: Project name.
-        :type project_name: str
+        :param user_or_username: User username or user object.
+        :type user_or_username: str | _user.User
+        :param project_or_name: Project name or project object.
+        :type project_or_name: str | _project.Project
         :raises UserNotExistsException: User with the given username was not found.
         :raises ProjectNotExistException: Project data was not found in the database.
         :raises UserNotEnrolledToProjectException: User is not enrolled to the given
         project.
         """
-        user, project = self._get_user_and_project(username, project_name)
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
 
         user_config = self.get_doc_by_filter(
             **{
@@ -553,8 +559,11 @@ class UserConfigManager(BaseManager[UserConfig]):
 
         if not user_config:
             raise UserNotEnrolledToProjectException(
-                f"User `{username}` is not enrolled to the project `{project_name}`"
+                f"User `{user.username}` is not enrolled to the project `{project.name}`"
             )
+
+        if self.user_instance_is_running(user, project):
+            self.stop_user_instance(user, project)
 
         # remove mount dirs and compose files
         mount_dir = (
@@ -564,40 +573,58 @@ class UserConfigManager(BaseManager[UserConfig]):
             shutil.rmtree(mount_dir)
 
         self.c_client.rm_networks(f"{project.name}_{user.username}_")
-        (Path(project.config_root_dir) / f"{username}_compose.yaml").unlink(
+        self.c_client.rm_images(f"{project.name}_{user.username}_")
+        (Path(project.config_root_dir) / f"{user.username}_compose.yaml").unlink(
             missing_ok=True
         )
 
         user_config.active = False
         self.update_doc(user_config)
 
-    def cancel_multiple_enrollments(self, lof_usernames: list[str], project_name: str):
+    def cancel_multiple_enrollments(
+        self, lof_usernames: list[str], project_or_name: str | _project.Project
+    ):
         """Cancel multiple enrollment to a selected project.
 
         :param lof_usernames: A list of usernames.
         :type lof_usernames: list[str]
-        :param project_name: Project name.
-        :type project_name: str
+        :param project_or_name: Project name or project object.
+        :type project_or_name: str | _project.Project
         :raises ProjectNotExistException: Project data was not found in the database.
         """
+
+        def remove_podman_objects():
+            lof_prefix_name = list(
+                map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
+            )
+            lof_network_names = self.c_client.get_networks(lof_prefix_name)
+            if lof_network_names:
+                cmd = ["podman", "network", "rm"] + lof_network_names
+                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
+            lof_image_names = self.c_client.get_images(lof_prefix_name)
+            if lof_image_names:
+                cmd = ["podman", "rmi"] + lof_image_names
+                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
         # check project existence
-        project = self._get_project(project_name)
-        user_configs = [
+        project = self._get_project(project_or_name)
+        user_configs: list = [
             i
             for i in self._coll.aggregate(
                 self._multiple_users_pipeline(project, lof_usernames)
             )
         ]
+
         if not user_configs:
             return
 
-        lof_prefix_name = list(
-            map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
+        users = self._user_mgr.get_docs(
+            _id={"$in": [uc["user_id"] for uc in user_configs]}
         )
-        lof_network_names = self.c_client.get_networks(lof_prefix_name)
-        if lof_network_names:
-            cmd = ["podman", "network", "rm"] + lof_network_names
-            subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+        self.stop_multiple_user_instances(users, project)
+
+        remove_podman_objects()
 
         # remove mount dirs and compose files
         for uc in user_configs:
@@ -618,6 +645,20 @@ class UserConfigManager(BaseManager[UserConfig]):
         :raises ProjectNotExistException: Project data was not found in the database.
         """
 
+        def remove_podman_objects():
+            lof_prefix_name = list(
+                map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
+            )
+            lof_network_names = self.c_client.get_networks(lof_prefix_name)
+            if lof_network_names:
+                cmd = ["podman", "network", "rm"] + lof_network_names
+                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
+            lof_image_names = self.c_client.get_images(lof_prefix_name)
+            if lof_image_names:
+                cmd = ["podman", "rmi"] + lof_image_names
+                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
         project = self._get_project(project_or_name)
         user_configs = [
             i for i in self._coll.aggregate(self._all_users_pipeline(project))
@@ -625,13 +666,8 @@ class UserConfigManager(BaseManager[UserConfig]):
         if not user_configs:
             return
 
-        lof_prefix_name = list(
-            map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
-        )
-        lof_network_names = self.c_client.get_networks(lof_prefix_name)
-        if lof_network_names:
-            cmd = ["podman", "network", "rm"] + lof_network_names
-            subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+        self.stop_all_user_instances(project)
+        remove_podman_objects()
 
         # remove mount dirs and compose files
         for uc in user_configs:
@@ -653,6 +689,24 @@ class UserConfigManager(BaseManager[UserConfig]):
         :type user_or_username: str | _user.User
         :raises UserNotExistsException: User with the given username was not found.
         """
+
+        def remove_podman_objects():
+            # create podman prefixes
+            lof_prefix_name = list(
+                map(lambda prj: f"{prj.name}_{user.username}_", lof_projects)
+            )
+
+            # delete networks
+            lof_network_names = self.c_client.get_networks(lof_prefix_name)
+            if lof_network_names:
+                cmd = ["podman", "network", "rm"] + lof_network_names
+                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
+            lof_image_names = self.c_client.get_images(lof_prefix_name)
+            if lof_image_names:
+                cmd = ["podman", "rmi"] + lof_image_names
+                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+
         user = self._get_user(user_or_username)
         pipeline = [
             {"$match": {"user_id.$id": user.id, "active": True}},
@@ -675,16 +729,10 @@ class UserConfigManager(BaseManager[UserConfig]):
             return
         ids = [uc["_id"] for uc in agg]
 
-        # create podman prefixes
-        lof_prefix_name = list(
-            map(lambda prj: f"{prj.name}_{user.username}_", lof_projects)
-        )
-
-        # delete networks
-        lof_network_names = self.c_client.get_networks(lof_prefix_name)
-        if lof_network_names:
-            cmd = ["podman", "network", "rm"] + lof_network_names
-            subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+        for project in lof_projects:
+            if self.user_instance_is_running(user, project):
+                self.stop_user_instance(user, project)
+        remove_podman_objects()
 
         # remove mount dirs and compose files
         for project in lof_projects:
@@ -724,8 +772,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :raises ModuleExistsException: The module is already assigned to the given login
             node.
         """
-        user = self._get_user(user_or_username)
-        project = self._get_project(project_or_name)
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
         user_config = self.get_user_config(project, user)
 
         # add and compile
@@ -756,8 +803,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :raises UserNotEnrolledToProjectException: Given user is not enrolled to the
             project.
         """
-        user = self._get_user(user_or_username)
-        project = self._get_project(project_or_name)
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
         user_config = self.get_user_config(project, user)
         if module_name in user_config.modules:
             user_config.modules.pop(module_name)
@@ -786,8 +832,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :return: A completed process data.
         :rtype: subprocess.CompletedProcess
         """
-        user = self._get_user(user_or_username)
-        project = self._get_project(project_or_name)
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
         if not self.user_is_enrolled_to_the_project(project, user):
             raise UserNotEnrolledToProjectException(
                 f"User `{user.username}` is not enrolled to `{project.name}`."
@@ -820,8 +865,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :return: A completed process data.
         :rtype: subprocess.CompletedProcess
         """
-        user = self._get_user(user_or_username)
-        project = self._get_project(project_or_name)
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
         if not self.user_is_enrolled_to_the_project(project, user):
             raise UserNotEnrolledToProjectException(
                 f"User `{user.username}` is not enrolled to `{project.name}`."
@@ -833,8 +877,8 @@ class UserConfigManager(BaseManager[UserConfig]):
                 "A compose file for the given user does not exist."
             )
         if not self.user_instance_is_running(user, project):
-            return subprocess.CompletedProcess(args=["compose", "up"], returncode=0)
-        return self.c_client.compose_down(str(compose_file.resolve()))
+            return subprocess.CompletedProcess(args=["compose", "down"], returncode=0)
+        return self.c_client.compose_down(compose_file)
 
     def user_instance_is_running(
         self,
@@ -854,15 +898,14 @@ class UserConfigManager(BaseManager[UserConfig]):
         :return: `True` if login nodes are up.
         :rtype: bool
         """
-        user = self._get_user(user_or_username)
-        project = self._get_project(project_or_name)
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
         if not self.user_is_enrolled_to_the_project(project, user):
             raise UserNotEnrolledToProjectException(
                 f"User `{user.username}` is not enrolled to `{project.name}`."
             )
 
         compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
-        return len(self.c_client.compose_ps(str(compose_file.resolve()))) > 0
+        return len(self.c_client.compose_ps(compose_file)) > 0
 
     def _compile_uc(
         self, user_config: UserConfig, project: _project.Project, user: _user.User
@@ -903,8 +946,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :raises UserNotEnrolledToProjectException: Given user is not enrolled to the
             project.
         """
-        user = self._get_user(user_or_username)
-        project = self._get_project(project_or_name)
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
         user_config = self.get_user_config(project, user)
         self._compile_uc(user_config, project, user)
 
@@ -924,8 +966,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         :raises UserNotEnrolledToProjectException: Given user is not enrolled to the
             project.
         """
-        user = self._get_user(user_or_username)
-        project = self._get_project(project_or_name)
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
         if not self.user_is_enrolled_to_the_project(project, user):
             raise UserNotEnrolledToProjectException(
                 f"User `{user.username}` is not enrolled to the project `{project.name}`."
@@ -949,14 +990,31 @@ class UserConfigManager(BaseManager[UserConfig]):
         :raises UserNotEnrolledToProjectException: Given user is not enrolled to the
             project.
         """
-        user = self._get_user(user_or_username)
-        project = self._get_project(project_or_name)
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
         if not self.user_is_enrolled_to_the_project(project, user):
             raise UserNotEnrolledToProjectException(
                 f"User `{user.username}` is not enrolled to the project `{project.name}`."
             )
         compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
         return self.c_client.compose_build(str(compose_file.resolve()))
+
+    def stop_multiple_user_instances(
+        self, users: list[_user.User], project: _project.Project
+    ):
+        """Stop multiple user nodes.
+
+        :param users: A list of user object that should be linked with the project and its
+            nodes will be stopped.
+        :type users: list[_user.User]
+        :param project: A project object.
+        :type project: _project.Project
+        """
+        for user in users:
+            try:
+                if self.user_instance_is_running(user, project):
+                    self.stop_user_instance(user, project)
+            except UserNotEnrolledToProjectException:
+                pass
 
     def stop_all_user_instances(self, project: _project.Project):
         """Stop all login nodes.

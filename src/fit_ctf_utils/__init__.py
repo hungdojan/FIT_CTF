@@ -8,5 +8,5 @@ def get_c_client_by_name(name: str) -> type[BaseContainerClient]:
         return PodmanClient
     elif name == "mock":
         return MockClient
-    else:
+    else:  # pragma: no cover
         raise ValueError("Given container engine name is not supported.")

@@ -13,7 +13,6 @@ from typing import Any
 
 from bson import ObjectId
 from passlib.hash import sha512_crypt
-from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 from pymongo.database import Database
 
 import fit_ctf_db_models.project as _project
@@ -27,6 +26,7 @@ from fit_ctf_backend.exceptions import (
 )
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_templates import TEMPLATE_FILES, get_template
+from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 
 log = logging.getLogger()
 log.disabled = False
@@ -118,15 +118,18 @@ class UserManager(BaseManager[User]):
         self._coll.insert_one(asdict(doc))
         return doc
 
-    def get_user(self, username: str) -> User:
+    def get_user(self, user_or_username: str | User) -> User:
         """Retrieve a user from the database.
 
-        :param username: User username.
-        :type username: str
+        :param user_or_username: User username or user object.
+        :type user_or_username: str | User
         :raises UserNotExistsException: User with the given username was not found.
         :return: A found user object.
         :rtype: User
         """
+        if isinstance(user_or_username, User):
+            return user_or_username
+        username = user_or_username
         user = self.get_doc_by_filter(username=username, active=True)
         if not user:
             raise UserNotExistsException(f"User `{username}` does not exists.")
@@ -288,7 +291,6 @@ class UserManager(BaseManager[User]):
             shadow_path=str(shadow_file.resolve()),
             shadow_hash=crypt_hash,
             email=email,
-
         )
         return user, {"username": username, "password": password}
 
