@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import os
@@ -38,6 +39,8 @@ def empty_data(
     db_name = os.getenv("DB_TEST_NAME", "test-ctf-db")
     if not db_host:
         pytest.exit("DB_HOST environment variable is not set!")
+    os.environ["LOG_DEST"] = str(tmp_path.resolve())
+
 
     # init testing env and clear database (just in case)
     try:

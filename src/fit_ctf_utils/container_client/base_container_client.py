@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from abc import ABC, abstractmethod
+from logging import Logger
 from pathlib import Path
 from typing import Any
 
@@ -39,58 +40,108 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def rm_images(
-        cls, contains: str
-    ) -> subprocess.CompletedProcess | None:  # pragma: no cover
+        cls, logger: Logger, contains: str, to_stdout: bool=False
+    ) -> int:  # pragma: no cover
         """Remove container images from the system using `podman` command.
 
+        :param logger: A logger handler to write output to.
+        :type logger: Logger
         :param contains: A substring search filter.
         :type contains: str
-        :return: A completed process object when images are successfully removed. None if no
-        image with the given substring was found.
-        :rtype: subprocess.CompletedProcess | None
+        :param to_stdout: Pipe output to stdout as well. Defaults to False.
+        :type to_stdout: bool
+        :return: An exit code.
+        :rtype: int
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def rm_multiple_images(
+        cls, logger: Logger, image_names: list[str], to_stdout: bool=False
+    ) -> int:  # pragma: no cover
+        """Remove numerous container images from the system using `podman` command.
+
+        :param logger: A logger handler to write output to.
+        :type logger: Logger
+        :param image_names: A list of images to remove.
+        :type image_names: list[str]
+        :param to_stdout: Pipe output to stdout as well. Defaults to False.
+        :type to_stdout: bool
+        :return: An exit code.
+        :rtype: int
         """
         pass
 
     @classmethod
     @abstractmethod
     def rm_networks(
-        cls, contains: str
-    ) -> subprocess.CompletedProcess | None:  # pragma: no cover
+        cls, logger: Logger, contains: str, to_stdout: bool=False
+    ) -> int:  # pragma: no cover
         """Remove container networks from the system using `podman` command.
 
+        :param logger: A logger handler to write output to.
+        :type logger: Logger
         :param contains: A substring search filter.
         :type contains: str
-        :return: A completed process object when networks are successfully removed. None if no
-        network with the given substring was found.
-        :rtype: subprocess.CompletedProcess | None
+        :param to_stdout: Pipe output to stdout as well. Defaults to False.
+        :type to_stdout: bool
+        :return: An exit code.
+        :rtype: int
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def rm_multiple_networks(
+        cls, logger: Logger, network_names: list[str], to_stdout: bool=False
+    ) -> int:  # pragma: no cover
+        """Remove numerous container networks from the system using `podman` command.
+
+        :param logger: A logger handler to write output to.
+        :type logger: Logger
+        :param network_names: A list of network names to remove.
+        :type network_names: list[str]
+        :param to_stdout: Pipe output to stdout as well. Defaults to False.
+        :type to_stdout: bool
+        :return: An exit code.
+        :rtype: int
         """
         pass
 
     @classmethod
     @abstractmethod
     def compose_up(
-        cls, file: str | Path
-    ) -> subprocess.CompletedProcess:  # pragma: no cover
+        cls, logger: Logger, file: str | Path, to_stdout: bool=False
+    ) -> int:  # pragma: no cover
         """Run `podman-compose up` for the given file.
 
+        :param logger: A logger handler to write output to.
+        :type logger: Logger
         :param file: Path to the compose file.
         :type file: str | Path
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
+        :param to_stdout: Pipe output to stdout as well. Defaults to False.
+        :type to_stdout: bool
+        :return: An exit code.
+        :rtype: int
         """
         pass
 
     @classmethod
     @abstractmethod
     def compose_down(
-        cls, file: str | Path
-    ) -> subprocess.CompletedProcess:  # pragma: no cover
+        cls, logger: Logger, file: str | Path, to_stdout: bool=False
+    ) -> int:  # pragma: no cover
         """Run `podman-compose down` for the given file.
 
+        :param logger: A logger handler to write output to.
+        :type logger: Logger
         :param file: Path to the compose file.
         :type file: str | Path
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
+        :param to_stdout: Pipe output to stdout as well. Defaults to False.
+        :type to_stdout: bool
+        :return: An exit code.
+        :rtype: int
         """
         pass
 
@@ -123,14 +174,18 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def compose_build(
-        cls, file: str | Path
-    ) -> subprocess.CompletedProcess:  # pragma: no cover
+        cls, logger: Logger, file: str | Path, to_stdout: bool=False
+    ) -> int:  # pragma: no cover
         """Build container images using `podman-compose` command.
 
+        :param logger: A logger handler to write output to.
+        :type logger: Logger
         :param file: Path to the compose file.
         :type file: str | Path
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
+        :param to_stdout: Pipe output to stdout as well. Defaults to False.
+        :type to_stdout: bool
+        :return: An exit code.
+        :rtype: int
         """
         pass
 

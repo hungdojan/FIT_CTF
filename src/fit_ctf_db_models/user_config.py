@@ -3,11 +3,8 @@ from __future__ import annotations
 import logging
 import os
 import shutil
-import subprocess
-import sys
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
-from subprocess import Popen
 from typing import Any
 
 from bson import DBRef, ObjectId
@@ -26,6 +23,7 @@ from fit_ctf_backend.exceptions import (
 from fit_ctf_db_models.base import Base, BaseManager
 from fit_ctf_db_models.compose_objects import Module
 from fit_ctf_templates import TEMPLATE_FILES, get_template
+from fit_ctf_utils import get_or_create_logger
 from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 
 log = logging.getLogger()
@@ -572,8 +570,12 @@ class UserConfigManager(BaseManager[UserConfig]):
         if mount_dir.exists() and mount_dir.is_dir() and len(str(mount_dir)) > 0:
             shutil.rmtree(mount_dir)
 
-        self.c_client.rm_networks(f"{project.name}_{user.username}_")
-        self.c_client.rm_images(f"{project.name}_{user.username}_")
+        self.c_client.rm_networks(
+            get_or_create_logger(project.name), f"{project.name}_{user.username}_"
+        )
+        self.c_client.rm_images(
+            get_or_create_logger(project.name), f"{project.name}_{user.username}_"
+        )
         (Path(project.config_root_dir) / f"{user.username}_compose.yaml").unlink(
             missing_ok=True
         )
@@ -594,18 +596,19 @@ class UserConfigManager(BaseManager[UserConfig]):
         """
 
         def remove_podman_objects():
-            lof_prefix_name = list(
-                map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
-            )
-            lof_network_names = self.c_client.get_networks(lof_prefix_name)
-            if lof_network_names:
-                cmd = ["podman", "network", "rm"] + lof_network_names
-                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+            lof_prefix_name = [
+                f"{project.name}_{uc['username']}_" for uc in user_configs
+            ]
 
-            lof_image_names = self.c_client.get_images(lof_prefix_name)
-            if lof_image_names:
-                cmd = ["podman", "rmi"] + lof_image_names
-                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+            network_names = self.c_client.get_networks(lof_prefix_name)
+            self.c_client.rm_multiple_networks(
+                get_or_create_logger(project.name), network_names
+            )
+
+            image_names = self.c_client.get_images(lof_prefix_name)
+            self.c_client.rm_multiple_images(
+                get_or_create_logger(project.name), image_names
+            )
 
         # check project existence
         project = self._get_project(project_or_name)
@@ -646,18 +649,19 @@ class UserConfigManager(BaseManager[UserConfig]):
         """
 
         def remove_podman_objects():
-            lof_prefix_name = list(
-                map(lambda uc: f"{project.name}_{uc['username']}_", user_configs)
-            )
-            lof_network_names = self.c_client.get_networks(lof_prefix_name)
-            if lof_network_names:
-                cmd = ["podman", "network", "rm"] + lof_network_names
-                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+            lof_prefix_name = [
+                f"{project.name}_{uc['username']}_" for uc in user_configs
+            ]
 
-            lof_image_names = self.c_client.get_images(lof_prefix_name)
-            if lof_image_names:
-                cmd = ["podman", "rmi"] + lof_image_names
-                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+            network_names = self.c_client.get_networks(lof_prefix_name)
+            self.c_client.rm_multiple_networks(
+                get_or_create_logger(project.name), network_names
+            )
+
+            image_names = self.c_client.get_images(lof_prefix_name)
+            self.c_client.rm_multiple_images(
+                get_or_create_logger(project.name), image_names
+            )
 
         project = self._get_project(project_or_name)
         user_configs = [
@@ -692,20 +696,17 @@ class UserConfigManager(BaseManager[UserConfig]):
 
         def remove_podman_objects():
             # create podman prefixes
-            lof_prefix_name = list(
-                map(lambda prj: f"{prj.name}_{user.username}_", lof_projects)
+            lof_prefix_name = [f"{prj.name}_{user.username}_" for prj in lof_projects]
+
+            network_names = self.c_client.get_networks(lof_prefix_name)
+            self.c_client.rm_multiple_networks(
+                get_or_create_logger(project.name), network_names
             )
 
-            # delete networks
-            lof_network_names = self.c_client.get_networks(lof_prefix_name)
-            if lof_network_names:
-                cmd = ["podman", "network", "rm"] + lof_network_names
-                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
-
-            lof_image_names = self.c_client.get_images(lof_prefix_name)
-            if lof_image_names:
-                cmd = ["podman", "rmi"] + lof_image_names
-                subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+            image_names = self.c_client.get_images(lof_prefix_name)
+            self.c_client.rm_multiple_images(
+                get_or_create_logger(project.name), image_names
+            )
 
         user = self._get_user(user_or_username)
         pipeline = [
@@ -818,7 +819,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         self,
         user_or_username: str | _user.User,
         project_or_name: str | _project.Project,
-    ) -> subprocess.CompletedProcess:
+    ) -> int:
         """Start user login nodes.
 
         :param user_or_username: User username or `User` object.
@@ -829,8 +830,8 @@ class UserConfigManager(BaseManager[UserConfig]):
         :raises ProjectNotExistException: Project data was not found in the database.
         :raises UserNotEnrolledToProjectException: Given user is not enrolled to the
             project.
-        :return: A completed process data.
-        :rtype: subprocess.CompletedProcess
+        :return: An exit code.
+        :rtype: int
         """
         user, project = self._get_user_and_project(user_or_username, project_or_name)
         if not self.user_is_enrolled_to_the_project(project, user):
@@ -844,13 +845,15 @@ class UserConfigManager(BaseManager[UserConfig]):
             user_config = self.get_user_config(project, user)
             self._compile_uc(user_config, project, user)
 
-        return self.c_client.compose_up(str(compose_file.resolve()))
+        return self.c_client.compose_up(
+            get_or_create_logger(project.name), compose_file
+        )
 
     def stop_user_instance(
         self,
         user_or_username: str | _user.User,
         project_or_name: str | _project.Project,
-    ) -> subprocess.CompletedProcess:
+    ) -> int:
         """Stop user login nodes.
 
         :param user_or_username: User username or `User` object.
@@ -862,8 +865,8 @@ class UserConfigManager(BaseManager[UserConfig]):
         :raises ComposeFileNotExist: Compose file for the given user not found.
         :raises UserNotEnrolledToProjectException: Given user is not enrolled to the
             project.
-        :return: A completed process data.
-        :rtype: subprocess.CompletedProcess
+        :return: An exit code.
+        :rtype: int
         """
         user, project = self._get_user_and_project(user_or_username, project_or_name)
         if not self.user_is_enrolled_to_the_project(project, user):
@@ -877,8 +880,10 @@ class UserConfigManager(BaseManager[UserConfig]):
                 "A compose file for the given user does not exist."
             )
         if not self.user_instance_is_running(user, project):
-            return subprocess.CompletedProcess(args=["compose", "down"], returncode=0)
-        return self.c_client.compose_down(compose_file)
+            return 0
+        return self.c_client.compose_down(
+            get_or_create_logger(project.name), compose_file
+        )
 
     def user_instance_is_running(
         self,
@@ -978,7 +983,7 @@ class UserConfigManager(BaseManager[UserConfig]):
         self,
         user_or_username: str | _user.User,
         project_or_name: str | _project.Project,
-    ):
+    ) -> int:
         """Build user login nodes using `podman-compose` command.
 
         :param user_or_username: User username or `User` object.
@@ -989,6 +994,8 @@ class UserConfigManager(BaseManager[UserConfig]):
         :raises ProjectNotExistException: Project data was not found in the database.
         :raises UserNotEnrolledToProjectException: Given user is not enrolled to the
             project.
+        :return: An exit code.
+        :rtype: int
         """
         user, project = self._get_user_and_project(user_or_username, project_or_name)
         if not self.user_is_enrolled_to_the_project(project, user):
@@ -996,7 +1003,9 @@ class UserConfigManager(BaseManager[UserConfig]):
                 f"User `{user.username}` is not enrolled to the project `{project.name}`."
             )
         compose_file = Path(project.config_root_dir) / f"{user.username}_compose.yaml"
-        return self.c_client.compose_build(str(compose_file.resolve()))
+        return self.c_client.compose_build(
+            get_or_create_logger(project.name), compose_file
+        )
 
     def stop_multiple_user_instances(
         self, users: list[_user.User], project: _project.Project
@@ -1039,12 +1048,14 @@ class UserConfigManager(BaseManager[UserConfig]):
             {"$project": {"_id": 0, "user": 1}},
         ]
         lof_users = [_user.User(**i["user"]) for i in self._coll.aggregate(pipeline)]
-        root_path = Path(project.config_root_dir)
-        cmds = [
-            f"podman-compose -f {str(root_path)}/{user.username}_compose.yaml down"
-            for user in lof_users
-            if (root_path / f"{user.username}_compose.yaml").is_file()
-        ]
-        procs = [Popen(i.split()) for i in cmds]
-        for p in procs:
-            p.wait()
+        self.stop_multiple_user_instances(lof_users, project)
+        # TODO: optimize to run in parallel (issue with stdout fetching)
+        # root_path = Path(project.config_root_dir)
+        # cmds = [
+        #     f"podman-compose -f {str(root_path)}/{user.username}_compose.yaml down"
+        #     for user in lof_users
+        #     if (root_path / f"{user.username}_compose.yaml").is_file()
+        # ]
+        # procs = [Popen(i.split()) for i in cmds]
+        # for p in procs:
+        #     p.wait()

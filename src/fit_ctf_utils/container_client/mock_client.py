@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+from logging import Logger
 from pathlib import Path
 from typing import Any
 
@@ -23,27 +24,39 @@ class MockClient(BaseContainerClient):
 
     @classmethod
     def rm_images(
-        cls, contains: str
-    ) -> subprocess.CompletedProcess | None:  # pragma: no cover
-        return None
+        cls, logger: Logger, contains: str, to_stdout: bool = False
+    ) -> int:  # pragma: no cover
+        return 0
+
+    @classmethod
+    def rm_multiple_images(
+        cls, logger: Logger, image_names: list[str], to_stdout: bool = False
+    ) -> int:  # pragma: no cover
+        return 0
 
     @classmethod
     def rm_networks(
-        cls, contains: str
-    ) -> subprocess.CompletedProcess | None:  # pragma: no cover
-        return None
+        cls, logger: Logger, contains: str, to_stdout: bool = False
+    ) -> int:  # pragma: no cover
+        return 0
+
+    @classmethod
+    def rm_multiple_networks(
+        cls, logger: Logger, network_names: list[str], to_stdout: bool = False
+    ) -> int:  # pragma: no cover
+        return 0
 
     @classmethod
     def compose_up(
-        cls, file: str | Path
-    ) -> subprocess.CompletedProcess:  # pragma: no cover
-        return subprocess.CompletedProcess(args=["compose", "up"], returncode=0)
+        cls, logger: Logger, file: str | Path, to_stdout: bool = False
+    ) -> int:  # pragma: no cover
+        return 0
 
     @classmethod
     def compose_down(
-        cls, file: str | Path
-    ) -> subprocess.CompletedProcess:  # pragma: no cover
-        return subprocess.CompletedProcess(args=["compose", "down"], returncode=0)
+        cls, logger: Logger, file: str | Path, to_stdout: bool = False
+    ) -> int:  # pragma: no cover
+        return 0
 
     @classmethod
     def compose_ps(cls, file: str | Path) -> list[str]:  # pragma: no cover
@@ -57,9 +70,9 @@ class MockClient(BaseContainerClient):
 
     @classmethod
     def compose_build(
-        cls, file: str | Path
-    ) -> subprocess.CompletedProcess:  # pragma: no cover
-        return subprocess.CompletedProcess(args=["compose", "build"], returncode=0)
+        cls, logger: Logger, file: str | Path, to_stdout: bool = False
+    ) -> int:  # pragma: no cover
+        return 0
 
     @classmethod
     def compose_shell(

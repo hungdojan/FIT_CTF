@@ -128,8 +128,7 @@ class CTFManager:
             project = self.prj_mgr.get_project(name)
         except ProjectNotExistException:
             return -1
-        proc = self.prj_mgr.start_project(project)
-        return proc.returncode
+        return self.prj_mgr.start_project(project)
 
     def stop_project(self, name: str) -> int:
         """Stop all server nodes in the project.
@@ -145,8 +144,7 @@ class CTFManager:
             return -1
 
         self.user_config_mgr.stop_all_user_instances(project)
-        proc = self.prj_mgr.stop_project(project)
-        return proc.returncode
+        return self.prj_mgr.stop_project(project)
 
     def project_is_running(self, name: str) -> bool:
         """Check if project is running.
@@ -176,29 +174,29 @@ class CTFManager:
 
     def start_user_instance(
         self, username: str, project_name: str
-    ) -> subprocess.CompletedProcess:
+    ) -> int:
         """Start a user login node.
 
         :param username: User username.
         :type username: str
         :param project_name: Project name.
         :type project_name: str
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
+        :return: An exit code.
+        :rtype: int
         """
         return self.user_config_mgr.start_user_instance(username, project_name)
 
     def stop_user_instance(
         self, username: str, project_name: str
-    ) -> subprocess.CompletedProcess:
+    ) -> int:
         """Stop a user login node.
 
         :param username: User username.
         :type username: str
         :param project_name: Project name.
         :type project_name: str
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
+        :return: An exit code.
+        :rtype: int
         """
         return self.user_config_mgr.stop_user_instance(username, project_name)
 

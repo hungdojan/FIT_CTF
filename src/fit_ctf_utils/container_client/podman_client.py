@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from logging import Logger
 from pathlib import Path
 from typing import Any
 
+import fit_ctf_utils
 from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 
 
@@ -49,48 +51,86 @@ class PodmanClient(BaseContainerClient):
         return [data.strip('"') for data in proc.stdout.rsplit() if contains in data]
 
     @classmethod
-    def rm_images(cls, contains: str) -> subprocess.CompletedProcess | None:
+    def rm_images(cls, logger: Logger, contains: str, to_stdout: bool = False) -> int:
         images = cls.get_images(contains)
         if not images:
-            return
+            return -1
         cmd = ["podman", "rmi"] + images
-        return subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        message = proc.stdout.decode("utf-8")
+        logger.info(message)
+        if to_stdout:
+            fit_ctf_utils.GLOBAL_LOGGER.info(message)
+        return proc.returncode
 
     @classmethod
-    def rm_networks(cls, contains: str) -> subprocess.CompletedProcess | None:
+    def rm_multiple_images(
+        cls, logger: Logger, image_names: list[str], to_stdout: bool = False
+    ) -> int:
+        cmd = ["podman", "rmi"] + image_names
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        message = proc.stdout.decode("utf-8")
+        logger.info(message)
+        if to_stdout:
+            fit_ctf_utils.GLOBAL_LOGGER.info(message)
+        return proc.returncode
+
+    @classmethod
+    def rm_networks(cls, logger: Logger, contains: str, to_stdout: bool = False) -> int:
         network_names = cls.get_networks(contains)
         if not network_names:
-            return
+            return -1
         cmd = ["podman", "network", "rm"] + network_names
-        return subprocess.run(cmd, stdout=sys.stdout, stderr=sys.stderr)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        message = proc.stdout.decode("utf-8")
+        logger.info(message)
+        if to_stdout:
+            fit_ctf_utils.GLOBAL_LOGGER.info(message)
+        return proc.returncode
 
     @classmethod
-    def compose_up(cls, file: str | Path) -> subprocess.CompletedProcess:
+    def rm_multiple_networks(
+        cls, logger: Logger, network_names: list[str], to_stdout: bool = False
+    ) -> int:
+        cmd = ["podman", "network", "rm"] + network_names
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        message = proc.stdout.decode("utf-8")
+        logger.info(message)
+        if to_stdout:
+            fit_ctf_utils.GLOBAL_LOGGER.info(message)
+        return proc.returncode
+
+    @classmethod
+    def compose_up(
+        cls, logger: Logger, file: str | Path, to_stdout: bool = False
+    ) -> int:
         # TODO: eliminate whitespaces
         cmd = f"podman-compose -f {file} up -d"
-        # TODO redirect outputs; store to log file
         proc = subprocess.run(
-            cmd.split(),
-            stdout=sys.stdout,
-            stderr=sys.stderr,
+            cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        return proc
+        message = proc.stdout.decode("utf-8")
+        logger.info(message)
+        if to_stdout:
+            fit_ctf_utils.GLOBAL_LOGGER.info(message)
+        return proc.returncode
 
     @classmethod
-    def compose_down(cls, file: str | Path) -> subprocess.CompletedProcess:
+    def compose_down(
+        cls, logger: Logger, file: str | Path, to_stdout: bool = False
+    ) -> int:
         if len(cls.compose_ps(file)) == 0:
-            return subprocess.CompletedProcess(
-                args=["podman-compose", "down"], returncode=0
-            )
+            return 0
         # TODO: eliminate whitespaces
         cmd = f"podman-compose -f {file} down"
-        # TODO: redirect outputs
         proc = subprocess.run(
-            cmd.split(),
-            stdout=sys.stdout,
-            stderr=sys.stderr,
+            cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        return proc
+        message = proc.stdout.decode("utf-8")
+        logger.info(message)
+        if to_stdout:
+            fit_ctf_utils.GLOBAL_LOGGER.info(message)
+        return proc.returncode
 
     @classmethod
     def compose_ps(cls, file: str | Path) -> list[str]:
@@ -106,15 +146,18 @@ class PodmanClient(BaseContainerClient):
         return data
 
     @classmethod
-    def compose_build(cls, file: str | Path) -> subprocess.CompletedProcess:
+    def compose_build(
+        cls, logger: Logger, file: str | Path, to_stdout: bool = False
+    ) -> int:
         cmd = f"podman-compose -f {file} build"
-        # TODO: redirect outputs
         proc = subprocess.run(
-            cmd.split(),
-            stdout=sys.stdout,
-            stderr=sys.stderr,
+            cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
-        return proc
+        message = proc.stdout.decode("utf-8")
+        logger.info(message)
+        if to_stdout:
+            fit_ctf_utils.GLOBAL_LOGGER.info(message)
+        return proc.returncode
 
     @classmethod
     def compose_shell(
@@ -133,7 +176,7 @@ class PodmanClient(BaseContainerClient):
             # "table {{.Name}} {{.CPUPerc}} {{.MemUsage}} {{.UpTime}}",
             "json",
         ]
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         data = json.loads(proc.stdout)
         return [d for d in data if d["name"].startswith(project_name)]
 

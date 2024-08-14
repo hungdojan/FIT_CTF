@@ -41,6 +41,7 @@ def empty_podman_data(
     db_name = os.getenv("DB_TEST_NAME", "test-ctf-db")
     if not db_host:
         pytest.exit("DB_HOST environment variable is not set!")
+    os.environ["LOG_DEST"] = str(tmp_path_factory.getbasetemp().resolve())
 
     # init testing env and clear database (just in case)
     try:
@@ -450,7 +451,6 @@ def test_user_instance_is_running(
     ctf_mgr, _, prjs, usrs = podman_updated_data
     user_config_mgr = ctf_mgr.user_config_mgr
 
-    compose_file = Path(prjs[0].config_root_dir) / f"{usrs[1].username}_compose.yaml"
     assert not user_config_mgr.user_instance_is_running(usrs[0], prjs[1])
 
     user_config_mgr.start_user_instance(usrs[0], prjs[1])
@@ -486,10 +486,11 @@ def test_restart_user_instance(
 
     assert not user_config_mgr.user_instance_is_running(usrs[0], prjs[1])
 
-    user_config_mgr.start_user_instance(usrs[0], prjs[1])
+    user_config_mgr.restart_user_instance(usrs[0], prjs[1])
     assert user_config_mgr.user_instance_is_running(usrs[0], prjs[1])
 
-    user_config_mgr.stop_user_instance(usrs[0], prjs[1])
+    with pytest.raises(UserNotEnrolledToProjectException):
+        user_config_mgr.restart_user_instance(usrs[0], prjs[0])
 
 
 def test_build_user_instance(
@@ -500,21 +501,6 @@ def test_build_user_instance(
 
     with pytest.raises(UserNotEnrolledToProjectException):
         user_config_mgr.build_user_instance(usrs[0], prjs[0])
-
-
-def test_stop_all_user_instances(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
-):
-    ctf_mgr, _, prjs, usrs = podman_updated_data
-    user_config_mgr = ctf_mgr.user_config_mgr
-
-    assert not user_config_mgr.user_instance_is_running(usrs[0], prjs[1])
-
-    user_config_mgr.restart_user_instance(usrs[0], prjs[1])
-    assert user_config_mgr.user_instance_is_running(usrs[0], prjs[1])
-
-    with pytest.raises(UserNotEnrolledToProjectException):
-        user_config_mgr.restart_user_instance(usrs[0], prjs[0])
 
 
 def test_delete_project_while_on(

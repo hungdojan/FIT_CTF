@@ -5,7 +5,6 @@ import logging
 import os
 import re
 import shutil
-import subprocess
 import zipfile
 from dataclasses import asdict, dataclass, field, fields
 from distutils.dir_util import copy_tree
@@ -42,6 +41,7 @@ from fit_ctf_templates import (
     TEMPLATE_PATHS,
     get_template,
 )
+from fit_ctf_utils import get_or_create_logger
 from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
 
 log = logging.getLogger()
@@ -530,17 +530,19 @@ class ProjectManager(BaseManager[Project]):
             f.write("firewall-cmd --zone=public --add-masquerade\n")
         os.chmod(filename, 0o755)
 
-    def start_project(self, project: Project) -> subprocess.CompletedProcess:
+    def start_project(self, project: Project) -> int:
         """Boot the project server.
 
         Run `podman-compose up` in the sub-shell.
 
         :param project: A project object.
         :type project: Project
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
+        :return: An exit code.
+        :rtype: int
         """
-        return self.c_client.compose_up(str(project.compose_filepath))
+        return self.c_client.compose_up(
+            get_or_create_logger(project.name), project.compose_filepath
+        )
 
     def restart_project(self, project: Project):
         """Restart project server.
@@ -555,17 +557,19 @@ class ProjectManager(BaseManager[Project]):
         self.stop_project(project)
         self.start_project(project)
 
-    def stop_project(self, project: Project) -> subprocess.CompletedProcess:
+    def stop_project(self, project: Project) -> int:
         """Stop the project server.
 
         Run `podman-compose down` in the sub-shell.
 
         :param project: A project object.
         :type project: Project
-        :return: A completed process object.
-        :rtype: subprocess.CompletedProcess
+        :return: An exit code.
+        :rtype: int
         """
-        return self.c_client.compose_down(project.compose_filepath)
+        return self.c_client.compose_down(
+            get_or_create_logger(project.name), project.compose_filepath
+        )
 
     def project_is_running(self, project: Project) -> bool:
         """Check if the project server is running.
@@ -575,20 +579,22 @@ class ProjectManager(BaseManager[Project]):
         :return: Returns `True` if the server is running; `False` otherwise.
         :rtype: bool
         """
-        return len(self.c_client.compose_ps(str(project.compose_filepath))) > 0
+        return len(self.c_client.compose_ps(project.compose_filepath)) > 0
 
-    def build_project(self, project: Project) -> subprocess.CompletedProcess:
+    def build_project(self, project: Project) -> int:
         """Rebuild project images.
 
-                Run `podman-compose down` in the sub-shell.
-        "pod_prj1" i
-                :param project: A project object.
-                :type project: Project
-                :return: A completed process object.
-                :rtype: subprocess.CompletedProcess
+        Run `podman-compose down` in the sub-shell.
+
+        :param project: A project object.
+        :type project: Project
+        :return: An exit code.
+        :rtype: int
         """
 
-        return self.c_client.compose_build(str(project.compose_filepath.resolve()))
+        return self.c_client.compose_build(
+            get_or_create_logger(project.name), project.compose_filepath
+        )
 
     def compile_project(self, project: Project):
         """Compile a compose file.
@@ -696,8 +702,8 @@ class ProjectManager(BaseManager[Project]):
         self._uc_mgr.stop_all_user_instances(prj)
         self._uc_mgr.cancel_all_project_enrollments(prj)
 
-        self.c_client.rm_images(f"{prj.name}_")
-        self.c_client.rm_networks(f"{prj.name}_")
+        self.c_client.rm_images(get_or_create_logger(prj.name), f"{prj.name}_")
+        self.c_client.rm_networks(get_or_create_logger(prj.name), f"{prj.name}_")
 
         # remove everything from the directory
         shutil.rmtree(prj.config_root_dir)
