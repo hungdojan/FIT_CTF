@@ -211,7 +211,7 @@ poetry run ctf_backend project \
 ```
 
 ## Documentation
-Tool's documentation will be periodically updated on the project's wiki page.
+Tool's documentation will be periodically updated on the project's [documentation page](https://hungdojan.github.io/FIT_CTF/click-commands.html).
 
 ## Contribution and Feedback
 Feel free to create new issues, suggest new features, or create a pull request.
