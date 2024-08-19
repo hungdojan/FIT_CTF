@@ -102,7 +102,7 @@ def create_project(
     """Create and initialize a new project.
 
     This command generate a basic project from the template and stores
-    it in the `dest_dir` directory. Make sure that `dest_dir` exists.\f"""
+    it in the `dest_dir` directory. Make sure that `dest_dir` exists."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     try:
         prj = ctf_mgr.init_project(
@@ -139,7 +139,7 @@ def list_projects(ctx: click.Context, _all: bool):
         - active state
         - project name
         - max number of users
-        - number of active users enrolled to the project\f
+        - number of active users enrolled to the project
     """
     prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     lof_prj = prj_mgr.get_projects(include_inactive=_all)
@@ -157,7 +157,7 @@ def list_projects(ctx: click.Context, _all: bool):
 def get_project_info(ctx: click.Context, project_name: str):
     """Display project PROJECT_NAME's information.
 
-    Dumps all information about a selected project.\f
+    Dumps all information about a selected project.
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     prj = ctf_mgr.get_project_info(project_name)
@@ -196,7 +196,7 @@ def active_users(ctx: click.Context, project_name: str):
         - path to the shadow file
         - email
         - path to home mounting directory/volume
-        - forwarded port (visible from the outside)\f
+        - forwarded port (visible from the outside)
     """
     prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     lof_active_users = prj_mgr.get_active_users_for_project_raw(project_name)
@@ -221,11 +221,7 @@ def active_users(ctx: click.Context, project_name: str):
 def firewall_rules(ctx: click.Context, project_name: str, ip_addr: str, output: str):
     """Generate a BASH script with port forwarding rules for PROJECT_NAME.
 
-    The command used in the script are written for `firewalld` application.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-        project_name (str): Project's name.
+    The command used in the script are written for `firewalld` application.
     """
     prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     prj_mgr.generate_port_forwarding_script(project_name, ip_addr, output)
@@ -251,14 +247,10 @@ def used_ports(ctx: click.Context):
 @click.argument("project_name")
 @click.pass_context
 def resources_usage(ctx: click.Context, project_name: str):
-    """Display PROJECT_NAME current resource usage.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-    """
+    """Display PROJECT_NAME current resource usage."""
     prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
     try:
-        prj_mgr.print_resource_usage(project_name)
+        prj_mgr.get_resource_usage(project_name)
     except CTFException as e:
         click.echo(e)
 
@@ -289,11 +281,7 @@ def delete_project(ctx: click.Context, project_name: str):
     """Delete an existing project PROJECT_NAME.
 
     Deletes all project configuration files and sets project activity
-    state to `inactive`.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-        project_name (str): Project's name.
+    state to `inactive`.
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     ctf_mgr.delete_project(project_name)
@@ -328,11 +316,7 @@ def server(ctx: click.Context, name: str):
 @server.command(name="start")
 @click.pass_context
 def start_project(ctx: click.Context):
-    """Start server nodes.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-    """
+    """Start server nodes."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
@@ -342,11 +326,7 @@ def start_project(ctx: click.Context):
 @server.command(name="stop")
 @click.pass_context
 def stop_project(ctx: click.Context):
-    """Stop server nodes.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-    """
+    """Stop server nodes."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
@@ -358,10 +338,7 @@ def stop_project(ctx: click.Context):
 def status_project(ctx: click.Context):
     """Check server nodes status.
 
-    Print output of `podman ps` command.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
+    Print output of `podman ps` command.
     """
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
@@ -374,11 +351,7 @@ def status_project(ctx: click.Context):
 @server.command(name="is-running")
 @click.pass_context
 def is_running(ctx: click.Context):
-    """Check if project is running.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-    """
+    """Check if project is running."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
@@ -391,10 +364,7 @@ def build_project(ctx: click.Context):
     """Build or update project's images.
 
     Run this command when you changed any server node image. If the image is not found
-    try recompiling the compose file first.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
+    try recompiling the compose file first.
     """
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
@@ -409,11 +379,7 @@ def build_project(ctx: click.Context):
 @server.command(name="restart")
 @click.pass_context
 def restart_project(ctx: click.Context):
-    """Stop login nodes and restart server nodes.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-    """
+    """Stop login nodes and restart server nodes."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
@@ -437,11 +403,7 @@ def health_check(ctx: click.Context):
 @server.command(name="compile")
 @click.pass_context
 def compile_project(ctx: click.Context):
-    """Recompile project compose file.\f
-
-    Params:
-        ctx (click.Context): Context of the argument manager.
-    """
+    """Recompile project compose file."""
     context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
     ctf_mgr: CTFManager = context_dict["ctf_mgr"]
     name = context_dict["name"]
@@ -560,5 +522,8 @@ def remove_user_modules(ctx: click.Context, name: str):
 @module.group(name="general")
 @click.pass_context
 def general_module_ops(ctx: click.Context):
-    """A set of general module operations."""
+    """A set of general module operations.
+
+    NOT IMPLEMENTED YET.
+    """
     raise NotImplemented()

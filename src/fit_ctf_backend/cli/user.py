@@ -20,7 +20,7 @@ from fit_ctf_db_models.user import UserManager
 @click.group(name="user")
 @click.pass_context
 def user(ctx: click.Context):
-    """A command that manages users."""
+    """A command for user management."""
     db_host, db_name = _cli._get_db_info()
     ctf_mgr = CTFManager(db_host, db_name)
 
@@ -124,6 +124,7 @@ def list_users(ctx: click.Context, _all: bool):
 @click.option("-u", "--username", required=True, help="Account username.")
 @click.pass_context
 def get_user_info(ctx: click.Context, username: str):
+    """Get user information."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     user = ctf_mgr.user_mgr.get_user(username)
     user_info = asdict(user)
@@ -289,6 +290,9 @@ def cancel_multiple_enrollment(ctx: click.Context, project_name: str, filename: 
 @click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def compile(ctx: click.Context, username: str, project_name: str):
+    """Compiles user's `compose.yaml` file.
+
+    This step is usually done after editing its list of modules."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     ctf_mgr.user_config_mgr.compile_compose(username, project_name)
 
@@ -298,6 +302,9 @@ def compile(ctx: click.Context, username: str, project_name: str):
 @click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def build(ctx: click.Context, username: str, project_name: str):
+    """Update images from user's `compose.yaml` file.
+
+    This step is usually done after compiling the YAML file."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     ctf_mgr.user_config_mgr.build_user_instance(username, project_name)
 
@@ -305,6 +312,7 @@ def build(ctx: click.Context, username: str, project_name: str):
 @user.group(name="module")
 @click.pass_context
 def module(ctx: click.Context):
+    """Manages user modules."""
     ctx.obj = ctx.parent.obj  # pyright: ignore
 
 
@@ -314,6 +322,7 @@ def module(ctx: click.Context):
 @click.option("-mn", "--module-name", required=True, help="Module's name.")
 @click.pass_context
 def add_module(ctx: click.Context, username: str, project_name: str, module_name: str):
+    """Attach a project module to the user."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     prj = ctf_mgr.prj_mgr.get_project(project_name)
     module = prj.user_modules.get(module_name)
@@ -328,6 +337,7 @@ def add_module(ctx: click.Context, username: str, project_name: str, module_name
 @click.option("-pn", "--project-name", required=True, help="Project's name.")
 @click.pass_context
 def list_modules(ctx: click.Context, username: str, project_name: str):
+    """Display a list of modules attached to the user in the selected module."""
     raise NotImplemented()
 
 
@@ -339,5 +349,6 @@ def list_modules(ctx: click.Context, username: str, project_name: str):
 def remove_module(
     ctx: click.Context, username: str, project_name: str, module_name: str
 ):
+    """Remove the attached module from the user."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     ctf_mgr.user_config_mgr.remove_module(username, project_name, module_name)

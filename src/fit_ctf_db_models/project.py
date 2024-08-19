@@ -505,7 +505,7 @@ class ProjectManager(BaseManager[Project]):
         :type dest_ip_addr: str
         :param filename: And output filename.
         :type filename: str
-        :raises ProjectExistsException: Project with the given name already exist.
+        :raises ProjectNotExistException: Project data were not found in the database.
         """
         prj = self.get_project(project_or_name)
 
@@ -625,7 +625,7 @@ class ProjectManager(BaseManager[Project]):
 
         :param project_name: Project name or the instance.
         :type project_name: str | Project
-        :raises ProjectExistsException: Project with the given name already exist.
+        :raises ProjectNotExistException: Project data were not found in the database.
         :return: List of each pod statistics.
         :rtype: list[dict[str, str]]
         """
@@ -637,7 +637,7 @@ class ProjectManager(BaseManager[Project]):
 
         :param project_name: Project name or the instance.
         :type project_name: str | Project
-        :raises ProjectExistsException: Project with the given name already exist.
+        :raises ProjectNotExistException: Project data were not found in the database.
         :return: List of stdout.
         :rtype: list[str]
         """

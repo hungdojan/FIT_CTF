@@ -1,6 +1,11 @@
 from __future__ import annotations
+
 import os
 import sys
+
+import click
+
+from . import project, user
 
 
 def _get_db_info() -> tuple[str, str]:
@@ -12,3 +17,13 @@ def _get_db_info() -> tuple[str, str]:
     if not db_name:
         sys.exit("Environment variable `DB_NAME` is not set.")
     return db_host, db_name
+
+
+@click.group("cli")
+def cli():
+    """A tool for CTF competition management."""
+    pass
+
+
+cli.add_command(project.project)
+cli.add_command(user.user)

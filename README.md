@@ -143,7 +143,7 @@ poetry run ctf_backend user module add \
 
 All project and user modules are generally generated in `./<path_to_project_config>/_modules/`. You are encouraged to edit `Containerfile` and `init_script.sh` to your needs.
 
-More information can be found on the wiki page.
+More information can be found [here](https://hungdojan.github.io/FIT_CTF/click-commands.html).
 
 ## Deployment
 It is expected that the CTF architecture will run inside a VM. The whole architecture can be seen in the following figure:
