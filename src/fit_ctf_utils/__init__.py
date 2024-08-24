@@ -9,6 +9,14 @@ from fit_ctf_utils.container_client.podman_client import PodmanClient
 
 
 def get_c_client_by_name(name: str) -> type[BaseContainerClient]:
+    """Choose the container client wrapper.
+
+    :param name: A name of the container engine/
+    :type name: str
+    :raises ValueError: When unsupported container engine was given.
+    :return: A `BaseContainerClient` based class.
+    :rtype: type[BaseContainerClient]
+    """
     if name == "podman":
         return PodmanClient
     elif name == "mock":
@@ -21,6 +29,18 @@ logger_format = "[%(asctime)s] - %(levelname)s: %(message)s"
 
 
 def get_or_create_logger(logger_name: str, is_file: bool = True) -> logging.Logger:
+    """Get an existing or create a new logger.
+
+    :param logger_name: Identification name of the logger.
+    :type logger_name: str
+    :param is_file: This flag is only meant to be used if the logger does not exist.
+        If set to `True` the new logger will write to a file; otherwise to STDOUT,
+        defaults to True.
+    :type is_file: bool, optional
+    :return: Found or a new logger.
+    :rtype: logging.Logger
+    """
+
     def setup_logger(
         name: str, handler: logging.Handler, level=logging.INFO
     ) -> logging.Logger:
@@ -46,4 +66,5 @@ def get_or_create_logger(logger_name: str, is_file: bool = True) -> logging.Logg
     return logging.getLogger(logger_name)
 
 
+# global logger writes to STDOUT
 GLOBAL_LOGGER = get_or_create_logger("global", False)

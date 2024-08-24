@@ -9,6 +9,8 @@ packages = [
     { include = "fit_ctf_backend", from = "src" },
     { include = "fit_ctf_rendezvous", from = "src" },
     { include = "fit_ctf_db_models", from = "src" },
+    { include = "fit_ctf_templates", from = "src"},
+    { include = "fit_ctf_utils", from = "src" }
 ]
 
 [tool.poetry.dependencies]
@@ -64,5 +66,5 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-ctf_backend = "fit_ctf_backend.__main__:main"
-ctf_rendezvous = "fit_ctf_rendezvous.__main__:main"
+fit-ctf = "fit_ctf_backend.__main__:main"
+ctf-rendezvous = "fit_ctf_rendezvous.__main__:main"

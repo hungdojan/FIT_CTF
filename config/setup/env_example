@@ -1,5 +1,19 @@
+# choose database username
 DB_USERNAME="admin"
+# choose database password
 DB_PASSWORD="database"
+# choose name of the production database
 DB_NAME="ctf-db"
+# generated URI path to connect to the database
 DB_HOST="mongodb://${DB_USERNAME}:${DB_PASSWORD}@localhost:27017"
+# a container engine to run (currently only `podman` is supported; `mock` is for testing)
 CONTAINER_CLIENT="podman"
+
+# waiting time (in seconds) of the timeout while connecting to the database
+# the tool tests the connection during start-up; to lower the number, the fast it will
+# detect that the database is not running
+# if you have slow internet connection it is recommended to have greater number
+DB_CONNECTION_TIMEOUT=30
+# directory that will contain all the logs that the tool produces
+# defaults to "./" if not set; make sure the program the program has writing permissions
+LOG_DEST="/tmp"

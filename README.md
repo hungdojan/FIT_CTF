@@ -24,20 +24,26 @@ cp config/setup/env_example .env
 ./manage_db.sh start
 ```
 
-Use `poetry` to run both tools.
+After the installation is done, both `fit-ctf` and `ctf-rendezvous` should be installed. Either run the CLI tools using `poetry run` command, or shell into the poetry virtual environment and run them as you would normally do.
+
 ```sh
 # run CLI tool
-poetry run ctf_backend <options>
+poetry run fit-ctf <options>
 
 # run Rendezvous tool
-poetry run ctf_rendezvous
+poetry run ctf-rendezvous
+
+# run them after activating the environment
+poetry shell
+fit-ctf
+ctf-rendezvous
 ```
 
 ## Basic control
 Use the CLI tool to setup project/competition, create users, enroll users, create modules, compile compose files, and more. Here is some a basic script that initialize a server, creates a new user and start the server instances.
 
 ```sh
-# start DB
+# start DB and shell into the environment
 ./manage_db.sh start
 
 # a destination directory that will contain project data and user shadow files
@@ -45,41 +51,41 @@ mkdir data
 mkdir -p data/shadow
 
 # create a new project
-poetry run ctf_backend project create \
+fit-ctf project create \
     --name "demo_project" \
     --dest-dir ./data
 
 # create a new user
-poetry run ctf_backend user create \
+fit-ctf user create \
     --username "user1" \
     --generate-password \
     --shadow-dir ./data/shadow/
 
 # enroll user to the project
-poetry run ctf_backend user enroll \
+fit-ctf user enroll \
     --username "user1" \
     --project-name "demo_project"
 
 # compile and start project (server nodes)
-poetry run ctf_backend project server \
+fit-ctf project server \
     --name "demo_project" \
     compile
 
-poetry run ctf_backend project server \
+fit-ctf project server \
     --name "demo_project" \
     start
 ```
 
 User can then start his instance by running the **Rendezvous** tool.
 ```sh
-poetry run ctf_rendezvous
+ctf-rendezvous
 ```
 
 Of course, the tool support a whole lot more. The full listing of commands can be found on the project's wiki page. Each command has a help command that displays command options and arguments. User `--help` option to display the usage messages.
 
 ```sh
-$ poetry run ctf_backend --help
-Usage: ctf_backend [OPTIONS] COMMAND [ARGS]...
+$ fit-ctf --help
+Usage: fit-ctf [OPTIONS] COMMAND [ARGS]...
 
 Options:
   --help  Show this message and exit.
@@ -88,8 +94,8 @@ Commands:
   project  A command that manages projects.
   user     A command that manages users.
 
-$ poetry run ctf_backend project --help
-Usage: ctf_backend project [OPTIONS] COMMAND [ARGS]...
+$ fit-ctf project --help
+Usage: fit-ctf project [OPTIONS] COMMAND [ARGS]...
 
   A command that manages projects.
 
@@ -118,24 +124,24 @@ By default, the server consists of only a single `admin` server node which is an
 The tool supports creating and deploying new server nodes and login node instances. Run following commands to create a server or login node, resp.:
 ```sh
 # create project module
-poetry run ctf_backend project module \
+fit-ctf project module \
     project --name "demo_project" \
     create --name "project_module1"
 
 # compile project
-project run ctf_backend project server \
+fit-ctf project server \
     --name "demo_project" \
     compile
 ```
 
 ```sh
 # create user module for the given project
-poetry run ctf_backend project module \
+fit-ctf project module \
     user --name "demo_project" \
     create --name "user_module1"
 
 # assign module to the given user
-poetry run ctf_backend user module add \
+fit-ctf user module add \
     --username "user1" \
     --project_name "demo_project" \
     --module_name "user_module1"
@@ -166,7 +172,7 @@ Port 22
 Port 5555
 Match User TheUser LocalPort 5555
     PermitEmptyPasswords yes
-    ForceCommand cd /home/TheUser && poetry run ctf_rendezvous
+    ForceCommand cd /home/TheUser && poetry run ctf-rendezvous
 ```
 
 Apply changes using following commands:
@@ -187,7 +193,7 @@ sudo systemctl restart sshd
 ```
 
 #### Port forwarding
-The second task also requires a root permissions but is set up **outside the VM** (host machine). Generate port forwarding rules using `poetry run ctf_backend project generate-firewall-rules <project_name> -ip <dst_ip_addr>`. Then create a port forwarding rule for the *Rendezvous* SSH access point. Lastly, open selected ports to allow the communication to reach the VM.
+The second task also requires a root permissions but is set up **outside the VM** (host machine). Generate port forwarding rules using `fit-ctf project generate-firewall-rules <project_name> -ip <dst_ip_addr>`. Then create a port forwarding rule for the *Rendezvous* SSH access point. Lastly, open selected ports to allow the communication to reach the VM.
 
 The following example uses `firewalld` as a firewall application.
 
@@ -202,7 +208,7 @@ sudo firewall-cmd --zone=public \
     --add-forwarded-port=port=5555:proto=tcp:toport=5555:toaddr=10.0.0.3
 
 # generate port forwarding script of all login nodes for the given project
-poetry run ctf_backend project \
+fit-ctf project \
     generate-firewall-rules "demo_project" \
     -ip "10.0.0.3"
 
@@ -212,6 +218,8 @@ poetry run ctf_backend project \
 
 ## Documentation
 Tool's documentation will be periodically updated on the project's [documentation page](https://hungdojan.github.io/FIT_CTF/click-commands.html).
+
+The generated man pages are located in `./docs/man/` directory.
 
 ## Contribution and Feedback
 Feel free to create new issues, suggest new features, or create a pull request.
