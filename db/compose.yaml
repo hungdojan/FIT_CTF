@@ -4,7 +4,7 @@ name: ctf_backend
 
 services:
   mongodb:
-    image: docker.io/library/mongo:7.0.6
+    image: docker.io/library/mongo:latest
     container_name: ctf-database-mongo
     restart: always
     environment:

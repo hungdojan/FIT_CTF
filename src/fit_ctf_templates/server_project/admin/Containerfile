@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8:8.9-1136
+FROM registry.access.redhat.com/ubi8:latest
 
 COPY ./init_script.sh /tmp/init_script.sh
 
