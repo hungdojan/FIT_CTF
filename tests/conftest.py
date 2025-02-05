@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import os
@@ -41,7 +40,6 @@ def empty_data(
         pytest.exit("DB_HOST environment variable is not set!")
     os.environ["LOG_DEST"] = str(tmp_path.resolve())
 
-
     # init testing env and clear database (just in case)
     try:
         ctf_mgr = CTFManager(db_host, db_name)
@@ -60,7 +58,7 @@ def empty_data(
 
 @pytest.fixture
 def project_data(
-    empty_data: tuple[CTFManager, Path, list[Project], list[User]]
+    empty_data: tuple[CTFManager, Path, list[Project], list[User]],
 ) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects and destination directory.
 
@@ -91,7 +89,7 @@ def project_data(
 
 @pytest.fixture
 def user_data(
-    empty_data: tuple[CTFManager, Path, list[Project], list[User]]
+    empty_data: tuple[CTFManager, Path, list[Project], list[User]],
 ) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 3 users and destination directory.
 
@@ -125,7 +123,7 @@ def user_data(
 
 @pytest.fixture
 def unconnected_data(
-    empty_data: tuple[CTFManager, Path, list[Project], list[User]]
+    empty_data: tuple[CTFManager, Path, list[Project], list[User]],
 ) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects, 3 users, and destination directory.
 
@@ -169,7 +167,7 @@ def unconnected_data(
 
 @pytest.fixture
 def connected_data(
-    unconnected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    unconnected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects, 3 users, and destination directory.
 
@@ -207,7 +205,7 @@ def connected_data(
 
 @pytest.fixture
 def modules_data(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects, 3 users, and destination directory.
 
@@ -268,7 +266,7 @@ def modules_data(
 
 @pytest.fixture
 def deleted_data(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects, 3 users, and destination directory.
 

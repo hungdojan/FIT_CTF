@@ -2,6 +2,7 @@ import os
 import sys
 
 from dotenv import load_dotenv
+
 from fit_ctf_rendezvous.actions import Actions
 from fit_ctf_rendezvous.view import View
 

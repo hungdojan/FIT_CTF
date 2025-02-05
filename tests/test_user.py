@@ -44,7 +44,7 @@ def test_create_user(empty_data: tuple[CTFManager, Path, list[Project], list[Use
 
 
 def test_create_multiple_users(
-    empty_data: tuple[CTFManager, Path, list[Project], list[User]]
+    empty_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, tmp_path, _, _ = empty_data
     user_mgr = ctf_mgr.user_mgr
@@ -91,7 +91,7 @@ def test_get_users(user_data: tuple[CTFManager, Path, list[Project], list[User]]
 
 
 def test_validate_user_login(
-    user_data: tuple[CTFManager, Path, list[Project], list[User]]
+    user_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, _, _ = user_data
     user_mgr = ctf_mgr.user_mgr
@@ -102,7 +102,7 @@ def test_validate_user_login(
 
 
 def test_get_password_hash(
-    user_data: tuple[CTFManager, Path, list[Project], list[User]]
+    user_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, _, usrs = user_data
     user_mgr = ctf_mgr.user_mgr
@@ -142,7 +142,7 @@ def test_change_password(user_data: tuple[CTFManager, Path, list[Project], list[
 
 # connected_data
 def test_get_active_projects_for_user(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, _, usrs = connected_data
     user_mgr = ctf_mgr.user_mgr
@@ -156,7 +156,7 @@ def test_get_active_projects_for_user(
 
 
 def test_delete_a_user(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, _, _ = connected_data
     user_mgr = ctf_mgr.user_mgr
@@ -171,16 +171,14 @@ def test_delete_a_user(
     assert len(ctf_mgr.prj_mgr.get_active_users_for_project("prj1")) == 2
     assert len(ctf_mgr.prj_mgr.get_active_users_for_project("prj2")) == 1
 
+
 def test_delete_users(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, _, _ = connected_data
     user_mgr = ctf_mgr.user_mgr
     prj_mgr = ctf_mgr.prj_mgr
-    expected_data = {
-        "prj1": {"user3"},
-        "prj2": set()
-    }
+    expected_data = {"prj1": {"user3"}, "prj2": set()}
 
     user_mgr.delete_users(["user1", "user2"])
     assert len(user_mgr.get_users()) == 1
@@ -191,7 +189,7 @@ def test_delete_users(
 
 
 def test_get_active_projects_for_user_raw(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, _, _ = connected_data
     user_mgr = ctf_mgr.user_mgr
@@ -228,6 +226,7 @@ def test_generate_password():
     assert len(UserManager.generate_password(10)) == 10
     assert len(UserManager.generate_password(8)) == 8
 
+
 def test_validate_username_format():
     assert not UserManager.validate_username_format("gg")
     assert not UserManager.validate_username_format("invalid-name")
@@ -237,4 +236,3 @@ def test_validate_username_format():
 
     assert UserManager.validate_username_format("ssss")
     assert UserManager.validate_username_format("numbers1")
-

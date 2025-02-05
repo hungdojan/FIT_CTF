@@ -54,8 +54,10 @@ def project(ctx: click.Context):
 @click.option(
     "-p",
     "--starting-port-bind",
-    help="A starting port value for each user. Each user will received a port from the range from <starting-port-bind>"
-    "to <starting-port-bind + max-nof-users>. If set to -1, the tool will automatically assign an available port value."
+    help="A starting port value for each user. "
+    "Each user will received a port from the range from <starting-port-bind>"
+    "to <starting-port-bind + max-nof-users>. "
+    "If set to -1, the tool will automatically assign an available port value."
     "User can choose a number between 10_000 to 65_535.",
     default=-1,
     show_default=True,
@@ -64,15 +66,18 @@ def project(ctx: click.Context):
 @click.option(
     "-vd",
     "--volume-mount-dirname",
-    help="A directory name that will contain all user home volumes for the given project. "
-    "This directory will be created inside project configuration directory (<dest-dir>/<dir-name>/<volume-mount-dirname>).",
+    help="A directory name that will contain all user "
+    "home volumes for the given project. "
+    "This directory will be created inside project configuration directory "
+    "(<dest-dir>/<dir-name>/<volume-mount-dirname>).",
     default="_mounts",
     show_default=True,
 )
 @click.option(
     "-dn",
     "--dir-name",
-    help="Name of the directory that will be created inside <dest-dir>. If no name is set, the directory name will be "
+    help="Name of the directory that will be created inside <dest-dir>. "
+    "If no name is set, the directory name will be "
     "generated using project name.",
     default="",
     show_default=True,
@@ -526,4 +531,4 @@ def general_module_ops(ctx: click.Context):
 
     NOT IMPLEMENTED YET.
     """
-    raise NotImplemented()
+    raise NotImplementedError()

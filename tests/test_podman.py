@@ -61,7 +61,7 @@ def empty_podman_data(
 
 @pytest.fixture(scope="module")
 def init_podman_data(
-    empty_podman_data: tuple[CTFManager, Path, list[Project], list[User]]
+    empty_podman_data: tuple[CTFManager, Path, list[Project], list[User]],
 ) -> tuple[CTFManager, Path, list[Project], list[User]]:
     """Yield a CTFManager with 2 projects, 3 users, and destination directory.
 
@@ -152,7 +152,7 @@ def init_podman_data(
 
 @pytest.fixture(scope="module")
 def build_podman_data(
-    init_podman_data: tuple[CTFManager, Path, list[Project], list[User]]
+    init_podman_data: tuple[CTFManager, Path, list[Project], list[User]],
 ) -> tuple[CTFManager, Path, list[Project], list[User]]:
     # init testing env
     ctf_mgr, tmp_path, _, _ = init_podman_data
@@ -270,7 +270,7 @@ def test_start_project(podman_data: tuple[CTFManager, Path, list[Project], list[
 
 
 def test_restart_project(
-    podman_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = podman_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -296,7 +296,7 @@ def test_stop_project(podman_data: tuple[CTFManager, Path, list[Project], list[U
 
 
 def test_compile_and_build_project(
-    podman_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = podman_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -324,7 +324,7 @@ def test_compile_and_build_project(
 
 
 def test_get_resource_usage(
-    podman_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = podman_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -349,7 +349,7 @@ def test_project_ps(podman_data: tuple[CTFManager, Path, list[Project], list[Use
 
 
 def test_get_images(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     def calculate_nof_images(prj: Project):
         # admin node + shared user node
@@ -378,7 +378,7 @@ def test_get_images(
 
 
 def test_get_networks(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     def calculate_nof_networks(prj: Project):
         # project's network + a private network each user has
@@ -401,7 +401,7 @@ def test_get_networks(
 
 
 def test_compose_ps_json(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = podman_updated_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -414,7 +414,7 @@ def test_compose_ps_json(
 
 
 def test_start_user_instance(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = podman_updated_data
     user_config_mgr = ctf_mgr.user_config_mgr
@@ -446,7 +446,7 @@ def test_start_user_instance(
 
 
 def test_user_instance_is_running(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = podman_updated_data
     user_config_mgr = ctf_mgr.user_config_mgr
@@ -461,7 +461,7 @@ def test_user_instance_is_running(
 
 
 def test_stop_user_instance(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = podman_updated_data
     user_config_mgr = ctf_mgr.user_config_mgr
@@ -479,7 +479,7 @@ def test_stop_user_instance(
 
 
 def test_restart_user_instance(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = podman_updated_data
     user_config_mgr = ctf_mgr.user_config_mgr
@@ -494,7 +494,7 @@ def test_restart_user_instance(
 
 
 def test_build_user_instance(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = podman_updated_data
     user_config_mgr = ctf_mgr.user_config_mgr
@@ -504,7 +504,7 @@ def test_build_user_instance(
 
 
 def test_delete_project_while_on(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = podman_updated_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -526,7 +526,7 @@ def test_delete_project_while_on(
 
 
 def test_cancel_multiple_enrollments(
-    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]]
+    podman_updated_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = podman_updated_data
     prj_mgr = ctf_mgr.prj_mgr

@@ -1,11 +1,15 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import pytest
 import yaml
 
 from fit_ctf_backend.ctf_manager import CTFManager
-from fit_ctf_backend.exceptions import DirNotEmptyException, ModuleExistsException, ModuleNotExistsException
+from fit_ctf_backend.exceptions import (
+    DirNotEmptyException,
+    ModuleExistsException,
+    ModuleNotExistsException,
+)
 from fit_ctf_db_models.project import Project
 from fit_ctf_db_models.user import User
 
@@ -22,7 +26,7 @@ def test_no_modules(connected_data: tuple[CTFManager, Path, list[Project], list[
 
 
 def test_create_project_module(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     # init testing env
     ctf_mgr, _, prjs, _ = connected_data
@@ -64,7 +68,7 @@ def test_create_project_module(
 
 
 def test_list_project_modules(
-    modules_data: tuple[CTFManager, Path, list[Project], list[User]]
+    modules_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = modules_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -80,7 +84,7 @@ def test_list_project_modules(
 
 
 def test_remove_project_module(
-    modules_data: tuple[CTFManager, Path, list[Project], list[User]]
+    modules_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = modules_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -102,7 +106,7 @@ def test_remove_project_module(
 
 
 def test_create_user_module(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     # init testing env
     ctf_mgr, _, prjs, _ = connected_data
@@ -143,7 +147,7 @@ def test_create_user_module(
 
 
 def test_list_user_modules(
-    modules_data: tuple[CTFManager, Path, list[Project], list[User]]
+    modules_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = modules_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -159,7 +163,7 @@ def test_list_user_modules(
 
 
 def test_remove_user_module(
-    modules_data: tuple[CTFManager, Path, list[Project], list[User]]
+    modules_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = modules_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -228,7 +232,7 @@ def test_add_module(modules_data: tuple[CTFManager, Path, list[Project], list[Us
 
 
 def test_remove_module(
-    modules_data: tuple[CTFManager, Path, list[Project], list[User]]
+    modules_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = modules_data
     prj_mgr = ctf_mgr.prj_mgr

@@ -25,7 +25,7 @@ def _get_compose_file_path(project: Project, username: str) -> Path:
 
 
 def test_user_is_enrolled_to_the_project(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = connected_data
     user_config_mgr = ctf_mgr.user_config_mgr
@@ -41,7 +41,7 @@ def test_user_is_enrolled_to_the_project(
 
 
 def test_get_user_config(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = connected_data
     user_config_mgr = ctf_mgr.user_config_mgr

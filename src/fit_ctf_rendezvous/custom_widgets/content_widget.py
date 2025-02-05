@@ -3,6 +3,7 @@ from pytermgui import InputField, MouseEvent
 
 class ContentWidget(InputField):
     """A content widget for displaying large text."""
+
     def __init__(self, value: str, **kwargs):
         super().__init__(value, multiline=True, **kwargs)
 

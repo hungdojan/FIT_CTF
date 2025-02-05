@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import subprocess
 
 import pymongo
 from pymongo.database import Database
@@ -172,9 +171,7 @@ class CTFManager:
         project = self.prj_mgr.get_project(name)
         return self.prj_mgr.c_client.compose_ps(project.name)
 
-    def start_user_instance(
-        self, username: str, project_name: str
-    ) -> int:
+    def start_user_instance(self, username: str, project_name: str) -> int:
         """Start a user login node.
 
         :param username: User username.
@@ -186,9 +183,7 @@ class CTFManager:
         """
         return self.user_config_mgr.start_user_instance(username, project_name)
 
-    def stop_user_instance(
-        self, username: str, project_name: str
-    ) -> int:
+    def stop_user_instance(self, username: str, project_name: str) -> int:
         """Stop a user login node.
 
         :param username: User username.
@@ -256,7 +251,7 @@ class CTFManager:
         :type name: str
         :raises NotImplemented: This function was not implemented yet.
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def get_project_info(self, name: str) -> Project | None:
         """Get project information.

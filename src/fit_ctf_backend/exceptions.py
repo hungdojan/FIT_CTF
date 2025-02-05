@@ -87,6 +87,8 @@ class ModuleNotExistsException(CTFException):
 
     pass
 
+
 class ComposeFileNotExist(CTFException):
     """A selected compose file does not exist."""
+
     pass

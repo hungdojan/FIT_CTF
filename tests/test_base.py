@@ -44,7 +44,7 @@ def test_project(unconnected_data: tuple[CTFManager, Path, list[Project], list[U
 
 
 def test_user_config(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = connected_data
     user_config_mgr = ctf_mgr.user_config_mgr

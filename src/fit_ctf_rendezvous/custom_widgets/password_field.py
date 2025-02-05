@@ -1,9 +1,11 @@
 import string
+
 from pytermgui import InputField, keys
 
 
 class PasswordField(InputField):
     """A field for hiding/showing password string."""
+
     def __init__(self, value: str = "", prompt: str = "", hide: bool = True, **kwargs):
         """Constructor method.
 

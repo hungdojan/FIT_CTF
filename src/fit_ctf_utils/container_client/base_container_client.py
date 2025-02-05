@@ -40,7 +40,7 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def rm_images(
-        cls, logger: Logger, contains: str, to_stdout: bool=False
+        cls, logger: Logger, contains: str, to_stdout: bool = False
     ) -> int:  # pragma: no cover
         """Remove container images from the system using `podman` command.
 
@@ -58,7 +58,7 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def rm_multiple_images(
-        cls, logger: Logger, image_names: list[str], to_stdout: bool=False
+        cls, logger: Logger, image_names: list[str], to_stdout: bool = False
     ) -> int:  # pragma: no cover
         """Remove numerous container images from the system using `podman` command.
 
@@ -76,7 +76,7 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def rm_networks(
-        cls, logger: Logger, contains: str, to_stdout: bool=False
+        cls, logger: Logger, contains: str, to_stdout: bool = False
     ) -> int:  # pragma: no cover
         """Remove container networks from the system using `podman` command.
 
@@ -94,7 +94,7 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def rm_multiple_networks(
-        cls, logger: Logger, network_names: list[str], to_stdout: bool=False
+        cls, logger: Logger, network_names: list[str], to_stdout: bool = False
     ) -> int:  # pragma: no cover
         """Remove numerous container networks from the system using `podman` command.
 
@@ -112,7 +112,7 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def compose_up(
-        cls, logger: Logger, file: str | Path, to_stdout: bool=False
+        cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:  # pragma: no cover
         """Run `podman-compose up` for the given file.
 
@@ -130,7 +130,7 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def compose_down(
-        cls, logger: Logger, file: str | Path, to_stdout: bool=False
+        cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:  # pragma: no cover
         """Run `podman-compose down` for the given file.
 
@@ -174,7 +174,7 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def compose_build(
-        cls, logger: Logger, file: str | Path, to_stdout: bool=False
+        cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:  # pragma: no cover
         """Build container images using `podman-compose` command.
 

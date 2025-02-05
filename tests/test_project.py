@@ -16,13 +16,6 @@ from fit_ctf_backend.exceptions import (
 from fit_ctf_db_models.project import Project, ProjectManager
 from fit_ctf_db_models.user import User
 
-# empty data
-
-# def test_(empty_data: tuple[CTFManager, Path, list[Project], list[User]]):
-#     """Create a project."""
-#     ctf_mgr, tmp_path, _, _ = empty_data
-#     prj_mgr = ctf_mgr.prj_mgr
-
 
 def test_create_project(empty_data: tuple[CTFManager, Path, list[Project], list[User]]):
     """Create a project."""
@@ -52,7 +45,7 @@ def test_create_project(empty_data: tuple[CTFManager, Path, list[Project], list[
 
 
 def test_creating_project_errors(
-    empty_data: tuple[CTFManager, Path, list[Project], list[User]]
+    empty_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     """Test errors during project initializations."""
     ctf_mgr, tmp_path, _, _ = empty_data
@@ -134,8 +127,9 @@ def test_creating_project_errors(
 #     ctf_mgr, _, prjs, _ = project_data
 #     prj_mgr = ctf_mgr.prj_mgr
 
+
 def test_get_project_info(
-    project_data: tuple[CTFManager, Path, list[Project], list[User]]
+    project_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = project_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -144,6 +138,7 @@ def test_get_project_info(
     assert len(projects) == len(prjs)
     assert set([p.id for p in prjs]) == set([p.id for p in projects.values()])
     assert set(list(projects.keys())) == set([p.name for p in prjs])
+
 
 def test_get_projects(project_data: tuple[CTFManager, Path, list[Project], list[User]]):
     ctf_mgr, _, prjs, _ = project_data
@@ -162,7 +157,7 @@ def test_get_projects(project_data: tuple[CTFManager, Path, list[Project], list[
 
 
 def test_get_reserved_ports(
-    project_data: tuple[CTFManager, Path, list[Project], list[User]]
+    project_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, _ = project_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -178,7 +173,7 @@ def test_get_reserved_ports(
 
 
 def test_delete_project(
-    project_data: tuple[CTFManager, Path, list[Project], list[User]]
+    project_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, tmp_path, prjs, _ = project_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -217,7 +212,7 @@ def test_delete_all(project_data: tuple[CTFManager, Path, list[Project], list[Us
 
 
 def test_get_active_users_for_project(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, _, prjs, usrs = connected_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -265,7 +260,7 @@ def test_get_active_users_for_project(
 
 
 def test_generate_port_forwarding_script(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, tmp_path, prjs, _ = connected_data
     prj_mgr = ctf_mgr.prj_mgr
@@ -277,7 +272,7 @@ def test_generate_port_forwarding_script(
 
     assert script_path.is_file()
     with open(script_path, "r") as f:
-        lines = [l.rstrip() for l in f]
+        lines = [line.rstrip() for line in f]
         assert lines.pop(0) == "#!/usr/bin/env bash"
         assert not lines.pop(0)
         for _ in range(len(prj_mgr.get_active_users_for_project(prjs[0]))):
@@ -291,7 +286,7 @@ def test_generate_port_forwarding_script(
 
 
 def test_export_project(
-    connected_data: tuple[CTFManager, Path, list[Project], list[User]]
+    connected_data: tuple[CTFManager, Path, list[Project], list[User]],
 ):
     ctf_mgr, tmp_path, prjs, _ = connected_data
     prj_mgr = ctf_mgr.prj_mgr

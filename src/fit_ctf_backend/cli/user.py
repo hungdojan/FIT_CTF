@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict
+from typing import Any
 
 import click
 from tabulate import tabulate
@@ -338,7 +339,7 @@ def add_module(ctx: click.Context, username: str, project_name: str, module_name
 @click.pass_context
 def list_modules(ctx: click.Context, username: str, project_name: str):
     """Display a list of modules attached to the user in the selected module."""
-    raise NotImplemented()
+    raise NotImplementedError()
 
 
 @module.command(name="remove")

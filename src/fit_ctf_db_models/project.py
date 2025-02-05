@@ -445,7 +445,8 @@ class ProjectManager(BaseManager[Project]):
         """
         if not self.validate_project_name(name):
             raise ProjectNamingFormatException(
-                f"Given name `{name}` is not allowed. Only lowercase characters, underscore and numbers are allowed."
+                f"Given name `{name}` is not allowed. "
+                "Only lowercase characters, underscore and numbers are allowed."
             )
         # check if project already exists
         prj = self.get_doc_by_filter(name=name, active=True)
