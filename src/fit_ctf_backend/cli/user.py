@@ -91,7 +91,7 @@ def multiple_create(
     try:
         usernames = []
         with open(filename, "r") as f:
-            usernames = [line for line in f]
+            usernames = [line.strip() for line in f]
 
         users = ctf_mgr.user_mgr.create_multiple_users(
             usernames, shadow_dir, default_password
