@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CLI commands &mdash; fit-ctf 0.1.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=01f34227"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to fit-ctf’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">CLI commands</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#fit-ctf-backend">fit_ctf_backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fit-ctf-backend-project">fit_ctf_backend project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-active-users">active-users</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-create">create</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-delete">delete</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-export">export</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-flush-db">flush-db</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-generate-firewall-rules">generate-firewall-rules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-get-config">get-config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-get-info">get-info</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-ls">ls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-module">module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-module-general">general</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-module-project">project</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-module-user">user</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-reserved-ports">reserved-ports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-resources">resources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-project-server">server</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-server-build">build</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-server-compile">compile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-server-health-check">health_check</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-server-is-running">is-running</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-server-restart">restart</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-server-shell-admin">shell_admin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-server-start">start</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-server-status">status</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-project-server-stop">stop</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fit-ctf-backend-user">fit_ctf_backend user</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-active-projects">active-projects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-build">build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-cancel">cancel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-cancel-multiple">cancel-multiple</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-change-password">change-password</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-compile">compile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-create">create</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-create-multiple">create-multiple</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-delete">delete</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-enroll">enroll</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-enroll-multiple">enroll-multiple</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-get">get</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-is-running">is-running</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-ls">ls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-module">module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-user-module-add">add</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-user-module-ls">ls</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit-ctf-backend-user-module-remove">remove</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-restart">restart</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-start">start</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-backend-user-stop">stop</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">CLI commands</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/click-commands.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cli-commands">
+<h1>CLI commands<a class="headerlink" href="#cli-commands" title="Link to this heading"></a></h1>
+<section id="fit-ctf-backend">
+<h2>fit_ctf_backend<a class="headerlink" href="#fit-ctf-backend" title="Link to this heading"></a></h2>
+<p>A tool for CTF competition management.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Commands</p>
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">project</span></span></dt>
+<dd><p>A command for project management.</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">user</span></span></dt>
+<dd><p>A command for user management.</p>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="fit-ctf-backend-project">
+<h2>fit_ctf_backend project<a class="headerlink" href="#fit-ctf-backend-project" title="Link to this heading"></a></h2>
+<p>A command for project management.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="fit-ctf-backend-project-active-users">
+<h3>active-users<a class="headerlink" href="#fit-ctf-backend-project-active-users" title="Link to this heading"></a></h3>
+<p>Get list of active users that are enrolled to the PROJECT_NAME.</p>
+<dl class="simple">
+<dt>Displays following states:</dt><dd><ul class="simple">
+<li><p>user ID</p></li>
+<li><p>active state</p></li>
+<li><p>account username</p></li>
+<li><p>account role</p></li>
+<li><p>path to the shadow file</p></li>
+<li><p>email</p></li>
+<li><p>path to home mounting directory/volume</p></li>
+<li><p>forwarded port (visible from the outside)</p></li>
+</ul>
+</dd>
+</dl>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>active-users<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>PROJECT_NAME
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-active-users-arg-PROJECT_NAME">
+<span class="sig-name descname"><span class="pre">PROJECT_NAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-active-users-arg-PROJECT_NAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-create">
+<h3>create<a class="headerlink" href="#fit-ctf-backend-project-create" title="Link to this heading"></a></h3>
+<p>Create and initialize a new project.</p>
+<p>This command generate a basic project from the template and stores
+it in the <cite>dest_dir</cite> directory. Make sure that <cite>dest_dir</cite> exists.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-create-n">
+<span id="cmdoption-fit_ctf_backend-project-create-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-create-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name (also serves as project id).</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-create-dd">
+<span id="cmdoption-fit_ctf_backend-project-create-dest-dir"></span><span class="sig-name descname"><span class="pre">-dd</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--dest-dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;dest_dir&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-create-dd" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> A directory in which the tool will store project configurations.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-create-mu">
+<span id="cmdoption-fit_ctf_backend-project-create-max-nof-users"></span><span class="sig-name descname"><span class="pre">-mu</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--max-nof-users</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;max_nof_users&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-create-mu" title="Link to this definition"></a></dt>
+<dd><p>Max number of users.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">1000</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-create-p">
+<span id="cmdoption-fit_ctf_backend-project-create-starting-port-bind"></span><span class="sig-name descname"><span class="pre">-p</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--starting-port-bind</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;starting_port_bind&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-create-p" title="Link to this definition"></a></dt>
+<dd><p>A starting port value for each user. Each user will received a port from the range from &lt;starting-port-bind&gt;to &lt;starting-port-bind + max-nof-users&gt;. If set to -1, the tool will automatically assign an available port value.User can choose a number between 10_000 to 65_535.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">-1</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-create-vd">
+<span id="cmdoption-fit_ctf_backend-project-create-volume-mount-dirname"></span><span class="sig-name descname"><span class="pre">-vd</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--volume-mount-dirname</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;volume_mount_dirname&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-create-vd" title="Link to this definition"></a></dt>
+<dd><p>A directory name that will contain all user home volumes for the given project. This directory will be created inside project configuration directory (&lt;dest-dir&gt;/&lt;dir-name&gt;/&lt;volume-mount-dirname&gt;).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">'_mounts'</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-create-dn">
+<span id="cmdoption-fit_ctf_backend-project-create-dir-name"></span><span class="sig-name descname"><span class="pre">-dn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--dir-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;dir_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-create-dn" title="Link to this definition"></a></dt>
+<dd><p>Name of the directory that will be created inside &lt;dest-dir&gt;. If no name is set, the directory name will be generated using project name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">''</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-create-de">
+<span id="cmdoption-fit_ctf_backend-project-create-description"></span><span class="sig-name descname"><span class="pre">-de</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--description</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;description&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-create-de" title="Link to this definition"></a></dt>
+<dd><p>A project description.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">''</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-create-cf">
+<span id="cmdoption-fit_ctf_backend-project-create-compose-file"></span><span class="sig-name descname"><span class="pre">-cf</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--compose-file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;compose_file&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-create-cf" title="Link to this definition"></a></dt>
+<dd><p>Compose filename used for managing CTF server pods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">'server_compose.yaml'</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-delete">
+<h3>delete<a class="headerlink" href="#fit-ctf-backend-project-delete" title="Link to this heading"></a></h3>
+<p>Delete an existing project PROJECT_NAME.</p>
+<p>Deletes all project configuration files and sets project activity
+state to <cite>inactive</cite>.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>PROJECT_NAME
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-delete-arg-PROJECT_NAME">
+<span class="sig-name descname"><span class="pre">PROJECT_NAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-delete-arg-PROJECT_NAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-export">
+<h3>export<a class="headerlink" href="#fit-ctf-backend-project-export" title="Link to this heading"></a></h3>
+<p>Export PROJECT_NAME configurations.</p>
+<p>Generates a ZIP file containing all the project configuration files, including
+mounts and modules.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>PROJECT_NAME
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-export-o">
+<span id="cmdoption-fit_ctf_backend-project-export-output"></span><span class="sig-name descname"><span class="pre">-o</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--output</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;output&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-export-o" title="Link to this definition"></a></dt>
+<dd><p>Final ZIP file name.</p>
+</dd></dl>
+
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-export-arg-PROJECT_NAME">
+<span class="sig-name descname"><span class="pre">PROJECT_NAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-export-arg-PROJECT_NAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-flush-db">
+<h3>flush-db<a class="headerlink" href="#fit-ctf-backend-project-flush-db" title="Link to this heading"></a></h3>
+<p>Removes all inactive projects from the database.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>flush-db<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-generate-firewall-rules">
+<h3>generate-firewall-rules<a class="headerlink" href="#fit-ctf-backend-project-generate-firewall-rules" title="Link to this heading"></a></h3>
+<p>Generate a BASH script with port forwarding rules for PROJECT_NAME.</p>
+<p>The command used in the script are written for <cite>firewalld</cite> application.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>generate-firewall-rules<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>PROJECT_NAME
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-generate-firewall-rules-ip">
+<span id="cmdoption-fit_ctf_backend-project-generate-firewall-rules-ip-addr"></span><span class="sig-name descname"><span class="pre">-ip</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--ip-addr</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;ip_addr&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-generate-firewall-rules-ip" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> The destination IP address.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-generate-firewall-rules-o">
+<span id="cmdoption-fit_ctf_backend-project-generate-firewall-rules-output"></span><span class="sig-name descname"><span class="pre">-o</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--output</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;output&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-generate-firewall-rules-o" title="Link to this definition"></a></dt>
+<dd><p>Destination file where the script content will be written.</p>
+</dd></dl>
+
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-generate-firewall-rules-arg-PROJECT_NAME">
+<span class="sig-name descname"><span class="pre">PROJECT_NAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-generate-firewall-rules-arg-PROJECT_NAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-get-config">
+<h3>get-config<a class="headerlink" href="#fit-ctf-backend-project-get-config" title="Link to this heading"></a></h3>
+<p>Return path to PROJECT_NAME’s configuration directory.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>get-config<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>PROJECT_NAME
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-get-config-arg-PROJECT_NAME">
+<span class="sig-name descname"><span class="pre">PROJECT_NAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-get-config-arg-PROJECT_NAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-get-info">
+<h3>get-info<a class="headerlink" href="#fit-ctf-backend-project-get-info" title="Link to this heading"></a></h3>
+<p>Display project PROJECT_NAME’s information.</p>
+<p>Dumps all information about a selected project.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>get-info<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>PROJECT_NAME
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-get-info-arg-PROJECT_NAME">
+<span class="sig-name descname"><span class="pre">PROJECT_NAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-get-info-arg-PROJECT_NAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-ls">
+<h3>ls<a class="headerlink" href="#fit-ctf-backend-project-ls" title="Link to this heading"></a></h3>
+<p>Display existing projects.</p>
+<p>This command by default displays only active projects. Use <cite>-a</cite> flag to
+display inactive projects.</p>
+<dl class="simple">
+<dt>Displays following states:</dt><dd><ul class="simple">
+<li><p>active state</p></li>
+<li><p>project name</p></li>
+<li><p>max number of users</p></li>
+<li><p>number of active users enrolled to the project</p></li>
+</ul>
+</dd>
+</dl>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-ls-a">
+<span id="cmdoption-fit_ctf_backend-project-ls-all"></span><span class="sig-name descname"><span class="pre">-a</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--all</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-ls-a" title="Link to this definition"></a></dt>
+<dd><p>Display both active and inactive projects.)</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-module">
+<h3>module<a class="headerlink" href="#fit-ctf-backend-project-module" title="Link to this heading"></a></h3>
+<p>Manage modules.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="fit-ctf-backend-project-module-general">
+<h4>general<a class="headerlink" href="#fit-ctf-backend-project-module-general" title="Link to this heading"></a></h4>
+<p>A set of general module operations.</p>
+<p>NOT IMPLEMENTED YET.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span>general<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-module-project">
+<h4>project<a class="headerlink" href="#fit-ctf-backend-project-module-project" title="Link to this heading"></a></h4>
+<p>Manage project modules.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span>project<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-module-project-n">
+<span id="cmdoption-fit_ctf_backend-project-module-project-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-module-project-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name</p>
+</dd></dl>
+
+<section id="fit-ctf-backend-project-module-project-create">
+<h5>create<a class="headerlink" href="#fit-ctf-backend-project-module-project-create" title="Link to this heading"></a></h5>
+<p>Create a new module.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span>project<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-module-project-create-n">
+<span id="cmdoption-fit_ctf_backend-project-module-project-create-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-module-project-create-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Name of the service module.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-module-project-ls">
+<h5>ls<a class="headerlink" href="#fit-ctf-backend-project-module-project-ls" title="Link to this heading"></a></h5>
+<p>List all available modules.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span>project<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-module-project-remove">
+<h5>remove<a class="headerlink" href="#fit-ctf-backend-project-module-project-remove" title="Link to this heading"></a></h5>
+<p>Remove a module.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span>project<span class="w"> </span>remove<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-module-project-remove-n">
+<span id="cmdoption-fit_ctf_backend-project-module-project-remove-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-module-project-remove-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Name of the service module.</p>
+</dd></dl>
+
+</section>
+</section>
+<section id="fit-ctf-backend-project-module-user">
+<h4>user<a class="headerlink" href="#fit-ctf-backend-project-module-user" title="Link to this heading"></a></h4>
+<p>Manage user modules.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span>user<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-module-user-n">
+<span id="cmdoption-fit_ctf_backend-project-module-user-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-module-user-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name</p>
+</dd></dl>
+
+<section id="fit-ctf-backend-project-module-user-create">
+<h5>create<a class="headerlink" href="#fit-ctf-backend-project-module-user-create" title="Link to this heading"></a></h5>
+<p>Create a module.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-module-user-create-n">
+<span id="cmdoption-fit_ctf_backend-project-module-user-create-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-module-user-create-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Name of the service module.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-module-user-ls">
+<h5>ls<a class="headerlink" href="#fit-ctf-backend-project-module-user-ls" title="Link to this heading"></a></h5>
+<p>List available modules.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span>user<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-module-user-remove">
+<h5>remove<a class="headerlink" href="#fit-ctf-backend-project-module-user-remove" title="Link to this heading"></a></h5>
+<p>Remove a module.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>module<span class="w"> </span>user<span class="w"> </span>remove<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-module-user-remove-n">
+<span id="cmdoption-fit_ctf_backend-project-module-user-remove-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-module-user-remove-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Name of the service module.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+<section id="fit-ctf-backend-project-reserved-ports">
+<h3>reserved-ports<a class="headerlink" href="#fit-ctf-backend-project-reserved-ports" title="Link to this heading"></a></h3>
+<p>Returns list of reserved ports.</p>
+<p>Displays a list of projects and their reserved port range.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>reserved-ports<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-resources">
+<h3>resources<a class="headerlink" href="#fit-ctf-backend-project-resources" title="Link to this heading"></a></h3>
+<p>Display PROJECT_NAME current resource usage.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>resources<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>PROJECT_NAME
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-resources-arg-PROJECT_NAME">
+<span class="sig-name descname"><span class="pre">PROJECT_NAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-resources-arg-PROJECT_NAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-project-server">
+<h3>server<a class="headerlink" href="#fit-ctf-backend-project-server" title="Link to this heading"></a></h3>
+<p>Manage project instances.</p>
+<p>The server command manages server nodes. User can start and stop nodes,
+check if it’s running or build a new image and compile compose files.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-project-server-n">
+<span id="cmdoption-fit_ctf_backend-project-server-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-project-server-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name</p>
+</dd></dl>
+
+<section id="fit-ctf-backend-project-server-build">
+<h4>build<a class="headerlink" href="#fit-ctf-backend-project-server-build" title="Link to this heading"></a></h4>
+<p>Build or update project’s images.</p>
+<p>Run this command when you changed any server node image. If the image is not found
+try recompiling the compose file first.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span>build<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-server-compile">
+<h4>compile<a class="headerlink" href="#fit-ctf-backend-project-server-compile" title="Link to this heading"></a></h4>
+<p>Recompile project compose file.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span>compile<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-server-health-check">
+<h4>health_check<a class="headerlink" href="#fit-ctf-backend-project-server-health-check" title="Link to this heading"></a></h4>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span>health_check<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-server-is-running">
+<h4>is-running<a class="headerlink" href="#fit-ctf-backend-project-server-is-running" title="Link to this heading"></a></h4>
+<p>Check if project is running.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span>is-running<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-server-restart">
+<h4>restart<a class="headerlink" href="#fit-ctf-backend-project-server-restart" title="Link to this heading"></a></h4>
+<p>Stop login nodes and restart server nodes.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span>restart<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-server-shell-admin">
+<h4>shell_admin<a class="headerlink" href="#fit-ctf-backend-project-server-shell-admin" title="Link to this heading"></a></h4>
+<p>Shell into the admin container.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span>shell_admin<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-server-start">
+<h4>start<a class="headerlink" href="#fit-ctf-backend-project-server-start" title="Link to this heading"></a></h4>
+<p>Start server nodes.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span>start<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-server-status">
+<h4>status<a class="headerlink" href="#fit-ctf-backend-project-server-status" title="Link to this heading"></a></h4>
+<p>Check server nodes status.</p>
+<p>Print output of <cite>podman ps</cite> command.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-backend-project-server-stop">
+<h4>stop<a class="headerlink" href="#fit-ctf-backend-project-server-stop" title="Link to this heading"></a></h4>
+<p>Stop server nodes.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>project<span class="w"> </span>server<span class="w"> </span>stop<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<hr class="docutils" />
+<section id="fit-ctf-backend-user">
+<h2>fit_ctf_backend user<a class="headerlink" href="#fit-ctf-backend-user" title="Link to this heading"></a></h2>
+<p>A command for user management.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="fit-ctf-backend-user-active-projects">
+<h3>active-projects<a class="headerlink" href="#fit-ctf-backend-user-active-projects" title="Link to this heading"></a></h3>
+<p>Get a list of active projects that a user is enrolled to.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>active-projects<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-active-projects-u">
+<span id="cmdoption-fit_ctf_backend-user-active-projects-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-active-projects-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-build">
+<h3>build<a class="headerlink" href="#fit-ctf-backend-user-build" title="Link to this heading"></a></h3>
+<p>Update images from user’s <cite>compose.yaml</cite> file.</p>
+<p>This step is usually done after compiling the YAML file.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>build<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-build-u">
+<span id="cmdoption-fit_ctf_backend-user-build-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-build-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-build-pn">
+<span id="cmdoption-fit_ctf_backend-user-build-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-build-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-cancel">
+<h3>cancel<a class="headerlink" href="#fit-ctf-backend-user-cancel" title="Link to this heading"></a></h3>
+<p>Remove user from the project.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>cancel<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-cancel-u">
+<span id="cmdoption-fit_ctf_backend-user-cancel-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-cancel-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-cancel-pn">
+<span id="cmdoption-fit_ctf_backend-user-cancel-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-cancel-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-cancel-multiple">
+<h3>cancel-multiple<a class="headerlink" href="#fit-ctf-backend-user-cancel-multiple" title="Link to this heading"></a></h3>
+<p>Remove multiple users from the project.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>cancel-multiple<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>FILENAME
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-cancel-multiple-pn">
+<span id="cmdoption-fit_ctf_backend-user-cancel-multiple-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-cancel-multiple-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-cancel-multiple-arg-FILENAME">
+<span class="sig-name descname"><span class="pre">FILENAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-cancel-multiple-arg-FILENAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-change-password">
+<h3>change-password<a class="headerlink" href="#fit-ctf-backend-user-change-password" title="Link to this heading"></a></h3>
+<p>Update user’s password.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>change-password<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-change-password-u">
+<span id="cmdoption-fit_ctf_backend-user-change-password-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-change-password-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-change-password-p">
+<span id="cmdoption-fit_ctf_backend-user-change-password-password"></span><span class="sig-name descname"><span class="pre">-p</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--password</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;password&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-change-password-p" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> New password.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-compile">
+<h3>compile<a class="headerlink" href="#fit-ctf-backend-user-compile" title="Link to this heading"></a></h3>
+<p>Compiles user’s <cite>compose.yaml</cite> file.</p>
+<p>This step is usually done after editing its list of modules.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>compile<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-compile-u">
+<span id="cmdoption-fit_ctf_backend-user-compile-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-compile-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-compile-pn">
+<span id="cmdoption-fit_ctf_backend-user-compile-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-compile-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-create">
+<h3>create<a class="headerlink" href="#fit-ctf-backend-user-create" title="Link to this heading"></a></h3>
+<p>Create a new user.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-create-u">
+<span id="cmdoption-fit_ctf_backend-user-create-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-create-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-create-p">
+<span id="cmdoption-fit_ctf_backend-user-create-password"></span><span class="sig-name descname"><span class="pre">-p</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--password</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;password&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-create-p" title="Link to this definition"></a></dt>
+<dd><p>Account password.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-create-generate-password">
+<span class="sig-name descname"><span class="pre">--generate-password</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-create-generate-password" title="Link to this definition"></a></dt>
+<dd><p>Computer generate a password.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-create-sd">
+<span id="cmdoption-fit_ctf_backend-user-create-shadow-dir"></span><span class="sig-name descname"><span class="pre">-sd</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--shadow-dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;shadow_dir&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-create-sd" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> A directory where a shadow file will be created.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-create-e">
+<span id="cmdoption-fit_ctf_backend-user-create-email"></span><span class="sig-name descname"><span class="pre">-e</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--email</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;email&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-create-e" title="Link to this definition"></a></dt>
+<dd><p>Account email.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-create-multiple">
+<h3>create-multiple<a class="headerlink" href="#fit-ctf-backend-user-create-multiple" title="Link to this heading"></a></h3>
+<p>Create multiple new users.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>create-multiple<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>FILENAME
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-create-multiple-sd">
+<span id="cmdoption-fit_ctf_backend-user-create-multiple-shadow-dir"></span><span class="sig-name descname"><span class="pre">-sd</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--shadow-dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;shadow_dir&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-create-multiple-sd" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> A directory where a shadow file will be created.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-create-multiple-dp">
+<span id="cmdoption-fit_ctf_backend-user-create-multiple-default-password"></span><span class="sig-name descname"><span class="pre">-dp</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--default-password</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;default_password&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-create-multiple-dp" title="Link to this definition"></a></dt>
+<dd><p>Set default passwords to all new users.</p>
+</dd></dl>
+
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-create-multiple-arg-FILENAME">
+<span class="sig-name descname"><span class="pre">FILENAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-create-multiple-arg-FILENAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-delete">
+<h3>delete<a class="headerlink" href="#fit-ctf-backend-user-delete" title="Link to this heading"></a></h3>
+<p>Remove user from the database.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>USERNAMES<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-delete-arg-USERNAMES">
+<span class="sig-name descname"><span class="pre">USERNAMES</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-delete-arg-USERNAMES" title="Link to this definition"></a></dt>
+<dd><p>Optional argument(s)</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-enroll">
+<h3>enroll<a class="headerlink" href="#fit-ctf-backend-user-enroll" title="Link to this heading"></a></h3>
+<p>enroll user to the project.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>enroll<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-enroll-u">
+<span id="cmdoption-fit_ctf_backend-user-enroll-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-enroll-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-enroll-pn">
+<span id="cmdoption-fit_ctf_backend-user-enroll-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-enroll-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-enroll-multiple">
+<h3>enroll-multiple<a class="headerlink" href="#fit-ctf-backend-user-enroll-multiple" title="Link to this heading"></a></h3>
+<p>Enroll multiple users to the project.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>enroll-multiple<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>FILENAME
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-enroll-multiple-pn">
+<span id="cmdoption-fit_ctf_backend-user-enroll-multiple-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-enroll-multiple-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-enroll-multiple-arg-FILENAME">
+<span class="sig-name descname"><span class="pre">FILENAME</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-enroll-multiple-arg-FILENAME" title="Link to this definition"></a></dt>
+<dd><p>Required argument</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-get">
+<h3>get<a class="headerlink" href="#fit-ctf-backend-user-get" title="Link to this heading"></a></h3>
+<p>Get user information.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-get-u">
+<span id="cmdoption-fit_ctf_backend-user-get-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-get-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-is-running">
+<h3>is-running<a class="headerlink" href="#fit-ctf-backend-user-is-running" title="Link to this heading"></a></h3>
+<p>Check if user instance is running.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>is-running<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-is-running-u">
+<span id="cmdoption-fit_ctf_backend-user-is-running-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-is-running-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-is-running-pn">
+<span id="cmdoption-fit_ctf_backend-user-is-running-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-is-running-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-ls">
+<h3>ls<a class="headerlink" href="#fit-ctf-backend-user-ls" title="Link to this heading"></a></h3>
+<p>Get a list of registered users in the database.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-ls-a">
+<span id="cmdoption-fit_ctf_backend-user-ls-all"></span><span class="sig-name descname"><span class="pre">-a</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--all</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-ls-a" title="Link to this definition"></a></dt>
+<dd><p>Display all users (even inactive).</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-module">
+<h3>module<a class="headerlink" href="#fit-ctf-backend-user-module" title="Link to this heading"></a></h3>
+<p>Manages user modules.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>module<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="fit-ctf-backend-user-module-add">
+<h4>add<a class="headerlink" href="#fit-ctf-backend-user-module-add" title="Link to this heading"></a></h4>
+<p>Attach a project module to the user.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>module<span class="w"> </span>add<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-module-add-u">
+<span id="cmdoption-fit_ctf_backend-user-module-add-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-module-add-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-module-add-pn">
+<span id="cmdoption-fit_ctf_backend-user-module-add-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-module-add-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-module-add-mn">
+<span id="cmdoption-fit_ctf_backend-user-module-add-module-name"></span><span class="sig-name descname"><span class="pre">-mn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--module-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;module_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-module-add-mn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Module’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-module-ls">
+<h4>ls<a class="headerlink" href="#fit-ctf-backend-user-module-ls" title="Link to this heading"></a></h4>
+<p>Display a list of modules attached to the user in the selected module.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>module<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-module-ls-u">
+<span id="cmdoption-fit_ctf_backend-user-module-ls-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-module-ls-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-module-ls-pn">
+<span id="cmdoption-fit_ctf_backend-user-module-ls-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-module-ls-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-module-remove">
+<h4>remove<a class="headerlink" href="#fit-ctf-backend-user-module-remove" title="Link to this heading"></a></h4>
+<p>Remove the attached module from the user.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>module<span class="w"> </span>remove<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-module-remove-u">
+<span id="cmdoption-fit_ctf_backend-user-module-remove-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-module-remove-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-module-remove-pn">
+<span id="cmdoption-fit_ctf_backend-user-module-remove-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-module-remove-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-module-remove-mn">
+<span id="cmdoption-fit_ctf_backend-user-module-remove-module-name"></span><span class="sig-name descname"><span class="pre">-mn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--module-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;module_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-module-remove-mn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Module’s name.</p>
+</dd></dl>
+
+</section>
+</section>
+<section id="fit-ctf-backend-user-restart">
+<h3>restart<a class="headerlink" href="#fit-ctf-backend-user-restart" title="Link to this heading"></a></h3>
+<p>Restart user instance.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>restart<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-restart-u">
+<span id="cmdoption-fit_ctf_backend-user-restart-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-restart-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-restart-pn">
+<span id="cmdoption-fit_ctf_backend-user-restart-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-restart-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-start">
+<h3>start<a class="headerlink" href="#fit-ctf-backend-user-start" title="Link to this heading"></a></h3>
+<p>Start user instance.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>start<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-start-u">
+<span id="cmdoption-fit_ctf_backend-user-start-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-start-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-start-pn">
+<span id="cmdoption-fit_ctf_backend-user-start-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-start-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-backend-user-stop">
+<h3>stop<a class="headerlink" href="#fit-ctf-backend-user-stop" title="Link to this heading"></a></h3>
+<p>Stop user instance.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit_ctf_backend<span class="w"> </span>user<span class="w"> </span>stop<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-stop-u">
+<span id="cmdoption-fit_ctf_backend-user-stop-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-stop-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit_ctf_backend-user-stop-pn">
+<span id="cmdoption-fit_ctf_backend-user-stop-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit_ctf_backend-user-stop-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to fit-ctf’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
