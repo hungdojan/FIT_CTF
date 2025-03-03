@@ -5,7 +5,7 @@ import sys
 
 import click
 
-from . import project, user
+from . import completion, project, user
 
 
 def _get_db_info() -> tuple[str, str]:
@@ -27,3 +27,4 @@ def cli():
 
 cli.add_command(project.project)
 cli.add_command(user.user)
+cli.add_command(completion.completion)
