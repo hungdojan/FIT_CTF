@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
@@ -9,13 +7,16 @@ from bson import ObjectId
 from pymongo.collection import Collection
 from pymongo.database import Database
 
-from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
+from fit_ctf_utils.container_client.container_client_interface import (
+    ContainerClientInterface,
+)
+from fit_ctf_utils.types import PathDict
 
 log = logging.getLogger()
 
 
-@dataclass
-class Base(object):
+@dataclass(kw_only=True)
+class Base(ABC):
     """A base class that all entities derive from.
 
     :param _id: Object ID.
@@ -23,9 +24,13 @@ class Base(object):
     :param active: Active status of the object. When an object is set as `False`, the
         object is considered as deleted and can be only used for displaying information.
     :type active: bool
+    :param config: Some additional options that is used by the app but will not be
+        stored in the database. Defaults to an empty dictionary.
+    :type config:dict
+    :type active: dict[str, str]
     """
 
-    _id: ObjectId
+    _id: ObjectId = field(default_factory=lambda: ObjectId())
     active: bool = field(default=True)
 
     @property
@@ -36,11 +41,15 @@ class Base(object):
 T = TypeVar("T", bound=Base)
 
 
-class BaseManager(ABC, Generic[T]):
+class BaseManagerInterface(ABC, Generic[T]):
     """A base manager class that all CTF managers derive from."""
 
     def __init__(
-        self, db: Database, coll: Collection, c_client: type[BaseContainerClient]
+        self,
+        db: Database,
+        coll: Collection,
+        c_client: type[ContainerClientInterface],
+        paths: PathDict,
     ):
         """Constructor method.
 
@@ -49,11 +58,14 @@ class BaseManager(ABC, Generic[T]):
         :param coll: MongoDB collection object.
         :type coll: Collection
         :param c_client: A container client class for calling container engine API.
-        :type c_client: type[BaseContainerClient]
+        :type c_client: type[ContainerClientInterface]
+        :param path: A path to a directory where contents of <T> are stored.
+        :type path: pathlib.Path
         """
         self._db = db
         self._coll = coll
         self.c_client = c_client
+        self._paths = paths
 
     @property
     def collection(self) -> Collection:
@@ -73,7 +85,7 @@ class BaseManager(ABC, Generic[T]):
         :return: A document object (subclass of `Base`) if found.
         :rtype: T | None
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def get_doc_by_id_raw(self, _id: ObjectId):  # pragma: no cover
@@ -83,7 +95,7 @@ class BaseManager(ABC, Generic[T]):
         :type _id: ObjectId
         :return: Result of query.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def get_doc_by_filter(self, **kw) -> T | None:  # pragma: no cover
@@ -92,7 +104,7 @@ class BaseManager(ABC, Generic[T]):
         :return: A document object (subclass of `Base`) if found.
         :rtype: T | None
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def get_docs(self, **filter) -> list[T]:  # pragma: no cover
@@ -101,7 +113,7 @@ class BaseManager(ABC, Generic[T]):
         :return: A list of found documents.
         :rtype: T | None.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def create_and_insert_doc(self, **kw) -> T:  # pragma no cover
@@ -110,7 +122,7 @@ class BaseManager(ABC, Generic[T]):
         :return: A new document.
         :rtype: T
         """
-        pass
+        raise NotImplementedError()
 
     def get_docs_raw(self, filter: dict[str, Any], projection: dict[str, Any]) -> list:
         """Search for all documents using filter and return results in raw format.
@@ -130,8 +142,9 @@ class BaseManager(ABC, Generic[T]):
         :param doc: A document to insert into the database.
         :type doc: T
         """
-        log.info(f"Inserting {asdict(doc)}")
-        self._coll.insert_one(asdict(doc))
+        dict_obj = asdict(doc)
+        log.info(f"Inserting {dict_obj}")
+        self._coll.insert_one(dict_obj)
 
     def update_doc(self, doc: T):
         """Update the whole document.
@@ -139,8 +152,9 @@ class BaseManager(ABC, Generic[T]):
         :param doc: A new version of the document.
         :type doc: T
         """
-        log.info(f"Updating {asdict(doc)}")
-        self._coll.replace_one({"_id": doc._id}, asdict(doc))
+        dict_obj = asdict(doc)
+        log.info(f"Updating {dict_obj}")
+        self._coll.replace_one({"_id": doc._id}, dict_obj)
 
     def remove_doc_by_id(self, _id: ObjectId) -> bool:
         """Remove a document using ObjectId.

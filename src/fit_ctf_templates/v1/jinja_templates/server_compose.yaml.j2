@@ -1,0 +1,16 @@
+name: {{ project.name }}-server
+
+services:
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Containerfile
+    networks:
+      - {{ project.name }}_main_net
+  {%- for _, module in project.project_modules.items() %}
+{% include module.root_dir ~ '/' ~ module.compose_template_path %}
+  {%- endfor %}
+
+networks:
+  {{ project.name }}_main_net:
+    name: "{{ project.name }}_main_net"

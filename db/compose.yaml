@@ -15,7 +15,6 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db:z
-        # - ./initdb.js:/docker-entrypoint-initdb.d/initdb.js:z,ro
 
 env_file:
   - path: ../.env

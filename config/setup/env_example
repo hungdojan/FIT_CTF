@@ -17,3 +17,15 @@ DB_CONNECTION_TIMEOUT=30
 # directory that will contain all the logs that the tool produces
 # defaults to "./" if not set; make sure the program the program has writing permissions
 LOG_DEST="/tmp"
+
+# a path to a directory where all projects are stored
+# if not set, the default path is set to `$HOME/.local/share/FIT_CTF/projects`
+#PROJECT_SHARE_DIR="$HOME/.local/share/FIT_CTF/projects"
+
+# a path to a directory where all users are stored
+# if not set, the default path is set to `$HOME/.local/share/FIT_CTF/users`
+#USER_SHARE_DIR="$HOME/.local/share/FIT_CTF/users"
+
+# a path to a directory where all modules are stored
+# if not set, the default path is set to `$HOME/.local/share/FIT_CTF/modules`
+#MODULE_SHARE_DIR="$HOME/.local/share/FIT_CTF/modules"

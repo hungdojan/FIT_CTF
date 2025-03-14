@@ -1,4 +1,3 @@
-import json
 import pprint
 from dataclasses import asdict
 from typing import Any
@@ -6,9 +5,8 @@ from typing import Any
 import click
 from tabulate import tabulate
 
-import fit_ctf_backend.cli as _cli
 from fit_ctf_backend.ctf_manager import CTFManager
-from fit_ctf_backend.exceptions import CTFException
+from fit_ctf_utils.exceptions import CTFException
 from fit_ctf_db_models.project import ProjectManager
 
 ##########################
@@ -18,29 +16,18 @@ from fit_ctf_db_models.project import ProjectManager
 
 @click.group(name="project")
 @click.pass_context
-def project(ctx: click.Context):
+def project(
+    ctx: click.Context,
+):
     """A command for project management."""
-    db_host, db_name = _cli._get_db_info()
-    ctf_mgr = CTFManager(db_host, db_name)
-
-    ctx.obj = {
-        "db_host": db_host,
-        "db_name": db_name,
-        "ctf_mgr": ctf_mgr,
-    }
+    ctx.obj = ctx.parent.obj  # pyright: ignore
 
 
 @project.command(name="create")
 @click.option(
-    "-n",
-    "--name",
+    "-pn",
+    "--project-name",
     help="Project's name (also serves as project id).",
-    required=True,
-)
-@click.option(
-    "-dd",
-    "--dest-dir",
-    help="A directory in which the tool will store project configurations.",
     required=True,
 )
 @click.option(
@@ -64,45 +51,15 @@ def project(ctx: click.Context):
     type=int,
 )
 @click.option(
-    "-vd",
-    "--volume-mount-dirname",
-    help="A directory name that will contain all user "
-    "home volumes for the given project. "
-    "This directory will be created inside project configuration directory "
-    "(<dest-dir>/<dir-name>/<volume-mount-dirname>).",
-    default="_mounts",
-    show_default=True,
-)
-@click.option(
-    "-dn",
-    "--dir-name",
-    help="Name of the directory that will be created inside <dest-dir>. "
-    "If no name is set, the directory name will be "
-    "generated using project name.",
-    default="",
-    show_default=True,
-)
-@click.option(
     "-de", "--description", help="A project description.", default="", show_default=True
-)
-@click.option(
-    "-cf",
-    "--compose-file",
-    help="Compose filename used for managing CTF server pods.",
-    default="server_compose.yaml",
-    show_default=True,
 )
 @click.pass_context
 def create_project(
     ctx: click.Context,
-    name: str,
-    dest_dir: str,
+    project_name: str,
     max_nof_users: int,
     starting_port_bind: int,
-    volume_mount_dirname: str,
-    dir_name: str,
     description: str,
-    compose_file: str,
 ):
     """Create and initialize a new project.
 
@@ -110,15 +67,11 @@ def create_project(
     it in the `dest_dir` directory. Make sure that `dest_dir` exists."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     try:
-        prj = ctf_mgr.init_project(
-            name,
-            dest_dir,
+        prj = ctf_mgr.prj_mgr.init_project(
+            project_name,
             max_nof_users,
             starting_port_bind,
-            volume_mount_dirname,
-            dir_name,
             description,
-            compose_file,
         )
         click.echo(f"Project `{prj.name}` was successfully generated.")
     except CTFException as e:
@@ -165,7 +118,7 @@ def get_project_info(ctx: click.Context, project_name: str):
     Dumps all information about a selected project.
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    prj = ctf_mgr.get_project_info(project_name)
+    prj = ctf_mgr.prj_mgr.get_project(project_name)
     # TODO: format
     if prj:
         pprint.pprint(asdict(prj))
@@ -173,24 +126,31 @@ def get_project_info(ctx: click.Context, project_name: str):
         click.echo(f"Project `{project_name}` not found.")
 
 
-@project.command(name="get-config")
-@click.argument("project_name")
+# @project.command(name="get-config")
+# @click.argument("project_name")
+# @click.pass_context
+# def get_config_path(ctx: click.Context, project_name: str):
+#     """Return path to PROJECT_NAME's configuration directory."""
+#     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+#     prj = ctf_mgr.get_project_info(project_name)
+#     if not prj:
+#         click.echo(f"Project `{project_name}` not found.")
+#         return
+#
+#     click.echo(prj.config_root_dir)
+
+
+@project.command(name="enrolled-users")
+@click.option("-pn", "--project-name", type=str, required=True, help="Project's name.")
+@click.option(
+    "-a",
+    "--all",
+    is_flag=True,
+    default=False,
+    help="Display inactive enrollments as well.",
+)
 @click.pass_context
-def get_config_path(ctx: click.Context, project_name: str):
-    """Return path to PROJECT_NAME's configuration directory."""
-    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    prj = ctf_mgr.get_project_info(project_name)
-    if not prj:
-        click.echo(f"Project `{project_name}` not found.")
-        return
-
-    click.echo(prj.config_root_dir)
-
-
-@project.command(name="active-users")
-@click.argument("project_name")
-@click.pass_context
-def active_users(ctx: click.Context, project_name: str):
+def enrolled_users(ctx: click.Context, project_name: str, all: bool):
     """Get list of active users that are enrolled to the PROJECT_NAME.
 
     Displays following states:
@@ -203,14 +163,17 @@ def active_users(ctx: click.Context, project_name: str):
         - path to home mounting directory/volume
         - forwarded port (visible from the outside)
     """
-    prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
-    lof_active_users = prj_mgr.get_active_users_for_project_raw(project_name)
-    if not lof_active_users:
-        click.echo("No active users found.")
-        return
-    header = list(lof_active_users[0].keys())
-    values = [list(i.values()) for i in lof_active_users]
-    click.echo(tabulate(values, header))
+    # TODO: allow inactive users
+
+    # prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
+    raise NotImplementedError()
+    # lof_active_users = prj_mgr.get_active_users_for_project_raw(project_name)
+    # if not lof_active_users:
+    #     click.echo("No active users found.")
+    #     return
+    # header = list(lof_active_users[0].keys())
+    # values = [list(i.values()) for i in lof_active_users]
+    # click.echo(tabulate(values, header))
 
 
 @project.command(name="generate-firewall-rules")
@@ -289,16 +252,16 @@ def delete_project(ctx: click.Context, project_name: str):
     state to `inactive`.
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    ctf_mgr.delete_project(project_name)
+    ctf_mgr.prj_mgr.delete_project(project_name)
     click.echo("Project deleted successfully.")
 
 
-@project.command("flush-db")
-@click.pass_context
-def flush_db(ctx: click.Context):
-    """Removes all inactive projects from the database."""
-    prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
-    prj_mgr.remove_doc_by_filter(active=False)
+# @project.command("flush-db")
+# @click.pass_context
+# def flush_db(ctx: click.Context):
+#     """Removes all inactive projects from the database."""
+#     prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
+#     prj_mgr.remove_doc_by_filter(active=False)
 
 
 ## MANAGE PROJECT INSTANCE
@@ -392,7 +355,7 @@ def restart_project(ctx: click.Context):
     if not prj:
         click.echo(f"Project `{name}` not found.")
         return
-    ctf_mgr.user_config_mgr.stop_all_user_instances(prj)
+    ctf_mgr.user_enrollment_mgr.stop_all_user_clusters(prj)
     click.echo(ctf_mgr.prj_mgr.restart_project(prj))
 
 
@@ -428,107 +391,3 @@ def shell_admin(ctx: click.Context):
     name: str = context_dict["name"]
     prj = ctf_mgr.prj_mgr.get_project(name)
     ctf_mgr.prj_mgr.shell_admin(prj)
-
-
-# MODULES
-
-
-@project.group(name="module")
-@click.pass_context
-def module(ctx: click.Context):
-    """Manage modules."""
-    ctx.obj = ctx.parent.obj  # pyright: ignore
-
-
-@module.group(name="project")
-@click.option("-n", "--name", help="Project's name", required=True)
-@click.pass_context
-def project_modules(ctx: click.Context, name: str):
-    """Manage project modules."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    context_dict["name"] = name
-    ctx.obj = context_dict
-
-
-@project_modules.command(name="create")
-@click.option("-n", "--name", required=True, help="Name of the service module.")
-@click.pass_context
-def create_project_module(ctx: click.Context, name: str):
-    """Create a new module."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    prj_name = context_dict["name"]
-    ctf_mgr.prj_mgr.create_project_module(prj_name, name)
-
-
-@project_modules.command(name="ls")
-@click.pass_context
-def list_project_modules(ctx: click.Context):
-    """List all available modules."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name = context_dict["name"]
-    click.echo(json.dumps(ctf_mgr.prj_mgr.list_project_modules(name), indent=4))
-
-
-@project_modules.command(name="remove")
-@click.option("-n", "--name", required=True, help="Name of the service module.")
-@click.pass_context
-def remove_project_module(ctx: click.Context, name: str):
-    """Remove a module."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    prj_name = context_dict["name"]
-    ctf_mgr.prj_mgr.remove_project_module(prj_name, name)
-
-
-@module.group(name="user")
-@click.option("-n", "--name", help="Project's name", required=True)
-@click.pass_context
-def user_modules(ctx: click.Context, name: str):
-    """Manage user modules."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    context_dict["name"] = name
-    ctx.obj = context_dict
-
-
-@user_modules.command(name="create")
-@click.option("-n", "--name", required=True, help="Name of the service module.")
-@click.pass_context
-def create_user_module(ctx: click.Context, name: str):
-    """Create a module."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    prj_name = context_dict["name"]
-    ctf_mgr.prj_mgr.create_user_module(prj_name, name)
-
-
-@user_modules.command(name="ls")
-@click.pass_context
-def list_user_modules(ctx: click.Context):
-    """List available modules."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name = context_dict["name"]
-    click.echo(json.dumps(ctf_mgr.prj_mgr.list_user_modules(name), indent=4))
-
-
-@user_modules.command(name="remove")
-@click.option("-n", "--name", required=True, help="Name of the service module.")
-@click.pass_context
-def remove_user_modules(ctx: click.Context, name: str):
-    """Remove a module."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    prj_name = context_dict["name"]
-    ctf_mgr.prj_mgr.remove_user_module(prj_name, name)
-
-
-@module.group(name="general")
-@click.pass_context
-def general_module_ops(ctx: click.Context):
-    """A set of general module operations.
-
-    NOT IMPLEMENTED YET.
-    """
-    raise NotImplementedError()

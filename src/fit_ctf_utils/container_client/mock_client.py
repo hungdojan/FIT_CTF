@@ -1,14 +1,14 @@
-from __future__ import annotations
-
 import subprocess
 from logging import Logger
 from pathlib import Path
 from typing import Any
 
-from fit_ctf_utils.container_client.base_container_client import BaseContainerClient
+from fit_ctf_utils.container_client.container_client_interface import (
+    ContainerClientInterface,
+)
 
 
-class MockClient(BaseContainerClient):
+class MockClient(ContainerClientInterface):
 
     @classmethod
     def get_images(
@@ -24,25 +24,13 @@ class MockClient(BaseContainerClient):
 
     @classmethod
     def rm_images(
-        cls, logger: Logger, contains: str, to_stdout: bool = False
-    ) -> int:  # pragma: no cover
-        return 0
-
-    @classmethod
-    def rm_multiple_images(
-        cls, logger: Logger, image_names: list[str], to_stdout: bool = False
+        cls, logger: Logger, contains: str | list[str], to_stdout: bool = False
     ) -> int:  # pragma: no cover
         return 0
 
     @classmethod
     def rm_networks(
-        cls, logger: Logger, contains: str, to_stdout: bool = False
-    ) -> int:  # pragma: no cover
-        return 0
-
-    @classmethod
-    def rm_multiple_networks(
-        cls, logger: Logger, network_names: list[str], to_stdout: bool = False
+        cls, logger: Logger, contains: str | list[str], to_stdout: bool = False
     ) -> int:  # pragma: no cover
         return 0
 
@@ -93,3 +81,9 @@ class MockClient(BaseContainerClient):
     @classmethod
     def ps_json(cls, project_name: str) -> list[dict[str, Any]]:  # pragma: no cover
         return []
+
+    @classmethod
+    def compose_down_multiple_parallel(
+        cls, compose_files: list[Path]
+    ):  # pragma: no cover
+        pass

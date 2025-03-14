@@ -1,13 +1,45 @@
-from __future__ import annotations
-
+import pathlib
 import subprocess
 from abc import ABC, abstractmethod
 from logging import Logger
 from pathlib import Path
 from typing import Any
 
+import fit_ctf_utils
 
-class BaseContainerClient(ABC):
+
+class ContainerClientInterface(ABC):
+
+    @classmethod
+    def _process_get_commands(
+        cls, cmd: list[str], contains: str | list[str] | None = None
+    ) -> list[str]:
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+
+        if not contains:
+            # TODO: hazardous
+            return [data.strip('"') for data in proc.stdout.rsplit()]
+        if isinstance(contains, list):
+            out = []
+            for data in proc.stdout.rsplit():
+                data = data.strip('"')
+                for user_prj in contains:
+                    if user_prj not in data:
+                        continue
+                    out.append(data)
+            return out
+        return [data.strip('"') for data in proc.stdout.rsplit() if contains in data]
+
+    @classmethod
+    def _process_logging(cls, logger: Logger, message: str, to_stdout: bool = False):
+        logger.info(message)
+        if to_stdout:
+            fit_ctf_utils.log.info(message)
+
+    @classmethod
+    @abstractmethod
+    def generate_container_prefix(cls, *names: str) -> str:
+        pass
 
     @classmethod
     @abstractmethod
@@ -40,32 +72,14 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def rm_images(
-        cls, logger: Logger, contains: str, to_stdout: bool = False
+        cls, logger: Logger, contains: str | list[str], to_stdout: bool = False
     ) -> int:  # pragma: no cover
         """Remove container images from the system using `podman` command.
 
         :param logger: A logger handler to write output to.
         :type logger: Logger
         :param contains: A substring search filter.
-        :type contains: str
-        :param to_stdout: Pipe output to stdout as well. Defaults to False.
-        :type to_stdout: bool
-        :return: An exit code.
-        :rtype: int
-        """
-        pass
-
-    @classmethod
-    @abstractmethod
-    def rm_multiple_images(
-        cls, logger: Logger, image_names: list[str], to_stdout: bool = False
-    ) -> int:  # pragma: no cover
-        """Remove numerous container images from the system using `podman` command.
-
-        :param logger: A logger handler to write output to.
-        :type logger: Logger
-        :param image_names: A list of images to remove.
-        :type image_names: list[str]
+        :type contains: str | list[str]
         :param to_stdout: Pipe output to stdout as well. Defaults to False.
         :type to_stdout: bool
         :return: An exit code.
@@ -76,32 +90,14 @@ class BaseContainerClient(ABC):
     @classmethod
     @abstractmethod
     def rm_networks(
-        cls, logger: Logger, contains: str, to_stdout: bool = False
+        cls, logger: Logger, contains: str | list[str], to_stdout: bool = False
     ) -> int:  # pragma: no cover
         """Remove container networks from the system using `podman` command.
 
         :param logger: A logger handler to write output to.
         :type logger: Logger
         :param contains: A substring search filter.
-        :type contains: str
-        :param to_stdout: Pipe output to stdout as well. Defaults to False.
-        :type to_stdout: bool
-        :return: An exit code.
-        :rtype: int
-        """
-        pass
-
-    @classmethod
-    @abstractmethod
-    def rm_multiple_networks(
-        cls, logger: Logger, network_names: list[str], to_stdout: bool = False
-    ) -> int:  # pragma: no cover
-        """Remove numerous container networks from the system using `podman` command.
-
-        :param logger: A logger handler to write output to.
-        :type logger: Logger
-        :param network_names: A list of network names to remove.
-        :type network_names: list[str]
+        :type contains: str | list[str]
         :param to_stdout: Pipe output to stdout as well. Defaults to False.
         :type to_stdout: bool
         :return: An exit code.
@@ -240,5 +236,30 @@ class BaseContainerClient(ABC):
         :type: str
         :return: A dict with Podman process data.
         :rtype: list[dict[str, Any]]
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def ps_csv(cls, project_name: str, output_file: pathlib.Path):  # pragma: no cover
+        """Generate CSV file for container states.
+
+        :param project_name: Project name.
+        :type project_name: str
+        :param output_file: The path to the destination file.
+        :type output_file: pathlib.Path
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def compose_down_multiple_parallel(
+        cls, compose_files: list[Path]
+    ):  # pragma: no cover
+        """Run multiple compose down commands in parallel.
+
+        :param compose_files:
+            A list of compose files to run command against.
+        :type compose_files: list[Path]
         """
         pass

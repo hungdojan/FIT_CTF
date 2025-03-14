@@ -1,0 +1,12 @@
+name: {{ project.name }}-{{ user.username }}
+
+services:
+  {%- for _, instance in user_enrollment._instances %}
+{% include ./instance_compose.yaml.j2 %}
+  {%- endfor %}
+
+networks:
+  {{ project.name }}_main_net:
+    name: "{{ project.name }}_main_net"
+  {{ project.name }}_{{ user.username }}_private_net:
+    name: "{{ project.name }}_{{ user.username }}_private_net"

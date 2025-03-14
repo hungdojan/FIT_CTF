@@ -1,0 +1,46 @@
+{{ instance.service_name }}:
+  {% if instance.is_local %}
+  build:
+    context: {{ module_dir }}/{{ instance.module_name}}
+    dockerfile: Containerfile
+  {% endif %}
+  image: {{ instance.module_name }}
+  name: {{ instance.module_name }}
+  {% if instance.ports %}
+  ports:
+    {% for item in instance.ports %}
+    - {{ item }}
+    {% endfor %}
+  {% else %}
+  ports: []
+  {% endif %}
+
+  {% if instance.networks %}
+  networks:
+    {% for net_name, net_val in instance.networks.items() %}
+    {{ net_name}}:
+      {% for k, v in net_val.items() %}
+      {{ k }}: {{ v }}
+      {% endfor %}
+    {% endfor %}
+  {% else %}
+  networks: {}
+  {% endif %}
+
+  {% if instance.volumes %}
+  volumes:
+    {% for vol in instance.volumes %}
+    - {{ vol }}
+    {% endfor %}
+  {% else %}
+  volumes: []
+  {% endif %}
+
+  {% if instance.env %}
+  environment:
+    {% for e in instance.env %}
+    - {{ e }}
+    {% endfor %}
+  {% else %}
+  volumes: []
+  {% endif %}

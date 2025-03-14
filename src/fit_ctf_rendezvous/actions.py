@@ -1,14 +1,12 @@
-from __future__ import annotations
-
 import os
 import re
 
-from fit_ctf_backend.constants import DEFAULT_PASSWORD_LENGTH
+from fit_ctf_utils.constants import DEFAULT_PASSWORD_LENGTH
 from fit_ctf_backend.ctf_manager import CTFManager
-from fit_ctf_backend.exceptions import ProjectNotExistException
+from fit_ctf_utils.exceptions import ProjectNotExistException
 from fit_ctf_db_models import User, UserManager
 from fit_ctf_db_models.project import Project
-from fit_ctf_db_models.user_config import UserConfig
+from fit_ctf_db_models.user_enrollment import UserEnrollment
 
 REGEX_IS_LOWER_CASE = re.compile("[a-z]")
 REGEX_IS_UPPER_CASE = re.compile("[A-Z]")
@@ -70,15 +68,17 @@ class Actions:
         """
         if not self.user:
             return []
-        return self.ctf_mgr.user_mgr.get_active_projects_for_user(self.user.username)
+        return self.ctf_mgr.user_enrollment_mgr.get_enrolled_projects(
+            self.user.username
+        )
 
-    def start_user_instance(self, project_name: str) -> UserConfig | None:
+    def start_user_instance(self, project_name: str) -> UserEnrollment | None:
         """Start user login nodes.
 
         :param project_name: Project name.
         :type project_name: str
-        :return: Found user config object; `None` otherwise.
-        :rtype: UserConfig | None
+        :return: Found user enrollment object; `None` otherwise.
+        :rtype: UserEnrollment | None
         """
         if not self.user:
             return None
@@ -86,15 +86,15 @@ class Actions:
             project = self.ctf_mgr.prj_mgr.get_project(project_name)
         except ProjectNotExistException:
             return None
-        self.ctf_mgr.user_config_mgr.start_user_instance(self.user, project)
-        user_config = self.ctf_mgr.user_config_mgr.get_doc_by_filter(
+        self.ctf_mgr.user_enrollment_mgr.start_user_instance(self.user, project)
+        user_enrollment = self.ctf_mgr.user_enrollment_mgr.get_doc_by_filter(
             **{
                 "user_id.$id": self.user.id,
                 "project_id.$id": project.id,
                 "active": True,
             }
         )
-        return user_config
+        return user_enrollment
 
     def stop_user_instance(self, project_name: str):
         """Stop user login nodes.
@@ -110,7 +110,7 @@ class Actions:
         except ProjectNotExistException:
             return
 
-        self.ctf_mgr.user_config_mgr.stop_user_instance(self.user, project)
+        self.ctf_mgr.user_enrollment_mgr.stop_user_instance(self.user, project)
 
     def change_password(self, password: str):
         """Change user password.

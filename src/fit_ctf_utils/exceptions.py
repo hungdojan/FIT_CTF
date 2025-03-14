@@ -64,6 +64,12 @@ class UserNotEnrolledToProjectException(CTFException):
     pass
 
 
+class UserEnrolledToProjectException(CTFException):
+    """A given user is enrolled to the selected project."""
+
+    pass
+
+
 class MaxUserCountReachedException(CTFException):
     """A maximal number of users per project reached."""
 
@@ -90,5 +96,53 @@ class ModuleNotExistsException(CTFException):
 
 class ComposeFileNotExist(CTFException):
     """A selected compose file does not exist."""
+
+    pass
+
+
+class DataFileNotExistException(CTFException):
+    """A configuration file could not be located."""
+
+    pass
+
+
+class DataValidationErrorException(CTFException):
+    """A provided file is not syntactically correct."""
+
+    pass
+
+
+class ShadowPathNotExistException(CTFException):
+    """A shadow for of the selected user does not exist."""
+
+    pass
+
+
+class ValidatorNotExistException(CTFException):
+    """A validator with given name does not exist."""
+
+    pass
+
+
+class SchemaFileNotExistException(CTFException):
+    """A schema file could not be located."""
+
+    pass
+
+
+class ServiceNotExistException(CTFException):
+    """The service with the given name does not exist."""
+
+    pass
+
+
+class ServiceExistException(CTFException):
+    """The service with the given name already exist."""
+
+    pass
+
+
+class ConfigurationFileNotEditedException(CTFException):
+    """The configuration data were not edited in the editor."""
 
     pass

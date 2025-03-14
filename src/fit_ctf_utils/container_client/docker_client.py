@@ -1,4 +1,5 @@
 import json
+import pathlib
 import subprocess
 import sys
 from logging import Logger
@@ -10,20 +11,20 @@ from fit_ctf_utils.container_client.container_client_interface import (
 )
 
 
-class PodmanClient(ContainerClientInterface):
+class DockerClient(ContainerClientInterface):
 
     @classmethod
     def generate_container_prefix(cls, *names: str) -> str:
-        return f"{'_'.join(names)}_"
+        return f"{'-'.join(names)}-"
 
     @classmethod
     def get_images(cls, contains: str | list[str] | None = None) -> list[str]:
-        cmd = ["podman", "images", "--format", '"{{ .Repository }}"']
+        cmd = ["docker", "images", "--format", '"{{ .Repository }}"']
         return cls._process_get_commands(cmd, contains)
 
     @classmethod
     def get_networks(cls, contains: str | list[str] | None = None) -> list[str]:
-        cmd = ["podman", "network", "ls", "--format", '"{{.Name}}"']
+        cmd = ["docker", "network", "ls", "--format", '"{{ .Name }}"']
         return cls._process_get_commands(cmd, contains)
 
     @classmethod
@@ -33,7 +34,7 @@ class PodmanClient(ContainerClientInterface):
         images = cls.get_images(contains)
         if not images:
             return -1
-        cmd = ["podman", "rmi"] + images
+        cmd = ["docker", "rmi"] + images
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         cls._process_logging(logger, proc.stdout.decode(), to_stdout)
         return proc.returncode
@@ -45,7 +46,7 @@ class PodmanClient(ContainerClientInterface):
         network_names = cls.get_networks(contains)
         if not network_names:
             return -1
-        cmd = ["podman", "network", "rm"] + network_names
+        cmd = ["docker", "network", "rm"] + network_names
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         cls._process_logging(logger, proc.stdout.decode(), to_stdout)
         return proc.returncode
@@ -55,7 +56,7 @@ class PodmanClient(ContainerClientInterface):
         cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:
         # TODO: eliminate whitespaces
-        cmd = f"podman-compose -f {file} up -d"
+        cmd = f"docker compose -f {file} up -d"
         proc = subprocess.run(
             cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
@@ -69,7 +70,7 @@ class PodmanClient(ContainerClientInterface):
         if len(cls.compose_ps(file)) == 0:
             return 0
         # TODO: eliminate whitespaces
-        cmd = f"podman-compose -f {file} down"
+        cmd = f"docker compose -f {file} down"
         proc = subprocess.run(
             cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
@@ -78,13 +79,13 @@ class PodmanClient(ContainerClientInterface):
 
     @classmethod
     def compose_ps(cls, file: str | Path) -> list[str]:
-        cmd = ["podman-compose", "-f", file, "ps", "--format", '"{{ .Names }}"']
+        cmd = ["docker", "compose", "-f", file, "ps", "--format", '"{{ .Names }}"']
         proc = subprocess.run(cmd, capture_output=True, text=True)
         return [data.strip('"') for data in proc.stdout.rsplit()]
 
     @classmethod
     def compose_ps_json(cls, file: str | Path) -> list[dict[str, Any]]:
-        cmd = ["podman-compose", "-f", file, "ps", "--format", "json"]
+        cmd = ["docker", "compose", "-f", file, "ps", "--format", "json"]
         proc = subprocess.run(cmd, capture_output=True, text=True)
         data = json.loads(proc.stdout)
         return data
@@ -93,7 +94,7 @@ class PodmanClient(ContainerClientInterface):
     def compose_build(
         cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:
-        cmd = f"podman-compose -f {file} build"
+        cmd = f"docker compose -f {file} build"
         proc = subprocess.run(
             cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
@@ -104,13 +105,13 @@ class PodmanClient(ContainerClientInterface):
     def compose_shell(
         cls, file: str | Path, service: str, command: str
     ) -> subprocess.CompletedProcess:  # pragma: no cover
-        cmd = f"podman-compose -f {file} exec {service} {command}"
+        cmd = f"docker compose -f {file} exec {service} {command}"
         return subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
 
     @classmethod
     def stats(cls, project_name: str) -> list[dict[str, str]]:
         cmd = [
-            "podman",
+            "docker",
             "stats",
             "--no-stream",
             "--format",
@@ -124,7 +125,7 @@ class PodmanClient(ContainerClientInterface):
     @classmethod
     def ps(cls, project_name: str) -> list[str]:
         cmd = [
-            "podman",
+            "docker",
             "ps",
             "-a",
             "--format",
@@ -137,7 +138,7 @@ class PodmanClient(ContainerClientInterface):
     @classmethod
     def ps_json(cls, project_name: str) -> list[dict[str, Any]]:
         cmd = [
-            "podman",
+            "docker",
             "ps",
             "-a",
             "--format",
@@ -147,6 +148,20 @@ class PodmanClient(ContainerClientInterface):
         proc = subprocess.run(cmd, capture_output=True, text=True)
         data = json.loads(proc.stdout)
         return data
+
+    @classmethod
+    def ps_csv(cls, project_name: str, output_file: pathlib.Path):
+        cmd = [
+            "docker",
+            "ps",
+            "-a",
+            "--no-truc" "--format",
+            'table "{{.Names}}","{{.Networks}}","{{.Ports}}","{{.State}}","{{.CreatedHuman}}"',
+            f"--filter=name=^{project_name}",
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        # TODO: print to file
+        print([data.strip('"') for data in proc.stdout.rsplit("\n") if data])
 
     @classmethod
     def compose_down_multiple_parallel(

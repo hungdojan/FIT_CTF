@@ -1,17 +1,23 @@
-from __future__ import annotations
-
 import os
+from pathlib import Path
+from shutil import copytree
+from typing import Literal
 
 import pymongo
 from pymongo.database import Database
 
-from fit_ctf_backend.exceptions import ProjectNotExistException
-from fit_ctf_db_models import Project, ProjectManager, UserConfigManager, UserManager
+from fit_ctf_db_models import (
+    ProjectManager,
+    UserEnrollmentManager,
+    UserManager,
+)
 from fit_ctf_utils import get_c_client_by_name
+from fit_ctf_utils import log_print as log
+from fit_ctf_utils.types import PathDict
 
 
 class CTFManager:
-    def __init__(self, host: str, db_name: str):
+    def __init__(self, host: str, db_name: str, paths: PathDict):
         """Constructor method
 
         :param host: A URL to connect to the database.
@@ -26,11 +32,13 @@ class CTFManager:
         self._client.server_info()
 
         self._ctf_db: Database = self._client[db_name]
+        self._init_paths(paths)
+
         c_client = get_c_client_by_name(os.getenv("CONTAINER_CLIENT", ""))
         self._managers = {
-            "project": ProjectManager(self._ctf_db, c_client),
-            "user": UserManager(self._ctf_db, c_client),
-            "user_config": UserConfigManager(self._ctf_db, c_client),
+            "project": ProjectManager(self._ctf_db, c_client, paths),
+            "user": UserManager(self._ctf_db, c_client, paths),
+            "user_enrollment": UserEnrollmentManager(self._ctf_db, c_client, paths),
         }
 
     @property
@@ -52,197 +60,103 @@ class CTFManager:
         return self._managers["user"]
 
     @property
-    def user_config_mgr(self) -> UserConfigManager:
-        """Returns a user config manager.
+    def user_enrollment_mgr(self) -> UserEnrollmentManager:
+        """Returns a user enrollment manager.
 
-        :return: A user config manager initialized in CTFManager.
-        :rtype: UserConfigManager
+        :return: A user enrollment manager initialized in CTFManager.
+        :rtype: UserEnrollmentManager
         """
-        return self._managers["user_config"]
+        return self._managers["user_enrollment"]
 
-    def init_project(
-        self,
-        name: str,
-        dest_dir: str,
-        max_nof_users: int,
-        starting_port_bind: int,
-        volume_mount_dirname: str,
-        dir_name: str | None,
-        description: str,
-        compose_file: str,
-    ) -> Project:
-        """A wrapper function that creates and initializes a project.
+    def _init_paths(self, paths: PathDict):
+        """Initialize path directories for the current session."""
+        self._paths = paths
+        if not self._paths["projects"].exists():
+            log.info(
+                f"Creating central project directory `{str(self._paths['projects'].resolve())}`..."
+            )
+            self._paths["projects"].mkdir(parents=True, exist_ok=True)
+        if not self._paths["users"].exists():
+            log.info(
+                f"Creating central user directory `{str(self._paths['users'].resolve())}`..."
+            )
+            self._paths["users"].mkdir(parents=True, exist_ok=True)
+        if not self._paths["modules"].exists():
+            log.info(
+                f"Creating central module directory `{str(self._paths['modules'].resolve())}`..."
+            )
+            self._paths["modules"].mkdir(parents=True, exist_ok=True)
 
-        :param name: Project's name.
-        :type name: str
-        :param dest_dir: A destination directory where project data will be stored.
-        :type name: str
-        :param max_nof_users: Number of users that can enroll the project.
-        :type max_nof_users: int
-        :param starting_port_bind: A ssh port of the first enrolled user. When
-            -1 is set the function will automatically find and assign available
-            port.
-        :type starting_port_bind: int
-        :param volume_mount_dirname: A destination directory that will contain
-            user mount directories/images. If the path does not exist, it will be
-            create inside `dest_dir`.
-        :type volume_mount_dirname: str
-        :param dir_name: A project directory name. If not set function will
-            auto-generate one
-        :type dir_name: str | None
-        :param description: A project description.
-        :type description: str
-        :param compose_file: Name of the server nodes' compose file.
-        :type compose_file: str
+        if not (self._paths["modules"] / "base").exists():
+            self.init_tool()
 
-        :raises ProjectExistsException: Project with the given name already exist.
-        :raises DirNotExistsException: A path to `dest_dir` does not exist.
-        :raises DirNotExistsException: A `dest_dir` directory is not empty.
+    def init_tool(self, base_image_os: Literal["rhel", "ubuntu"] = "rhel"):
+        """Initialize base images."""
+        if not (self._paths["modules"] / "base").exists():
+            dst_path = self._paths["modules"] / "base"
+            root_dir = (
+                Path(os.path.dirname(os.path.realpath(__file__))).parent.parent
+                / "config"
+                / "base_images"
+            )
 
-        :return: A created project object.
-        :rtype: class `Project`
-        """
+            if base_image_os not in {"rhel", "ubuntu"}:
+                raise ValueError(
+                    "The only supported base image OS are `rhel` or `ubuntu`."
+                )
+            src_path = root_dir / f"base_{base_image_os}"
+            copytree(str(src_path.resolve()), str(dst_path.resolve()))
 
-        # check if project already exists
-        return self.prj_mgr.init_project(
-            name,
-            dest_dir,
-            max_nof_users,
-            starting_port_bind,
-            volume_mount_dirname,
-            dir_name,
-            description,
-            compose_file,
-        )
+    def export_data(self):
+        raise NotImplementedError()
 
-    def start_project(self, name: str) -> int:
-        """Starts all server nodes in a project.
+    # FIX: completely rewrite the function
+    # the function should generate a YAML file that the user will be able to
+    # import on a different machine
+    # def export_project(self, project_or_name: str | Project, output_file: str):
+    #     """Export project configuration files.
 
-        :param name: Project name.
-        :type name: str
-        :return: Returns a process return code. Returns `-1` when project not found.
-        :rtype: int
-        """
-        try:
-            project = self.prj_mgr.get_project(name)
-        except ProjectNotExistException:
-            return -1
-        return self.prj_mgr.start_project(project)
+    #     Generate a ZIP archive.
 
-    def stop_project(self, name: str) -> int:
-        """Stop all server nodes in the project.
+    #     :param project_name: Project name or the instance.
+    #     :type project_name: str | Project
+    #     :param output_file: Output filename.
+    #     :type output_file: str
+    #     :raises ProjectNotExistException: Project was not found.
+    #     """
+    #     # TODO: implement this
+    #     raise NotImplementedError()
+    # prj = self.get_project(project_or_name)
+    # with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as zf:
+    #     # add a file containing list of enrolled users
+    #     zf.writestr(
+    #         "enrolled_users.json",
+    #         json.dumps(self.get_active_users_for_project_raw(prj)),
+    #     )
 
-        :param name: Project name.
-        :type name: str
-        :return: Returns a process return code. Returns `-1` when project not found.
-        :rtype: int
-        """
-        try:
-            project = self.prj_mgr.get_project(name)
-        except ProjectNotExistException:
-            return -1
+    #     # this code snippet originates from: https://stackoverflow.com/a/46604244
+    #     for dirpath, _, filenames in os.walk(prj.config_root_dir):
+    #         for filename in filenames:
 
-        self.user_config_mgr.stop_all_user_instances(project)
-        return self.prj_mgr.stop_project(project)
+    #             # Write the file named filename to the archive,
+    #             # giving it the archive name 'arcname'.
+    #             filepath = os.path.join(dirpath, filename)
+    #             parentpath = os.path.relpath(filepath, prj.config_root_dir)
+    #             arcname = os.path.join(
+    #                 os.path.basename(prj.config_root_dir), parentpath
+    #             )
 
-    def project_is_running(self, name: str) -> bool:
-        """Check if project is running.
+    #             # omit mounts for permissions issues
+    #             if parentpath.startswith("_mounts"):
+    #                 continue
 
-        :param name: Project name.
-        :type name: str
-        :return: `True` if server nodes are running.
-        :rtype: bool
-        """
-        try:
-            project = self.prj_mgr.get_project(name)
-        except ProjectNotExistException:
-            return False
-        return self.prj_mgr.project_is_running(project)
+    #             zf.write(filepath, arcname)
 
-    def project_status(self, name: str) -> list[str]:
-        """Print a result of `podman ps` command.
+    def import_data(self):
+        raise NotImplementedError()
 
-        :param name: Project name.
-        :type name: str
-        :raises ProjectNotExistException: Project with the given name was not found.
-        :return: Lines from stdout.
-        :rtype: list[str]
-        """
-        project = self.prj_mgr.get_project(name)
-        return self.prj_mgr.c_client.compose_ps(project.name)
-
-    def start_user_instance(self, username: str, project_name: str) -> int:
-        """Start a user login node.
-
-        :param username: User username.
-        :type username: str
-        :param project_name: Project name.
-        :type project_name: str
-        :return: An exit code.
-        :rtype: int
-        """
-        return self.user_config_mgr.start_user_instance(username, project_name)
-
-    def stop_user_instance(self, username: str, project_name: str) -> int:
-        """Stop a user login node.
-
-        :param username: User username.
-        :type username: str
-        :param project_name: Project name.
-        :type project_name: str
-        :return: An exit code.
-        :rtype: int
-        """
-        return self.user_config_mgr.stop_user_instance(username, project_name)
-
-    def user_instance_is_running(self, username: str, project_name: str) -> bool:
-        """Check if user login node is running.
-
-        :param username: User username.
-        :type username: str
-        :param project_name: Project name.
-        :type project_name: str
-        :return: `True` if the login node is running.
-        :rtype: bool
-        """
-        return self.user_config_mgr.user_instance_is_running(username, project_name)
-
-    def delete_project(self, name: str) -> None:
-        """Delete a project.
-
-        :param name: Project name.
-        :type name: str
-        :raises ProjectNotExistException: Project was not found.
-        """
-        self.prj_mgr.delete_project(name)
-
-    def enroll_users_to_project(self, users: str | list[str], project_name: str):
-        """Enroll users to the project
-
-        :param users: A username or a list of usernames.
-        :type users: str | list[str]
-        :raises ProjectNotExistException: Project was not found.
-        :param project_name: Project name.
-        :type project_name: str
-        """
-        if isinstance(users, str):
-            self.user_config_mgr.enroll_user_to_project(users, project_name)
-        else:
-            self.user_config_mgr.enroll_multiple_users_to_project(users, project_name)
-
-    def cancel_user_enrollments(self, users: str | list[str], project_name: str):
-        """Cancel user enrollments to the project.
-
-        :param users: A username or a list of usernames.
-        :type users: str | list[str]
-        :raises ProjectNotExistException: Project was not found.
-        :param project_name: Project name.
-        :type project_name: str
-        """
-        if isinstance(users, str):
-            self.user_config_mgr.cancel_user_enrollment(users, project_name)
-        else:
-            self.user_config_mgr.cancel_multiple_enrollments(users, project_name)
+    def setup_env_from_file(self):
+        raise NotImplementedError()
 
     def health_check(self, name: str):
         """Run a health check.
@@ -252,13 +166,3 @@ class CTFManager:
         :raises NotImplemented: This function was not implemented yet.
         """
         raise NotImplementedError()
-
-    def get_project_info(self, name: str) -> Project | None:
-        """Get project information.
-
-        :param name: Project name.
-        :type name: str
-        :return: Found project object or `None`.
-        :rtype: Project | None
-        """
-        return self.prj_mgr.get_doc_by_filter(name=name)
