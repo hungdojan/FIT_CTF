@@ -1,0 +1,4 @@
+$id: "https://github.com/hungdojan/FIT_CTF/schemas/v1/network.yaml"
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+title: Network document schema

@@ -83,7 +83,5 @@ class MockClient(ContainerClientInterface):
         return []
 
     @classmethod
-    def compose_down_multiple_parallel(
-        cls, compose_files: list[Path]
-    ):  # pragma: no cover
-        pass
+    def project_stats(cls, project_name: str) -> list[dict]:  # pragma: no cover
+        return []

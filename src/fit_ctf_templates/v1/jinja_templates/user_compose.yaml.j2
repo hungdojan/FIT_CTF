@@ -1,8 +1,8 @@
 name: {{ project.name }}-{{ user.username }}
 
 services:
-  {%- for _, instance in user_enrollment._instances %}
-{% include ./instance_compose.yaml.j2 %}
+  {%- for _, service in user_enrollment.services.items() %}
+{% include 'service_compose.yaml.j2' %}
   {%- endfor %}
 
 networks:

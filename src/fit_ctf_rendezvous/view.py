@@ -11,7 +11,7 @@ from pytermgui import (
     WindowManager,
 )
 
-from fit_ctf_db_models.project import Project
+from fit_ctf_models.project import Project
 from fit_ctf_rendezvous.actions import Actions
 from fit_ctf_rendezvous.custom_widgets import (
     ContentWidget,

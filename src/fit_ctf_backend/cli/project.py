@@ -1,13 +1,12 @@
-import pprint
-from dataclasses import asdict
-from typing import Any
-
 import click
 from tabulate import tabulate
 
+from fit_ctf_backend.cli.utils import project_option
 from fit_ctf_backend.ctf_manager import CTFManager
+from fit_ctf_models.project import ProjectManager
+from fit_ctf_utils import color_state
+from fit_ctf_utils.config_loader.yaml_parser import YamlParser
 from fit_ctf_utils.exceptions import CTFException
-from fit_ctf_db_models.project import ProjectManager
 
 ##########################
 ## Project CLI commands ##
@@ -110,7 +109,7 @@ def list_projects(ctx: click.Context, _all: bool):
 
 
 @project.command(name="get-info")
-@click.argument("project_name")
+@project_option
 @click.pass_context
 def get_project_info(ctx: click.Context, project_name: str):
     """Display project PROJECT_NAME's information.
@@ -118,30 +117,16 @@ def get_project_info(ctx: click.Context, project_name: str):
     Dumps all information about a selected project.
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    prj = ctf_mgr.prj_mgr.get_project(project_name)
+    prj = ctf_mgr.prj_mgr.get_doc_by_filter_raw({"name": project_name}, {"_id": 0})
     # TODO: format
     if prj:
-        pprint.pprint(asdict(prj))
+        click.echo(YamlParser.dump_data(prj))
     else:
         click.echo(f"Project `{project_name}` not found.")
 
 
-# @project.command(name="get-config")
-# @click.argument("project_name")
-# @click.pass_context
-# def get_config_path(ctx: click.Context, project_name: str):
-#     """Return path to PROJECT_NAME's configuration directory."""
-#     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-#     prj = ctf_mgr.get_project_info(project_name)
-#     if not prj:
-#         click.echo(f"Project `{project_name}` not found.")
-#         return
-#
-#     click.echo(prj.config_root_dir)
-
-
 @project.command(name="enrolled-users")
-@click.option("-pn", "--project-name", type=str, required=True, help="Project's name.")
+@project_option
 @click.option(
     "-a",
     "--all",
@@ -163,17 +148,17 @@ def enrolled_users(ctx: click.Context, project_name: str, all: bool):
         - path to home mounting directory/volume
         - forwarded port (visible from the outside)
     """
-    # TODO: allow inactive users
-
-    # prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
-    raise NotImplementedError()
-    # lof_active_users = prj_mgr.get_active_users_for_project_raw(project_name)
-    # if not lof_active_users:
-    #     click.echo("No active users found.")
-    #     return
-    # header = list(lof_active_users[0].keys())
-    # values = [list(i.values()) for i in lof_active_users]
-    # click.echo(tabulate(values, header))
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    lof_active_users = ctf_mgr.user_enrollment_mgr.get_user_enrollments_for_project_raw(
+        project_name, all
+    )
+    if not lof_active_users:
+        click.echo("No active users found.")
+        return
+    header_order = ["username", "role", "active", "forwarded_port", "mount"]
+    header = [" ".join([i.capitalize() for i in i.split("_")]) for i in header_order]
+    values = [[i[key] for key in header_order] for i in lof_active_users]
+    click.echo(tabulate(values, header, stralign="center", numalign="center"))
 
 
 @project.command(name="generate-firewall-rules")
@@ -184,7 +169,7 @@ def enrolled_users(ctx: click.Context, project_name: str, all: bool):
     default="firewall.sh",
     help="Destination file where the script content will be written.",
 )
-@click.argument("project_name")
+@project_option
 @click.pass_context
 def firewall_rules(ctx: click.Context, project_name: str, ip_addr: str, output: str):
     """Generate a BASH script with port forwarding rules for PROJECT_NAME.
@@ -212,7 +197,7 @@ def used_ports(ctx: click.Context):
 
 
 @project.command(name="resources")
-@click.argument("project_name")
+@project_option
 @click.pass_context
 def resources_usage(ctx: click.Context, project_name: str):
     """Display PROJECT_NAME current resource usage."""
@@ -223,27 +208,8 @@ def resources_usage(ctx: click.Context, project_name: str):
         click.echo(e)
 
 
-@project.command(name="export")
-@click.option(
-    "-o", "--output", default="project_archive.zip", help="Final ZIP file name."
-)
-@click.argument("project_name")
-@click.pass_context
-def export_project(ctx: click.Context, project_name: str, output: str):
-    """Export PROJECT_NAME configurations.
-
-    Generates a ZIP file containing all the project configuration files, including
-    mounts and modules.
-    """
-    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    try:
-        ctf_mgr.prj_mgr.export_project(project_name, output)
-    except CTFException as e:
-        click.echo(e)
-
-
 @project.command("delete")
-@click.argument("project_name")
+@project_option
 @click.pass_context
 def delete_project(ctx: click.Context, project_name: str):
     """Delete an existing project PROJECT_NAME.
@@ -256,138 +222,36 @@ def delete_project(ctx: click.Context, project_name: str):
     click.echo("Project deleted successfully.")
 
 
-# @project.command("flush-db")
-# @click.pass_context
-# def flush_db(ctx: click.Context):
-#     """Removes all inactive projects from the database."""
-#     prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
-#     prj_mgr.remove_doc_by_filter(active=False)
-
-
-## MANAGE PROJECT INSTANCE
-
-
-@project.group(name="server")
-@click.option("-n", "--name", help="Project's name", required=True)
+@project.command(name="running-cluster")
+@project_option
 @click.pass_context
-def server(ctx: click.Context, name: str):
-    """Manage project instances.
-
-    The server command manages server nodes. User can start and stop nodes,
-    check if it's running or build a new image and compile compose files.
-    """
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    context_dict["name"] = name
-    ctx.obj = context_dict
-
-
-@server.command(name="start")
-@click.pass_context
-def start_project(ctx: click.Context):
-    """Start server nodes."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name = context_dict["name"]
-    return ctf_mgr.start_project(name)
-
-
-@server.command(name="stop")
-@click.pass_context
-def stop_project(ctx: click.Context):
-    """Stop server nodes."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name = context_dict["name"]
-    ctf_mgr.stop_project(name)
-
-
-@server.command(name="status")
-@click.pass_context
-def status_project(ctx: click.Context):
-    """Check server nodes status.
-
-    Print output of `podman ps` command.
-    """
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name = context_dict["name"]
-    data = ctf_mgr.prj_mgr.get_ps_data(name)
-    for line in data:
-        click.echo(line)
-
-
-@server.command(name="is-running")
-@click.pass_context
-def is_running(ctx: click.Context):
-    """Check if project is running."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name = context_dict["name"]
-    click.echo(ctf_mgr.project_is_running(name))
-
-
-@server.command(name="build")
-@click.pass_context
-def build_project(ctx: click.Context):
-    """Build or update project's images.
-
-    Run this command when you changed any server node image. If the image is not found
-    try recompiling the compose file first.
-    """
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name = context_dict["name"]
-    prj = ctf_mgr.get_project_info(name)
-    if not prj:
-        click.echo(f"Project `{name}` not found.")
-        return
-    click.echo(ctf_mgr.prj_mgr.build_project(prj))
-
-
-@server.command(name="restart")
-@click.pass_context
-def restart_project(ctx: click.Context):
-    """Stop login nodes and restart server nodes."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name = context_dict["name"]
-    prj = ctf_mgr.prj_mgr.get_doc_by_filter(name=name, active=True)
-    if not prj:
-        click.echo(f"Project `{name}` not found.")
-        return
-    ctf_mgr.user_enrollment_mgr.stop_all_user_clusters(prj)
-    click.echo(ctf_mgr.prj_mgr.restart_project(prj))
-
-
-@server.command(name="health_check")
-@click.pass_context
-def health_check(ctx: click.Context):
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name: str = context_dict["name"]
-    ctf_mgr.health_check(name)
-
-
-@server.command(name="compile")
-@click.pass_context
-def compile_project(ctx: click.Context):
-    """Recompile project compose file."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name = context_dict["name"]
-    prj = ctf_mgr.prj_mgr.get_doc_by_filter(name=name, active=True)
-    if not prj:
-        click.echo(f"Project `{name}` not found.")
-        return
-    ctf_mgr.prj_mgr.compile_project(prj)
-
-
-@server.command(name="shell_admin")
-@click.pass_context
-def shell_admin(ctx: click.Context):
-    """Shell into the admin container."""
-    context_dict: dict[str, Any] = ctx.parent.obj  # pyright: ignore
-    ctf_mgr: CTFManager = context_dict["ctf_mgr"]
-    name: str = context_dict["name"]
-    prj = ctf_mgr.prj_mgr.get_project(name)
-    ctf_mgr.prj_mgr.shell_admin(prj)
+def running_clusters_info(ctx: click.Context, project_name: str):
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    services_info = ctf_mgr.prj_mgr.get_all_services_info(project_name)
+    data_buffer = []
+    for info in services_info:
+        data_buffer.append(
+            {
+                "image": info["Image"],
+                "name": info["Names"][0],
+                "networks": "\n".join(info["Networks"]) if info["Networks"] else "",
+                "cluster_type": (
+                    info["Labels"]["cluster_type"]
+                    if info["Labels"].get("cluster_type")
+                    else ""
+                ),
+                "state": color_state(info["State"]),
+                "ports": (
+                    "\n".join([str(p["host_port"]) for p in info["Ports"]])
+                    if info["Ports"]
+                    else ""
+                ),
+            }
+        )
+    # click.echo(services_info)
+    header_order = ["name", "image", "cluster_type", "networks", "ports", "state"]
+    header = [" ".join([i.capitalize() for i in i.split("_")]) for i in header_order]
+    values = [[i[key] for key in header_order] for i in data_buffer]
+    click.echo(
+        tabulate(values, header, stralign="center", numalign="center", tablefmt="grid")
+    )

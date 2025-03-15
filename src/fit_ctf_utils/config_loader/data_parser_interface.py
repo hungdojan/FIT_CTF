@@ -10,10 +10,7 @@ from fit_ctf_utils.exceptions import ValidatorNotExistException
 class DataParserInterface(ABC):
     """A base class for loading and validating structured data files."""
 
-    _validators: dict[str, Validator]
-
-    def __init__(self):
-        self._validators = dict()
+    _validators: dict[str, Validator] = dict()
 
     @staticmethod
     def get_schema_dirpath() -> pathlib.Path:
@@ -23,6 +20,15 @@ class DataParserInterface(ABC):
             ).parent.parent.parent
             / "schemas"
         )
+
+    @classmethod
+    @abstractmethod
+    def init_parser(cls):
+        """Run the initial configuration to setup the parser.
+
+        Each class will define their own setup.
+        """
+        pass
 
     @classmethod
     @abstractmethod
@@ -61,16 +67,18 @@ class DataParserInterface(ABC):
 
     @classmethod
     @abstractmethod
-    def load_data(
-        cls, data_filepath: str | pathlib.Path, validator_name: str | None = None, **kw
+    def load_data_stream(
+        cls,
+        stream,
+        validator_name: str | None = None,
+        **kw,
     ) -> dict:
         """Load and validate the given data file.
 
         If the user does not pass a validator name, the function will only load
         the content of the file.
 
-        :param data_filepath: A path to the serialized structured file.
-        :type data_filepath: str | pathlib.Path
+        :param stream: A data stream.
         :param validator_name: An identification name of the validator. When set
             to None, the function will not run the data against the schema file.
             The default value is None.
@@ -85,12 +93,51 @@ class DataParserInterface(ABC):
 
     @classmethod
     @abstractmethod
-    def write_data(cls, data: dict, output_file: str | pathlib.Path, **kw):
-        """Serialized data to the output file.
+    def load_data_file(
+        cls,
+        file: pathlib.Path,
+        validator_name: str | None = None,
+        **kw,
+    ) -> dict:
+        """Load and validate the given data file.
 
-        :param data: A serialized data.
+        If the user does not pass a validator name, the function will only load
+        the content of the file.
+
+        :param file: A path to the data file.
+        :type file: pathlib.Path
+        :param validator_name: An identification name of the validator. When set
+            to None, the function will not run the data against the schema file.
+            The default value is None.
+        :type validator_name: str | None
+        :raises DataFileNotExistException: When the data file could not be located.
+        :raises ValidatorNotExistException: When the validator is not registered.
+        :return: The loaded configuration data.
+        :rtype: dict.
+        """
+
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    def validate_data(cls, data: dict, validator_name: str):
+        """Run JSON Schema validation against the data.
+
+        :param data: Object in question.
         :type data: dict
-        :param output_file: The destination file where data will be written to.
-        :type output_file: str | pathlib.Path
+        :param validator_name: A validator ID name.
+        :type validator_name: str
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def dump_data(cls, data: dict, **kw) -> str:
+        """Convert serialized data to string.
+
+        :param data: Data to be serialized.
+        :type data: dict
+        :return: Serialized data in string format.
+        :rtype output_file: str
         """
         raise NotImplementedError()

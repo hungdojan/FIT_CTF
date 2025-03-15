@@ -1,5 +1,3 @@
-version: '3.8'
-
 name: ctf_backend
 
 services:
@@ -13,6 +11,8 @@ services:
       MONGO_INITDB_DATABASE: "${DB_NAME}"
     ports:
       - "27017:27017"
+    networks:
+      fit-ctf-net: {}
     volumes:
       - mongo_data:/data/db:z
 
@@ -22,3 +22,6 @@ env_file:
 
 volumes:
   mongo_data:
+
+networks:
+  fit-ctf-net: {}

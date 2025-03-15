@@ -1,9 +1,9 @@
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass, field
 from typing import Any, Generic, TypeVar
 
 from bson import ObjectId
+from pydantic import BaseModel, Field
 from pymongo.collection import Collection
 from pymongo.database import Database
 
@@ -15,8 +15,7 @@ from fit_ctf_utils.types import PathDict
 log = logging.getLogger()
 
 
-@dataclass(kw_only=True)
-class Base(ABC):
+class Base(ABC, BaseModel):
     """A base class that all entities derive from.
 
     :param _id: Object ID.
@@ -30,12 +29,20 @@ class Base(ABC):
     :type active: dict[str, str]
     """
 
-    _id: ObjectId = field(default_factory=lambda: ObjectId())
-    active: bool = field(default=True)
+    class Config:
+        arbitrary_types_allowed = True
+        use_enum_values = True
 
-    @property
-    def id(self) -> ObjectId:
-        return self._id
+    id: ObjectId = Field(default_factory=ObjectId, alias="_id")
+    active: bool = True
+
+    def model_dump(self, by_alias: bool = True, **kw) -> dict[str, Any]:
+        return super().model_dump(by_alias=by_alias, **kw)
+
+    def validate_dict(self) -> dict[str, Any]:
+        model = self.model_dump()
+        model["_id"] = str(model["_id"])
+        return model
 
 
 T = TypeVar("T", bound=Base)
@@ -88,11 +95,15 @@ class BaseManagerInterface(ABC, Generic[T]):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_doc_by_id_raw(self, _id: ObjectId):  # pragma: no cover
+    def get_doc_by_id_raw(
+        self, _id: ObjectId, projection: dict | None = None
+    ):  # pragma: no cover
         """Search for a document using ObjectId in raw format.
 
         :param _id: ID of the document.
         :type _id: ObjectId
+        :param projection: A projection query.
+        :type projection: dict[str, Any] | None
         :return: Result of query.
         """
         raise NotImplementedError()
@@ -103,6 +114,20 @@ class BaseManagerInterface(ABC, Generic[T]):
 
         :return: A document object (subclass of `Base`) if found.
         :rtype: T | None
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_doc_by_filter_raw(
+        self, filter: dict | None = None, projection: dict | None = None
+    ):
+        """Search for a document with filter and project in raw format.
+
+        :param filter: A filter query.
+        :type filter: dict | None
+        :param projection: A projection query.
+        :type projection: dict | None
+        :return: Result of query.
         """
         raise NotImplementedError()
 
@@ -142,7 +167,7 @@ class BaseManagerInterface(ABC, Generic[T]):
         :param doc: A document to insert into the database.
         :type doc: T
         """
-        dict_obj = asdict(doc)
+        dict_obj = doc.model_dump()
         log.info(f"Inserting {dict_obj}")
         self._coll.insert_one(dict_obj)
 
@@ -152,9 +177,9 @@ class BaseManagerInterface(ABC, Generic[T]):
         :param doc: A new version of the document.
         :type doc: T
         """
-        dict_obj = asdict(doc)
+        dict_obj = doc.model_dump()
         log.info(f"Updating {dict_obj}")
-        self._coll.replace_one({"_id": doc._id}, dict_obj)
+        self._coll.replace_one({"_id": doc.id}, dict_obj)
 
     def remove_doc_by_id(self, _id: ObjectId) -> bool:
         """Remove a document using ObjectId.

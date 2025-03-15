@@ -1,5 +1,5 @@
-import fit_ctf_db_models.project as prj
-import fit_ctf_db_models.user as user
+import fit_ctf_models.project as prj
+import fit_ctf_models.user as user
 
 
 class MongoQueries:
@@ -52,7 +52,7 @@ class MongoQueries:
                     "from": "user",
                     "localField": "user_id.$id",
                     "foreignField": "_id",
-                    "as": "user",
+                    "as": "users",
                     "pipeline": [
                         {"$match": {"active": True}},
                         {"$project": {"password": 0, "_id": 0}},
@@ -62,14 +62,14 @@ class MongoQueries:
             {
                 # since lookup returns array
                 # pop the first element from the array
-                "$unwind": "$user"
+                "$unwind": "$users"
             },
             {
                 "$project": {
                     "_id": 0,
                     "project_id": 0,
                     "user_id": 0,
-                    "instances": 0,
+                    "services": 0,
                 }
             },
         ]
@@ -366,7 +366,7 @@ class MongoQueries:
             {"$match": _filter},
             {
                 "$lookup": {
-                    "from": "user_enroll",
+                    "from": "user_enrollment",
                     "localField": "_id",
                     "foreignField": "project_id.$id",
                     "as": "user_enrolls",
@@ -406,7 +406,7 @@ class MongoQueries:
             {
                 "$match": {
                     "$or": [
-                        {"user_id.$id": u.id, "project_id.$id": p.id, "active": True}
+                        {"user_id.$id": u.id, "project_id.$id": p.id, "active": False}
                         for u, p in user_project_pairs
                     ]
                 }
@@ -429,4 +429,71 @@ class MongoQueries:
                 }
             },
             {"$unwind": "$project"},
+        ]
+
+    @staticmethod
+    def count_module_name_occurences() -> list[dict]:
+        # XXX: does not do matching
+        return [
+            {"$unwind": "$services"},
+            {
+                "$project": {
+                    "_id": 0,
+                    "services": {
+                        "$map": {
+                            "input": {"$objectToArray": "$services"},
+                            "as": "item",
+                            "in": "$$item.v",
+                        }
+                    },
+                }
+            },
+            {"$unwind": "$services"},
+            {"$group": {"_id": "$services.module_name", "count": {"$sum": 1}}},
+        ]
+
+    @staticmethod
+    def export_user_enrollments(
+        project: "prj.Project | None" = None, include_inactive: bool = False
+    ) -> list[dict]:
+        _filter = {}
+        if project is not None:
+            _filter["project_id.$id"] = project.id
+        if not include_inactive:
+            _filter["active"] = True
+
+        return [
+            {"$match": _filter},
+            {
+                "$lookup": {
+                    "from": "project",
+                    "localField": "project_id.$id",
+                    "foreignField": "_id",
+                    "as": "project",
+                    "pipeline": [{"$project": {"_id": 0, "name": 1}}],
+                }
+            },
+            {
+                "$lookup": {
+                    "from": "user",
+                    "localField": "user_id.$id",
+                    "foreignField": "_id",
+                    "as": "user",
+                    "pipeline": [{"$project": {"_id": 0, "username": 1}}],
+                }
+            },
+            {"$unwind": "$project"},
+            {"$unwind": "$user"},
+            {
+                "$project": {
+                    "_id": 0,
+                    "user": "$user.username",
+                    "project": "$project.name",
+                    "container_port": 1,
+                    "forwarded_port": 1,
+                    "progress": 1,
+                    "services": 1,
+                    "networks": 1,
+                }
+            },
         ]

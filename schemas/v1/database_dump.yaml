@@ -1,0 +1,69 @@
+$id: "https://github.com/hungdojan/FIT_CTF/schemas/v1/database_dump.yaml"
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+title: Exported project database dump
+properties:
+  enrollments:
+    type: array
+    items:
+      $ref: "#/$defs/user_enrollment_item"
+  modules:
+    type: array
+    items:
+      type: string
+  project:
+    $ref: "#/$defs/project"
+  users:
+    type: array
+    items:
+      $ref: "#/$defs/user_item"
+
+$defs:
+  project:
+    type: object
+    properties:
+      allOf:
+        - $ref: "https://github.com/hungdojan/FIT_CTF/schemas/v1/project.yaml#/properties"
+        - _id:
+            not: {}
+      required:
+        - name
+        - active
+        - max_of_users
+        - starting_port_bind
+        - services
+        - networks
+  user_item:
+    type: object
+    properties:
+      allOf:
+        - $ref: "https://github.com/hungdojan/FIT_CTF/schemas/v1/user.yaml#/properties"
+        - _id:
+            not: {}
+    required:
+      - username
+      - active
+      - password
+      - email
+      - role
+  user_enrollment_item:
+    type: object
+    properties:
+      user:
+        type: string
+      project:
+        type: string
+      container_port:
+        type: integer
+      forwarded_port:
+        type: integer
+      networks:
+        type: object
+        patternProperties:
+          ".*":
+            $ref: "https://github.com/hungdojan/FIT_CTF/schemas/v1/network.yaml"
+      services:
+        type: object
+        patternProperties:
+          ".*":
+            $ref: "https://github.com/hungdojan/FIT_CTF/schemas/v1/service.yaml"

@@ -1,0 +1,36 @@
+$id: "https://github.com/hungdojan/FIT_CTF/schemas/v1/project.yaml"
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+title: Project document schema
+properties:
+  _id:
+    type: string
+  name:
+    type: string
+  description:
+    type: string
+  active:
+    type: boolean
+  max_nof_users:
+    type: integer
+  starting_port_bind:
+    type: integer
+  services:
+    description: "Define a list of server nodes."
+    type: object
+    patternProperties:
+      ".*":
+        $ref: "https://github.com/hungdojan/FIT_CTF/schemas/v1/service.yaml"
+  networks:
+    type: object
+    description: "Define all the networks used in the project."
+    patternProperties:
+      ".*":
+        $ref: "https://github.com/hungdojan/FIT_CTF/schemas/v1/network.yaml"
+
+required:
+  - _id
+  - name
+  - services
+  - networks
+  - active

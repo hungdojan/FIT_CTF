@@ -1,13 +1,12 @@
 import json
 import os
 import pathlib
-from dataclasses import asdict
 from shutil import rmtree
 
 import click
 
 from fit_ctf_backend.ctf_manager import CTFManager
-from fit_ctf_db_models.project import Project
+from fit_ctf_models.project import Project
 from fit_ctf_utils import document_editor
 
 
@@ -22,7 +21,7 @@ def debug(ctx: click.Context):
 def edit(ctx: click.Context):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     project = ctf_mgr.prj_mgr.get_docs()[0]
-    doc = document_editor(asdict(project))
+    doc = document_editor(project.model_dump())
     ctf_mgr.prj_mgr.update_doc(Project(**doc))
 
 

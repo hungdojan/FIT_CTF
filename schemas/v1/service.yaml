@@ -1,0 +1,41 @@
+$id: "https://github.com/hungdojan/FIT_CTF/schemas/v1/service.yaml"
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+title: Service document schema
+properties:
+  env:
+    type: array
+    items:
+      type: string
+  is_local:
+    type: boolean
+  module_name:
+    type: string
+  service_name:
+    type: string
+  networks:
+    type: object
+    patternProperties:
+      ".*":
+        $ref: "#/$defs/service_network"
+  other:
+    type: object
+    additionalProperties: true
+  ports:
+    type: array
+    items:
+      type: string
+  volumes:
+    type: array
+    items:
+      type: string
+
+required:
+  - is_local
+  - module_name
+  - service_name
+
+$defs:
+  service_network:
+    type: object
+    additionalProperties: true

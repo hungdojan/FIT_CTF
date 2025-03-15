@@ -1,0 +1,46 @@
+$id: "https://github.com/hungdojan/FIT_CTF/schemas/v1/user_enrollment.yaml"
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+title: User enrollment document schema
+properties:
+  _id:
+    type: string
+  user_id:
+    $ref: "#/$defs/dbref"
+  project_id:
+    $ref: "#/$defs/dbref"
+  description:
+    type: string
+  active:
+    type: boolean
+  progress:
+    type: object
+    additionalProperties: true
+  services:
+    description: "Define a list of server nodes."
+    type: object
+    patternProperties:
+      ".*":
+        $ref: "https://github.com/hungdojan/FIT_CTF/schemas/v1/service.yaml"
+  networks:
+    type: object
+    description: "Define all the networks used in the project."
+    patternProperties:
+      ".*":
+        $ref: "https://github.com/hungdojan/FIT_CTF/schemas/v1/network.yaml"
+
+required:
+  - _id
+  - name
+  - services
+  - networks
+  - active
+
+$defs:
+  dbref:
+    type: object
+    patternProperties:
+      "^\\$ref$":
+        type: string
+      "^\\$id$":
+        type: string

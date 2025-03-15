@@ -8,6 +8,7 @@ from typing import Any
 from fit_ctf_utils.container_client.container_client_interface import (
     ContainerClientInterface,
 )
+from fit_ctf_utils.types import HealthCheckDict
 
 
 class PodmanClient(ContainerClientInterface):
@@ -54,7 +55,8 @@ class PodmanClient(ContainerClientInterface):
     def compose_up(
         cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:
-        # TODO: eliminate whitespaces
+        if isinstance(file, Path):
+            file = str(file.resolve())
         cmd = f"podman-compose -f {file} up -d"
         proc = subprocess.run(
             cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
@@ -66,24 +68,33 @@ class PodmanClient(ContainerClientInterface):
     def compose_down(
         cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:
-        if len(cls.compose_ps(file)) == 0:
+        if isinstance(file, Path):
+            file = str(file.resolve())
+        res = subprocess.check_output(
+            ["podman-compose", "-f", file, "ps", "-q"], text=True
+        )
+        if not res.strip():
             return 0
-        # TODO: eliminate whitespaces
-        cmd = f"podman-compose -f {file} down"
         proc = subprocess.run(
-            cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            ["podman-compose", "-f", file, "down"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
         cls._process_logging(logger, proc.stdout.decode(), to_stdout)
         return proc.returncode
 
     @classmethod
     def compose_ps(cls, file: str | Path) -> list[str]:
+        if isinstance(file, Path):
+            file = str(file.resolve())
         cmd = ["podman-compose", "-f", file, "ps", "--format", '"{{ .Names }}"']
         proc = subprocess.run(cmd, capture_output=True, text=True)
         return [data.strip('"') for data in proc.stdout.rsplit()]
 
     @classmethod
     def compose_ps_json(cls, file: str | Path) -> list[dict[str, Any]]:
+        if isinstance(file, Path):
+            file = str(file.resolve())
         cmd = ["podman-compose", "-f", file, "ps", "--format", "json"]
         proc = subprocess.run(cmd, capture_output=True, text=True)
         data = json.loads(proc.stdout)
@@ -93,6 +104,8 @@ class PodmanClient(ContainerClientInterface):
     def compose_build(
         cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:
+        if isinstance(file, Path):
+            file = str(file.resolve())
         cmd = f"podman-compose -f {file} build"
         proc = subprocess.run(
             cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.STDOUT
@@ -104,6 +117,8 @@ class PodmanClient(ContainerClientInterface):
     def compose_shell(
         cls, file: str | Path, service: str, command: str
     ) -> subprocess.CompletedProcess:  # pragma: no cover
+        if isinstance(file, Path):
+            file = str(file.resolve())
         cmd = f"podman-compose -f {file} exec {service} {command}"
         return subprocess.run(cmd.split(), stdout=sys.stdout, stderr=sys.stderr)
 
@@ -149,12 +164,35 @@ class PodmanClient(ContainerClientInterface):
         return data
 
     @classmethod
-    def compose_down_multiple_parallel(
-        cls, compose_files: list[Path]
-    ):  # pragma: no cover
-        cmds = [
-            f"podman-compose -f {str(file.resolve())} down" for file in compose_files
+    def compose_states(
+        cls, file: str | Path
+    ) -> list[HealthCheckDict]:  # pragma: no cover
+        if isinstance(file, Path):
+            file = str(file.resolve())
+        cmd = ["podman-compose", "-f", file, "ps", "--format", "json"]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        data = json.loads(proc.stdout)
+        # filtering
+        return [
+            {
+                "name": service["Names"][0],
+                "state": service["State"],
+                "image": service["Image"],
+            }
+            for service in data
         ]
-        procs = [subprocess.Popen(i.split()) for i in cmds]
-        for p in procs:
-            p.wait()
+
+    @classmethod
+    def project_stats(cls, project_name: str) -> list[dict]:
+        cmd = [
+            "podman",
+            "ps",
+            "-a",
+            "--format",
+            "json",
+            "--filter",
+            f"label=project={project_name}",
+        ]
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        data = json.loads(proc.stdout)
+        return data

@@ -1,26 +1,25 @@
 import logging
 import shutil
-from dataclasses import asdict, dataclass, field
 from typing import Any
 
 from bson import ObjectId
 from passlib.hash import sha512_crypt
 from pymongo.database import Database
 
-import fit_ctf_db_models.user_enrollment as _ue
-from fit_ctf_utils.exceptions import (
-    ComposeFileNotExist,
-    ShadowPathNotExistException,
-    UserExistsException,
-    UserNotExistsException,
-)
-from fit_ctf_db_models.base import Base, BaseManagerInterface
+import fit_ctf_models.user_enrollment as _ue
+from fit_ctf_models.base import Base, BaseManagerInterface
 from fit_ctf_templates import JINJA_TEMPLATE_DIRPATHS, get_template
 from fit_ctf_utils.auth.auth_interface import AuthInterface
 from fit_ctf_utils.auth.local_auth import LocalAuth
 from fit_ctf_utils.constants import DEFAULT_PASSWORD_LENGTH
 from fit_ctf_utils.container_client.container_client_interface import (
     ContainerClientInterface,
+)
+from fit_ctf_utils.exceptions import (
+    ComposeFileNotExist,
+    ShadowPathNotExistException,
+    UserExistsException,
+    UserNotExistsException,
 )
 from fit_ctf_utils.mongo_queries import MongoQueries
 from fit_ctf_utils.types import PathDict, UserRole
@@ -29,7 +28,6 @@ log = logging.getLogger()
 log.disabled = False
 
 
-@dataclass(kw_only=True)
 class User(Base):
     """A class that represents a user document.
 
@@ -50,7 +48,7 @@ class User(Base):
     username: str
     password: str
     role: UserRole
-    email: str = field(default="")
+    email: str = ""
 
 
 class UserManager(BaseManagerInterface[User]):
@@ -83,11 +81,20 @@ class UserManager(BaseManagerInterface[User]):
         res = self._coll.find_one({"_id": _id})
         return User(**res) if res else None
 
-    def get_doc_by_id_raw(self, _id: ObjectId):
-        return self._coll.find_one({"_id": _id})
+    def get_doc_by_id_raw(self, _id: ObjectId, projection: dict | None = None):
+        projection = {} if projection is None else projection
+        return self._coll.find_one({"_id": _id}, projection=projection)
 
     def get_doc_by_filter(self, **kw) -> User | None:
         res = self._coll.find_one(filter=kw)
+        return User(**res) if res else None
+
+    def get_doc_by_filter_raw(
+        self, filter: dict | None = None, projection: dict | None = None
+    ):
+        filter = {} if filter is None else filter
+        projection = {} if projection is None else projection
+        res = self._coll.find_one(filter=filter, projection=projection)
         return User(**res) if res else None
 
     def get_docs(self, **filter) -> list[User]:
@@ -95,15 +102,17 @@ class UserManager(BaseManagerInterface[User]):
         return [User(**data) for data in res]
 
     def create_and_insert_doc(self, **kw) -> User:
-        doc = User(_id=ObjectId(), **kw)
-        self._coll.insert_one(asdict(doc))
+        doc = User(**kw)
+        self._coll.insert_one(doc.model_dump())
         return doc
 
-    def get_user(self, user_or_username: str | User) -> User:
+    def get_user(self, user_or_username: str | User, active: bool = True) -> User:
         """Retrieve a user from the database.
 
         :param user_or_username: User username or user object.
         :type user_or_username: str | User
+        :param active: The document is valid and still in use. Defaults to True
+        :type active: bool
         :raises UserNotExistsException: User with the given username was not found.
         :return: A found user object.
         :rtype: User
@@ -111,7 +120,7 @@ class UserManager(BaseManagerInterface[User]):
         if isinstance(user_or_username, User):
             return user_or_username
         username = user_or_username
-        user = self.get_doc_by_filter(username=username, active=True)
+        user = self.get_doc_by_filter(username=username, active=active)
         if not user:
             raise UserNotExistsException(f"User `{username}` does not exists.")
         return user
@@ -125,7 +134,7 @@ class UserManager(BaseManagerInterface[User]):
         :rtype: dict
         """
         user = self.get_user(user_or_username)
-        user = asdict(user)
+        user = user.model_dump()
         user.pop("password", "")
         user.pop("_id", "")
         return user
@@ -188,6 +197,7 @@ class UserManager(BaseManagerInterface[User]):
         password: str,
         role: UserRole = UserRole.USER,
         email: str = "",
+        **kw,
     ) -> tuple[User, dict[str, str]]:
         """Create a new user.
 
@@ -206,6 +216,7 @@ class UserManager(BaseManagerInterface[User]):
             `username` and `password` in plain-text format.
         :rtype: tuple[User, dict[str, str]]
         """
+        # TODO: activate inactive user
         user = self.get_doc_by_filter(username=username, active=True)
         if user:
             raise UserExistsException(f"User `{username}` already exists.")
@@ -266,7 +277,7 @@ class UserManager(BaseManagerInterface[User]):
         # create new users
         for username, password in lof_user_info.items():
             user, data = self.create_new_user(username, password)
-            users[user.username] = data["password"]
+            users[user.username] = data[user.username]
 
         return users
 
@@ -362,7 +373,7 @@ class UserManager(BaseManagerInterface[User]):
         :type lof_usernames: list[str]
         """
 
-        users = self.get_docs(username={"$in": lof_usernames}, active=True)
+        users = self.get_docs(username={"$in": list(lof_usernames)}, active=True)
 
         ids = [u.id for u in users]
 

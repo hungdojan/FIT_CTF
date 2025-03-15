@@ -1,0 +1,24 @@
+$id: "https://github.com/hungdojan/FIT_CTF/schemas/v1/user.yaml"
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+title: User document schema
+properties:
+  _id:
+    type: string
+  username:
+    type: string
+  password:
+    type: string
+  role:
+    type: string
+    enum: ["user", "admin"]
+  email:
+    type: string
+  active:
+    type: boolean
+
+required:
+  - _id
+  - username
+  - password
+  - role

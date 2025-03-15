@@ -1,22 +1,28 @@
-from dataclasses import asdict
-
 import click
-import yaml
+from tabulate import tabulate
 
+from fit_ctf_backend.cli.utils import (
+    module_name_option,
+    project_option,
+    service_name_option,
+    user_option,
+)
 from fit_ctf_backend.ctf_manager import CTFManager
-from fit_ctf_db_models.cluster import Service
-from fit_ctf_utils import document_editor
+from fit_ctf_models.cluster import Service
+from fit_ctf_utils import color_state, document_editor
+from fit_ctf_utils.config_loader.yaml_parser import YamlParser
 from fit_ctf_utils.exceptions import (
-    CTFException,
     ConfigurationFileNotEditedException,
+    CTFException,
     ServiceNotExistException,
     UserNotEnrolledToProjectException,
 )
 
 
 @click.group(name="user-cluster")
-@click.option("-u", "--username", type=str, required=True, help="Account username.")
-@click.option("-pn", "--project-name", type=str, required=True, help="Project's name.")
+@user_option
+@project_option
+@click.pass_context
 def user_cluster(ctx: click.Context, username: str, project_name: str):
     """Manage services of an enrolled user."""
     ctx.obj = ctx.parent.obj  # pyright: ignore
@@ -55,13 +61,16 @@ def stop_cluster(ctx: click.Context):
 
 
 @user_cluster.command(name="health-check")
-@click.option("--to-csv", is_flag=True, help="Export the health check to the CSV file.")
 @click.pass_context
-def health_check(ctx: click.Context, to_csv: bool):
-    # ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    # user = ctx.parent.obj["user"]  # pyright: ignore
-    # project = ctx.parent.obj["project"]  # pyright: ignore
-    raise NotImplementedError()
+def health_check(ctx: click.Context):
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    user = ctx.parent.obj["user"]  # pyright: ignore
+    project = ctx.parent.obj["project"]  # pyright: ignore
+    cluster_data = ctf_mgr.user_enrollment_mgr.user_cluster_health_check(user, project)
+
+    header = ["Name", "Image", "State"]
+    values = [[i["name"], i["image"], color_state(i["state"])] for i in cluster_data]
+    click.echo(tabulate(values, header))
 
 
 @user_cluster.command(name="restart")
@@ -116,8 +125,8 @@ def services(ctx: click.Context):
 
 
 @services.command(name="register")
-@click.option("-sn", "--service-name", required=True, type=str, help="Service's name.")
-@click.option("-mn", "--module-name", required=True, type=str, help="Module's name.")
+@service_name_option
+@module_name_option
 @click.option(
     "-L",
     "--is-not-local",
@@ -143,14 +152,11 @@ def register_service(
 
     try:
         doc = document_editor(
-            asdict(
-                Service(
-                    service_name=service_name,
-                    module_name=module_name,
-                    is_local=not is_not_local,
-                )
-            ),
-            {"service_name", "module_name", "is_local"},
+            ctf_mgr.user_enrollment_mgr.create_template_user_service(
+                user, project, service_name, module_name, not is_not_local
+            ).model_dump(),
+            {"service_name"},
+            "service_editor",
         )
         ctf_mgr.user_enrollment_mgr.register_service(
             user, project, service_name, Service(**doc)
@@ -172,11 +178,12 @@ def list_services(ctx: click.Context):
         click.echo(e)
         exit(1)
 
-    click.echo(yaml.dump(services, default_flow_style=True))
+    services_raw = {k: v.model_dump() for k, v in services.items()}
+    click.echo(YamlParser.dump_data(services_raw))
 
 
 @services.command(name="update")
-@click.option("-sn", "--service-name", required=True, help="Service's name.")
+@service_name_option
 @click.pass_context
 def update_service(ctx: click.Context, service_name: str):
     """Update a particular service"""
@@ -190,7 +197,7 @@ def update_service(ctx: click.Context, service_name: str):
         exit(1)
 
     try:
-        doc = document_editor(asdict(service), {"service_name"})
+        doc = document_editor(service.model_dump(), {"service_name"}, "service_editor")
         ctf_mgr.user_enrollment_mgr.update_service(
             user, project, service_name, Service(**doc)
         )
@@ -199,7 +206,7 @@ def update_service(ctx: click.Context, service_name: str):
 
 
 @services.command(name="rm")
-@click.option("-sn", "--service-name", required=True, help="Service's name.")
+@service_name_option
 @click.pass_context
 def remove_service(ctx: click.Context, service_name: str):
     """Remove the attached module from the user."""
@@ -212,4 +219,4 @@ def remove_service(ctx: click.Context, service_name: str):
         click.echo("Nothing to remove.")
     else:
         click.echo(f"Removed service {service.service_name}")
-        click.echo(yaml.dump(asdict(service), default_flow_style=True))
+        click.echo(YamlParser.dump_data(service.model_dump()))

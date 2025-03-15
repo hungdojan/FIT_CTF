@@ -4,9 +4,9 @@ import re
 from fit_ctf_utils.constants import DEFAULT_PASSWORD_LENGTH
 from fit_ctf_backend.ctf_manager import CTFManager
 from fit_ctf_utils.exceptions import ProjectNotExistException
-from fit_ctf_db_models import User, UserManager
-from fit_ctf_db_models.project import Project
-from fit_ctf_db_models.user_enrollment import UserEnrollment
+from fit_ctf_models import User, UserManager
+from fit_ctf_models.project import Project
+from fit_ctf_models.user_enrollment import UserEnrollment
 
 REGEX_IS_LOWER_CASE = re.compile("[a-z]")
 REGEX_IS_UPPER_CASE = re.compile("[A-Z]")

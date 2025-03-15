@@ -10,10 +10,21 @@ from fit_ctf_backend.ctf_manager import CTFManager
 from fit_ctf_utils.constants import MODULE_SHARE_PATH, PRJ_SHARE_PATH, USER_SHARE_PATH
 from fit_ctf_utils.types import PathDict
 
-from . import completion, enrollment, module, project, user, user_cluster
+from . import (
+    completion,
+    enrollment,
+    module,
+    project,
+    project_cluster,
+    system,
+    user,
+    user_cluster,
+    data_mgmt,
+)
 
 
 def _get_db_info() -> tuple[str, str]:
+    # TODO: move config to SHARE DIR location
     db_host = os.getenv("DB_HOST")
     if not db_host:
         sys.exit("Environment variable `DB_HOST` is not set.")
@@ -51,7 +62,6 @@ def cli(
     module_dir: pathlib.Path | None,
 ):
     """A tool for CTF competition management."""
-    db_host, db_name = _get_db_info()
     paths = PathDict(
         **{
             "projects": project_dir if project_dir is not None else PRJ_SHARE_PATH,
@@ -59,7 +69,14 @@ def cli(
             "modules": module_dir if module_dir is not None else MODULE_SHARE_PATH,
         }
     )
+    # system commands are offline commands that do not require database to be running
+    # some commands like `start a database`, or `uninstall`
+    # will be located in system group
+    if ctx.invoked_subcommand == "system":
+        ctx.obj["paths"] = paths
+        return
 
+    db_host, db_name = _get_db_info()
     try:
         ctf_mgr = CTFManager(db_host, db_name, paths)
 
@@ -85,5 +102,8 @@ cli.add_command(user.user)
 cli.add_command(completion.completion)
 cli.add_command(enrollment.enrollment)
 cli.add_command(user_cluster.user_cluster)
+cli.add_command(project_cluster.project_cluster)
 cli.add_command(module.module)
+cli.add_command(system.system)
+cli.add_command(data_mgmt.data_mgmt)
 cli.add_command(debug)

@@ -1,8 +1,0 @@
-  {{ module.name }}:
-    build:
-      context: {{ project.config_root_dir }}/{{ module.root_dir }}/{{ module.build_dir_name }}
-      dockerfile: Containerfile
-    networks:
-      - {{ project.name }}_main_net
-    ports: []
-    volumes: []

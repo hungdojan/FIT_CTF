@@ -1,16 +1,15 @@
 import os
 import re
 import shutil
-from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
 from bson import ObjectId
 from pymongo.database import Database
 
-import fit_ctf_db_models.user_enrollment as _ue
-from fit_ctf_db_models.base import Base, BaseManagerInterface
-from fit_ctf_db_models.cluster import ClusterConfig, Service
+import fit_ctf_models.user_enrollment as _ue
+from fit_ctf_models.base import Base, BaseManagerInterface
+from fit_ctf_models.cluster import ClusterConfig, Service
 from fit_ctf_templates import (
     JINJA_TEMPLATE_DIRPATHS,
     get_template,
@@ -26,10 +25,14 @@ from fit_ctf_utils.exceptions import (
     ProjectNotExistException,
 )
 from fit_ctf_utils.mongo_queries import MongoQueries
-from fit_ctf_utils.types import PathDict, ProjectPortListing
+from fit_ctf_utils.types import (
+    HealthCheckDict,
+    ModuleCount,
+    PathDict,
+    ProjectPortListing,
+)
 
 
-@dataclass(kw_only=True)
 class Project(Base, ClusterConfig):
     """A class that represents a project.
 
@@ -54,7 +57,7 @@ class Project(Base, ClusterConfig):
     name: str
     max_nof_users: int
     starting_port_bind: int
-    description: str = field(default="")
+    description: str = ""
 
 
 class ProjectManager(BaseManagerInterface[Project]):
@@ -87,23 +90,33 @@ class ProjectManager(BaseManagerInterface[Project]):
         res = self._coll.find_one({"_id": _id})
         return Project(**res) if res else None
 
-    def get_doc_by_id_raw(self, _id: ObjectId):
-        return self._coll.find_one({"_id": _id})
+    def get_doc_by_id_raw(self, _id: ObjectId, projection: dict | None = None):
+        projection = {} if projection is None else projection
+        return self._coll.find_one({"_id": _id}, projection)
 
     def get_doc_by_filter(self, **kw) -> Project | None:
         res = self._coll.find_one(filter=kw)
         return Project(**res) if res else None
+
+    def get_doc_by_filter_raw(
+        self, filter: dict | None = None, projection: dict | None = None
+    ):
+        filter = {} if filter is None else filter
+        projection = {} if projection is None else projection
+        return self._coll.find_one(filter=filter, projection=projection)
 
     def get_docs(self, **filter) -> list[Project]:
         res = self._coll.find(filter=filter)
         return [Project(**data) for data in res]
 
     def create_and_insert_doc(self, **kw) -> Project:
-        doc = Project(_id=ObjectId(), **kw)
+        doc = Project(**kw)
         self.insert_doc(doc)
         return doc
 
-    def get_project(self, project_or_name: str | Project) -> Project:
+    def get_project(
+        self, project_or_name: str | Project, active: bool = True
+    ) -> Project:
         """Retrieve project data from the database.
 
         If the given argument is a Project instance, it will simple return
@@ -111,6 +124,8 @@ class ProjectManager(BaseManagerInterface[Project]):
 
         :param project_or_name: Project name or the instance.
         :type name: str | Project
+        :param active: The document is valid and still in use. Defaults to True
+        :type active: bool
         :raises ProjectNotExistException: Project data was not found in the database.
         :return: The retrieved project object.
         :rtype: Project
@@ -118,7 +133,7 @@ class ProjectManager(BaseManagerInterface[Project]):
         if isinstance(project_or_name, Project):
             return project_or_name
         name = project_or_name
-        prj = self.get_doc_by_filter(name=name, active=True)
+        prj = self.get_doc_by_filter(name=name, active=active)
         if not prj:
             raise ProjectNotExistException(f"Project `{name}` does not exists.")
         return prj
@@ -183,12 +198,46 @@ class ProjectManager(BaseManagerInterface[Project]):
         """
         return re.search(r"^[a-z0-9_]*$", project_name) is not None
 
+    def create_admin_service(self, project_name: str) -> Service:
+        return Service(
+            service_name="admin",
+            module_name="base",
+            is_local=True,
+            networks={f"{project_name}_admin_net": {}},
+        )
+
+    def create_template_project_service(
+        self,
+        project: Project,
+        service_name: str,
+        module_name: str,
+        is_local: bool,
+    ) -> Service:
+        return Service(
+            service_name=service_name,
+            module_name=module_name,
+            is_local=is_local,
+            networks={f"{project.name}_main_net": {}, f"{project.name}_admin_net": {}},
+        )
+
+    def get_modules_count(
+        self, project_or_name: str | Project | None
+    ) -> list[ModuleCount]:
+        _filter: dict = {"active": True}
+        if project_or_name:
+            project = self.get_project(project_or_name)
+            _filter["_id"] = project.id
+
+        pipeline = [{"$match": _filter}, *MongoQueries.count_module_name_occurences()]
+        return [i for i in self.collection.aggregate(pipeline)]
+
     def init_project(
         self,
         name: str,
         max_nof_users: int,
         starting_port_bind: int = -1,
         description: str = "",
+        **kw,
     ) -> Project:
         if not self.validate_project_name(name):
             raise ProjectNamingFormatException(
@@ -209,12 +258,12 @@ class ProjectManager(BaseManagerInterface[Project]):
         (dest_dir / "users").mkdir()
         (dest_dir / "logs").mkdir()
 
-        # NOTE: should I add admin service?
         prj = self.create_and_insert_doc(
             name=name,
             max_nof_users=max_nof_users,
             starting_port_bind=starting_port_bind,
             description=description,
+            services={"admin": self.create_admin_service(name)},
         )
 
         return prj
@@ -325,7 +374,13 @@ class ProjectManager(BaseManagerInterface[Project]):
             template = get_template(
                 "server_compose.yaml.j2", str(JINJA_TEMPLATE_DIRPATHS["v1"].resolve())
             )
-            f.write(template.render(project=asdict(project)))
+            f.write(
+                template.render(
+                    project=project.model_dump(),
+                    module_dir=self._paths["modules"],
+                    container_name_prefix=project.name,
+                )
+            )
 
     def shell_admin(self, project: Project):  # pragma: no cover
         """Shell user into the admin container.
@@ -333,11 +388,7 @@ class ProjectManager(BaseManagerInterface[Project]):
         :param project: A project object.
         :type project: Project
         """
-        # WARN: the admin service is not ship with new project yet
-        # therefore, this will not work for now
-        self.c_client.compose_shell(
-            str(self.get_compose_file(project)), "admin", "bash"
-        )
+        self.c_client.compose_shell(self.get_compose_file(project), "admin", "bash")
 
     def get_resource_usage(
         self, project_or_name: str | Project
@@ -365,16 +416,27 @@ class ProjectManager(BaseManagerInterface[Project]):
         prj = self.get_project(project_or_name)
         return self.c_client.ps(prj.name)
 
+    def get_all_services_info(self, project_or_name: str | Project) -> list[dict]:
+        project = self.get_project(project_or_name)
+        return self.c_client.project_stats(project.name)
+
+    def health_check(self, project_or_name: str | Project) -> list[HealthCheckDict]:
+        prj = self.get_project(project_or_name)
+        return self.c_client.compose_states(self.get_compose_file(prj))
+
     def disable_project(self, project_or_name: str | Project):
         prj = self.get_project(project_or_name)
 
-        # stop project if running
-        if self.project_is_running(prj):
-            self.stop_project_cluster(prj)
-            # cancel all users enrollments
-            self._ue_mgr.stop_all_user_clusters(prj)
+        # cancel all services
+        self.stop_project_cluster(prj)
+        self._ue_mgr.stop_all_user_clusters(prj)
 
-        # self._ue_mgr.cancel_all_project_enrollments(prj)
+        self.c_client.rm_networks(
+            get_or_create_logger(prj.name), f"{prj.name}_main_net"
+        )
+        self.c_client.rm_networks(
+            get_or_create_logger(prj.name), f"{prj.name}_admin_net"
+        )
         self._ue_mgr.disable_multiple_enrollments(
             [(user, prj) for user in self._ue_mgr.get_user_enrollments_for_project(prj)]
         )
@@ -393,8 +455,6 @@ class ProjectManager(BaseManagerInterface[Project]):
         if path.exists():
             shutil.rmtree(path)
 
-        # TODO: remove main network
-        # TODO: remove admin network
         self._ue_mgr.flush_multiple_enrollments(
             [
                 (user, prj)
@@ -459,18 +519,33 @@ class ProjectManager(BaseManagerInterface[Project]):
             raise ProjectNotExistException(e)
 
         project.register_node_service(service_name, node_instance)
+        self.update_doc(project)
 
     def get_service(
         self,
         project_or_name: str | Project,
         service_name: str,
-    ) -> Service | None:
+    ) -> Service:
         try:
             project = self.get_project(project_or_name)
         except ProjectNotExistException as e:
             raise ProjectNotExistException(e)
 
         return project.get_node_service(service_name)
+
+    def update_service(
+        self,
+        project_or_name: str | Project,
+        service_name: str,
+        node_service: Service,
+    ):
+        try:
+            project = self.get_project(project_or_name)
+        except ProjectNotExistException as e:
+            raise ProjectNotExistException(e)
+
+        project.update_node_service(service_name, node_service)
+        self.update_doc(project)
 
     def list_services(
         self,
@@ -487,10 +562,12 @@ class ProjectManager(BaseManagerInterface[Project]):
         self,
         project_or_name: str | Project,
         service_name: str,
-    ):
+    ) -> Service | None:
         try:
             project = self.get_project(project_or_name)
         except ProjectNotExistException as e:
             raise ProjectNotExistException(e)
 
-        project.remove_node_service(service_name)
+        service = project.remove_node_service(service_name)
+        self.update_doc(project)
+        return service

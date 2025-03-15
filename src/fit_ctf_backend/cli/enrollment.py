@@ -1,5 +1,8 @@
+import pathlib
+
 import click
 
+from fit_ctf_backend.cli.utils import project_option, user_option
 from fit_ctf_backend.ctf_manager import CTFManager
 from fit_ctf_utils.exceptions import UserEnrolledToProjectException
 
@@ -12,10 +15,8 @@ def enrollment(ctx: click.Context):
 
 
 @enrollment.command(name="enroll")
-@click.option("-un", "--username", required=True, help="Account username.", type=str)
-@click.option(
-    "-pn", "--project-name", required=True, help="Project's username.", type=str
-)
+@user_option
+@project_option
 @click.pass_context
 def enroll(ctx: click.Context, username: str, project_name: str):
     """Enroll a user to a project."""
@@ -31,31 +32,44 @@ def enroll(ctx: click.Context, username: str, project_name: str):
 
 
 @enrollment.command(name="enroll-multiple")
-@click.option("-pn", "--project-name", required=True, help="Project's name.")
-@click.argument("filename")
+@project_option
+@click.option(
+    "-i",
+    "--input_file",
+    required=True,
+    help="Filepath to a file with new usernames.",
+    type=click.Path(path_type=pathlib.Path),
+)
 @click.pass_context
-def enroll_multiple_to_project(ctx: click.Context, project_name: str, filename: str):
+def enroll_multiple_to_project(
+    ctx: click.Context, project_name: str, input_file: pathlib.Path
+):
     """Enroll multiple users to the project."""
 
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     try:
         usernames = []
-        with open(filename, "r") as f:
-            usernames = [line for line in f]
+        with open(input_file, "r") as f:
+            usernames = [line.strip() for line in f]
 
-        users = ctf_mgr.user_enrollment_mgr.enroll_multiple_users_to_project(
+        user_enrollments = ctf_mgr.user_enrollment_mgr.enroll_multiple_users_to_project(
             usernames, project_name
+        )
+        # TODO: process new documents
+        user_ids = [ue.user_id.id for ue in user_enrollments]
+        users = ctf_mgr.user_mgr.get_docs_raw(
+            {"_id": {"$in": user_ids}}, {"_id": 0, "username": 1}
         )
         click.echo(users)
     except FileNotFoundError:
-        click.echo(f"File `{filename}` does not exist.")
+        click.echo(f"File `{str(input_file.resolve())}` does not exist.")
     except PermissionError:
-        click.echo(f"Permission denied to access: {filename}")
+        click.echo(f"Permission denied to access: {str(input_file.resolve())}")
 
 
 @enrollment.command(name="cancel")
-@click.option("-un", "--username", required=True, help="Account username.")
-@click.option("-pn", "--project-name", required=True, help="Project's name.")
+@user_option
+@project_option
 @click.pass_context
 def cancel_from_project(ctx: click.Context, username: str, project_name: str):
     """Remove user from the project."""
@@ -64,23 +78,28 @@ def cancel_from_project(ctx: click.Context, username: str, project_name: str):
 
 
 @enrollment.command(name="cancel-multiple")
-@click.option("-pn", "--project-name", required=True, help="Project's name.")
-@click.argument("filename")
+@project_option
+@click.option(
+    "-i",
+    "--input_file",
+    required=True,
+    help="Filepath to a file with new usernames.",
+    type=click.Path(path_type=pathlib.Path),
+)
 @click.pass_context
-def cancel_multiple_enrollment(ctx: click.Context, project_name: str, filename: str):
+def cancel_multiple_enrollment(
+    ctx: click.Context, project_name: str, input_file: pathlib.Path
+):
     """Remove multiple users from the project."""
 
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     try:
         usernames = []
-        with open(filename, "r") as f:
-            usernames = [line for line in f]
+        with open(input_file, "r") as f:
+            usernames = [line.strip() for line in f]
 
-        users = ctf_mgr.user_enrollment_mgr.cancel_multiple_enrollments(
-            usernames, project_name
-        )
-        click.echo(users)
+        ctf_mgr.user_enrollment_mgr.cancel_multiple_enrollments(usernames, project_name)
     except FileNotFoundError:
-        click.echo(f"File `{filename}` does not exist.")
+        click.echo(f"File `{str(input_file.resolve())}` does not exist.")
     except PermissionError:
-        click.echo(f"Permission denied to access: {filename}")
+        click.echo(f"Permission denied to access: {str(input_file.resolve())}")

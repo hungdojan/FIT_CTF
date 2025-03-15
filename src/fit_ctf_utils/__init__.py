@@ -5,9 +5,9 @@ import tempfile
 from pathlib import Path
 from subprocess import call
 
-import yaml
+from termcolor import colored
 
-from fit_ctf_utils.config_loader.yaml_parser import YamlParser
+from fit_ctf_utils.config_loader import YamlParser
 from fit_ctf_utils.container_client.container_client_interface import (
     ContainerClientInterface,
 )
@@ -89,14 +89,16 @@ def get_or_create_logger(
 
 
 # NOTE: source link of the code: https://stackoverflow.com/a/6309753
-def document_editor(doc: dict, read_only: set = set()) -> dict:
+def document_editor(
+    doc: dict, read_only_fields: set = set(), validator_name: str | None = None
+) -> dict:
     """Allows user to edit configuration files in the system editor."""
     editor = os.getenv("EDITOR", "vim")
-    excluded_data = {k: doc.pop(k) for k in read_only if k in doc}
+    excluded_data = {k: doc.pop(k) for k in read_only_fields if k in doc}
 
-    with tempfile.NamedTemporaryFile(suffix=".tmp", mode="w+") as tf:
+    with tempfile.NamedTemporaryFile(suffix=".tmp.yaml", mode="w+") as tf:
         # dump the content of the data into the file
-        yaml.dump(doc, tf, default_flow_style=True)
+        tf.write(YamlParser.dump_data(doc))
         tf.flush()
 
         initial_mod_time = os.path.getmtime(tf.name)
@@ -111,14 +113,24 @@ def document_editor(doc: dict, read_only: set = set()) -> dict:
         # do the parsing with `tf` using regular File operations.
         # for instance:
         tf.seek(0)
-        doc = yaml.safe_load(tf)
+        doc = YamlParser.load_data_stream(tf, validator_name)
 
     doc.update(excluded_data)
     return doc
 
 
+def color_state(state: str) -> str:
+    """Colors the text of the state field based on its value."""
+    out = ""
+    if state == "running":
+        out = colored(state, "green")
+    elif state in {"created", "initialized", "paused"}:
+        out = colored(state, "yellow")
+    else:
+        out = colored(state, "red")
+    return out
+
+
 # global logger writes to STDOUT
 log = get_or_create_logger(__name__, False)
 log_print = get_or_create_logger(f"{__name__}_print", False, "")
-
-yamlParser = YamlParser()

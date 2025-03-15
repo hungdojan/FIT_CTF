@@ -1,5 +1,5 @@
-from enum import Enum
 import pathlib
+from enum import Enum
 from typing import TypedDict
 
 
@@ -17,7 +17,7 @@ class PathDict(TypedDict):
 
 
 class ProjectPortListing(TypedDict):
-    _id: str
+    id: str
     name: str
     min_port: int
     max_port: int
@@ -28,3 +28,28 @@ class RawEnrolledProjects(TypedDict):
     active: bool
     max_nof_users: int
     active_users: int
+
+
+class HealthCheckDict(TypedDict):
+    name: str
+    image: str
+    state: str
+
+
+class ModuleCount(TypedDict):
+    _id: str
+    count: int
+
+
+class DatabaseDumpDict(TypedDict):
+    project: dict
+    users: list
+    modules: list
+    enrollments: list
+
+
+class SetupDict(TypedDict):
+    projects: list
+    users: list
+    enrollments: list
+    options: dict

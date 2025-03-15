@@ -1,16 +1,15 @@
 import logging
-from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
 from bson import DBRef, ObjectId
+from pydantic import Field
 from pymongo.database import Database
-from typing_extensions import deprecated
 
-import fit_ctf_db_models.project as _project
-import fit_ctf_db_models.user as _user
-from fit_ctf_db_models.base import Base, BaseManagerInterface
-from fit_ctf_db_models.cluster import ClusterConfig, Service
+import fit_ctf_models.project as _project
+import fit_ctf_models.user as _user
+from fit_ctf_models.base import Base, BaseManagerInterface
+from fit_ctf_models.cluster import ClusterConfig, Service
 from fit_ctf_templates import JINJA_TEMPLATE_DIRPATHS, get_template
 from fit_ctf_utils import get_or_create_logger
 from fit_ctf_utils.container_client.container_client_interface import (
@@ -24,12 +23,16 @@ from fit_ctf_utils.exceptions import (
     UserNotEnrolledToProjectException,
 )
 from fit_ctf_utils.mongo_queries import MongoQueries
-from fit_ctf_utils.types import PathDict, RawEnrolledProjects
+from fit_ctf_utils.types import (
+    HealthCheckDict,
+    ModuleCount,
+    PathDict,
+    RawEnrolledProjects,
+)
 
 log = logging.getLogger()
 
 
-@dataclass(kw_only=True)
 class UserEnrollment(Base, ClusterConfig):
     """A class that represents a user enrollment document.
 
@@ -55,7 +58,15 @@ class UserEnrollment(Base, ClusterConfig):
     project_id: DBRef
     container_port: int
     forwarded_port: int
-    progress: dict = field(default_factory=dict)
+    progress: dict = Field(default_factory=dict)
+
+    def validate_dict(self) -> dict[str, Any]:
+        model = super().validate_dict()
+        model["user_id"] = {
+            "$id": str(model["user_id"]["$id"]),
+            "$ref": model["user_id"]["$ref"],
+        }
+        return model
 
 
 class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
@@ -195,20 +206,28 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         res = self._coll.find_one({"_id": _id})
         return UserEnrollment(**res) if res else None
 
-    def get_doc_by_id_raw(self, _id: ObjectId):
-        return self._coll.find_one({"_id": _id})
+    def get_doc_by_id_raw(self, _id: ObjectId, projection: dict | None = None):
+        projection = {} if projection is None else projection
+        return self._coll.find_one({"_id": _id}, projection=projection)
 
     def get_doc_by_filter(self, **kw) -> UserEnrollment | None:
         res = self._coll.find_one(filter=kw)
         return UserEnrollment(**res) if res else None
+
+    def get_doc_by_filter_raw(
+        self, filter: dict | None = None, projection: dict | None = None
+    ):
+        filter = {} if filter is None else filter
+        projection = {} if projection is None else projection
+        return self._coll.find_one(filter=filter, projection=projection)
 
     def get_docs(self, **filter) -> list[UserEnrollment]:
         res = self._coll.find(filter=filter)
         return [UserEnrollment(**data) for data in res]
 
     def create_and_insert_doc(self, **kw) -> UserEnrollment:
-        doc = UserEnrollment(_id=ObjectId(), **kw)
-        self._coll.insert_one(asdict(doc))
+        doc = UserEnrollment(**kw)
+        self._coll.insert_one(doc.model_dump())
         return doc
 
     def compile_compose_file(
@@ -231,7 +250,11 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             )
             f.write(
                 template.render(
-                    project=asdict(project), user=asdict(user), ue=asdict(ue)
+                    project=project.model_dump(),
+                    user=user.model_dump(),
+                    user_enrollment=ue.model_dump(),
+                    module_dir=self._paths["modules"],
+                    container_name_prefix=user.username,
                 )
             )
 
@@ -272,8 +295,8 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         user_home_dirpath = self._paths["users"] / user.username / "home"
         shadow_path = self._paths["users"] / user.username / "shadow"
         return Service(
-            service_name="base",
-            module_name="base",
+            service_name="login",
+            module_name="base_ssh",
             is_local=True,
             ports=[f"{container_port}:22"],
             networks={
@@ -284,6 +307,21 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
                 f"{str(user_home_dirpath.resolve())}:/home/user:Z",
                 f"{str(shadow_path.resolve())}:/etc/shadow:Z",
             ],
+        )
+
+    def create_template_user_service(
+        self,
+        user: "_user.User",
+        project: "_project.Project",
+        service_name: str,
+        module_name: str,
+        is_local: bool,
+    ) -> Service:
+        return Service(
+            service_name=service_name,
+            module_name=module_name,
+            is_local=is_local,
+            networks={f"{project.name}_{user.username}_private_net": {}},
         )
 
     # ASSIGN USER TO PROJECTS
@@ -357,7 +395,7 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             project_id=DBRef("project", project.id),
             container_port=container_port,
             forwarded_port=forwarded_port,
-            _services={
+            services={
                 "base": self.create_base_user_service(user, project, container_port)
             },
         )
@@ -405,10 +443,15 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
                     project_id=DBRef("project", project.id),
                     container_port=min_sshport + i,
                     forwarded_port=min_sshport + i,
+                    services={
+                        "base": self.create_base_user_service(
+                            user, project, min_sshport + i
+                        )
+                    },
                 )
             )
 
-        self._coll.insert_many([asdict(uc) for uc in user_enrollments])
+        self._coll.insert_many([uc.model_dump() for uc in user_enrollments])
         return user_enrollments
 
     # LIST ENROLLMENTS
@@ -521,47 +564,18 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         pipeline = MongoQueries.user_enrollment_get_all_enrolled_projects(user)
         return [i for i in self.collection.aggregate(pipeline)]
 
-    # GET USER INFO
+    # GET MODULE COUNT
 
-    # NOTE:  dont use
-    @deprecated("do not use")
-    def get_user_info(self, user: _user.User) -> list[dict[str, Any]]:
-        """Get user information.
+    def get_modules_count(
+        self, project_or_name: "str | _project.Project | None"
+    ) -> list[ModuleCount]:
+        _filter: dict = {"active": True}
+        if project_or_name:
+            project = self._get_project(project_or_name)
+            _filter["project_id.$id"] = project.id
 
-        Retrieve all projects that the user is enrolled to. The final directory has a
-        following format:
-        {
-            "name": <project_name>,
-            "config_root_dir": <path_to_root_project_dir>,
-            "active": <active_status>
-        }
-
-        :param user: A user object.
-        :type user: _user.User
-        :return: A list or retrieved projects.
-        :rtype: list[dict[str, Any]]
-        """
-        pipeline = [
-            {"$match": {"user_id.$id": user.id, "active": True}},
-            {
-                "$lookup": {
-                    "from": "project",
-                    "localField": "project_id.$id",
-                    "foreignField": "_id",
-                    "as": "project",
-                }
-            },
-            {"$unwind": "$project"},
-            {
-                "$project": {
-                    "_id": 0,
-                    "project.name": 1,
-                    "project.config_root_dir": 1,
-                    "project.active": 1,
-                }
-            },
-        ]
-        return [i["project"] for i in self._coll.aggregate(pipeline)]
+        pipeline = [{"$match": _filter}, *MongoQueries.count_module_name_occurences()]
+        return [i for i in self.collection.aggregate(pipeline)]
 
     # CANCEL USER ENROLLMENTS
 
@@ -585,8 +599,10 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
                 f"User `{user.username}` is not enrolled to the project `{project.name}`"
             )
 
-        if self.user_cluster_is_running(user, project):
-            self.stop_user_cluster(user, project)
+        self.stop_user_cluster(user, project)
+        self.c_client.rm_networks(
+            get_or_create_logger(project.name), f"{project.name}_{user.username}_"
+        )
 
         user_enrollment.active = False
         self.update_doc(user_enrollment)
@@ -594,23 +610,21 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
     def disable_multiple_enrollments(
         self, user_project_pairs: list[tuple[_user.User, "_project.Project"]]
     ):
-        compose_files = []
         ue_ids = []
         for user, project in user_project_pairs:
             ue = self.get_doc_by_filter(
                 **{"user_id.$id": user.id, "project_id.$id": project.id, "active": True}
             )
             if ue:
-                compose_files.append(
-                    (
-                        self._paths["projects"]
-                        / project.name
-                        / "users"
-                        / f"{user.username}_compose.yaml"
-                    )
+                self.c_client.compose_down(
+                    get_or_create_logger(project.name),
+                    self.get_compose_file(user, project),
+                )
+                self.c_client.rm_networks(
+                    get_or_create_logger(project.name),
+                    f"{project.name}_{user.username}_",
                 )
                 ue_ids.append(ue.id)
-        self.c_client.compose_down_multiple_parallel(compose_files)
         self.collection.update_many(
             {"_id": {"$in": ue_ids}}, {"$set": {"active": False}}
         )
@@ -645,7 +659,6 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         )
         if compose_path.exists():
             compose_path.unlink()
-            # TODO: remove networks
         self.remove_doc_by_id(user_enrollment.id)
 
     def flush_multiple_enrollments(
@@ -666,7 +679,6 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             )
             if compose_path.exists():
                 compose_path.unlink()
-                # TODO: delete network
 
         self.remove_docs_by_id([data["_id"] for data in query_res])
 
@@ -744,7 +756,7 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         """Remove all canceled user enrollments."""
         self.remove_docs_by_filter(active=False)
 
-    # MANAGE INSTACES
+    # MANAGE SERVICES
 
     def register_service(
         self,
@@ -760,6 +772,7 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             raise UserNotEnrolledToProjectException(e)
 
         ue.register_node_service(service_name, node_service)
+        self.update_doc(ue)
 
     def get_service(
         self,
@@ -788,7 +801,8 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         except UserNotEnrolledToProjectException as e:
             raise UserNotEnrolledToProjectException(e)
 
-        return ue.update_node_service(service_name, node_service)
+        ue.update_node_service(service_name, node_service)
+        self.update_doc(ue)
 
     def list_services(
         self,
@@ -815,9 +829,11 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         except UserNotEnrolledToProjectException as e:
             raise UserNotEnrolledToProjectException(e)
 
-        return ue.remove_node_service(service_name)
+        service = ue.remove_node_service(service_name)
+        self.update_doc(ue)
+        return service
 
-    # RUNNING INSTANCES
+    # MANAGE CLUSTER
 
     def start_user_cluster(
         self,
@@ -873,9 +889,6 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         except UserNotEnrolledToProjectException as e:
             raise UserNotEnrolledToProjectException(e)
         compose_file = self.get_compose_file(user, project)
-
-        if not self.user_cluster_is_running(user, project):
-            return 0
 
         return self.c_client.compose_down(
             get_or_create_logger(project.name), compose_file
@@ -959,6 +972,18 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             get_or_create_logger(project.name), compose_file
         )
 
+    def user_cluster_health_check(
+        self,
+        user_or_username: "str | _user.User",
+        project_or_name: "str | _project.Project",
+    ) -> list[HealthCheckDict]:
+        user, project = self._get_user_and_project(user_or_username, project_or_name)
+        try:
+            _ = self.get_user_enrollment(user, project)
+        except UserNotEnrolledToProjectException as e:
+            raise UserNotEnrolledToProjectException(e)
+        return self.c_client.compose_states(self.get_compose_file(user, project))
+
     def stop_multiple_user_clusters(
         self, users: list[_user.User], project: "_project.Project"
     ):
@@ -977,7 +1002,8 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             except UserNotEnrolledToProjectException:
                 pass
 
-        self.c_client.compose_down_multiple_parallel(compose_files)
+        for cfile in compose_files:
+            self.c_client.compose_down(get_or_create_logger(project.name), cfile)
 
     def stop_all_user_clusters(self, project: "_project.Project"):
         """Stop all user clusters.
@@ -994,4 +1020,5 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             except UserNotEnrolledToProjectException:
                 pass
 
-        self.c_client.compose_down_multiple_parallel(compose_files)
+        for cfile in compose_files:
+            self.c_client.compose_down(get_or_create_logger(project.name), cfile)

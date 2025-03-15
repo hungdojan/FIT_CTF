@@ -74,4 +74,4 @@ class AuthInterface(ABC):
         :return: True if the validation succeeds.
         :rtype: bool
         """
-        pass
+        raise NotImplementedError()

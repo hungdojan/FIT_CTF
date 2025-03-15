@@ -1,0 +1,74 @@
+$id: "https://github.com/hungdojan/FIT_CTF/schemas/v1/setup.yaml"
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+title: Quick project, users and enrollment setup file
+properties:
+  projects:
+    description: |
+      A list of projects that will be created if they don't exist in the database.
+    type: array
+    items:
+      $ref: "#/$defs/project_item"
+  users:
+    type: array
+    description: |
+      A list of users that will be created if they don't exist in the database.
+    items:
+      $ref: "#/$defs/user_item"
+  enrollments:
+    type: array
+    description: |
+      A list of enrollments that will be applied if both project and user is found.
+    items:
+      $ref: "#/$defs/enrollment_item"
+
+$defs:
+  project_item:
+    type: object
+    properties:
+      name:
+        type: string
+      max_nof_users:
+        type: integer
+      starting_port_big:
+        type: integer
+        default: -1
+      description:
+        type: string
+        default: ""
+    required: ["name", "max_nof_users"]
+
+  user_item:
+    type: object
+    properties:
+      username:
+        type: string
+      email:
+        type: string
+        default: ""
+      role:
+        type: string
+        enum: ["user", "admin"]
+        default: "user"
+      generate_password:
+        type: boolean
+    required: ["username"]
+    oneOf:
+      - properties:
+          password:
+            type: string
+        required: ["password"]
+      - properties:
+          generate_password:
+            type: boolean
+            const: true
+        required: ["generate_password"]
+
+  enrollment_item:
+    type: object
+    properties:
+      project:
+        type: string
+      user:
+        type: string
+    required: ["project", "user"]

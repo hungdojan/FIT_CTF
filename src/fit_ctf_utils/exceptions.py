@@ -146,3 +146,15 @@ class ConfigurationFileNotEditedException(CTFException):
     """The configuration data were not edited in the editor."""
 
     pass
+
+
+class ImportFileCorruptedException(CTFException):
+    """All the errors that occur during project import."""
+
+    pass
+
+
+class ModuleInUseException(CTFException):
+    """The selected module is still used by some kind of server"""
+
+    pass

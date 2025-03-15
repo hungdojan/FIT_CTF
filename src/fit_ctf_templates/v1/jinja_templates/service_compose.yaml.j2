@@ -1,46 +1,58 @@
-{{ instance.service_name }}:
-  {% if instance.is_local %}
-  build:
-    context: {{ module_dir }}/{{ instance.module_name}}
-    dockerfile: Containerfile
-  {% endif %}
-  image: {{ instance.module_name }}
-  name: {{ instance.module_name }}
-  {% if instance.ports %}
-  ports:
-    {% for item in instance.ports %}
-    - {{ item }}
-    {% endfor %}
-  {% else %}
-  ports: []
-  {% endif %}
+  {{ service.service_name }}:
+    {%- if service.is_local %}
+    build:
+      context: {{ module_dir }}/{{ service.module_name}}
+      dockerfile: Containerfile
+    {%- endif %}
+    image: {{ service.module_name }}
+    container_name: {{ container_name_prefix }}_{{ service.service_name}}
+    labels:
+      project: {{ project.name }}
+      {%- if user %}
+      user: {{ user.username }}
+      cluster_type: user
+      {%- else %}
+      cluster_type: server
+      {%- endif %}
+    {%- if service.ports %}
+    ports:
+      {%- for item in service.ports %}
+      - "{{ item }}"
+      {%- endfor %}
+    {%- else %}
+    ports: []
+    {%- endif %}
 
-  {% if instance.networks %}
-  networks:
-    {% for net_name, net_val in instance.networks.items() %}
-    {{ net_name}}:
-      {% for k, v in net_val.items() %}
-      {{ k }}: {{ v }}
-      {% endfor %}
-    {% endfor %}
-  {% else %}
-  networks: {}
-  {% endif %}
+    {%- if service.networks %}
+    networks:
+      {%- for net_name, net_val in service.networks.items() %}
+      {%- if net_val %}
+      {{ net_name }}:
+        {%- for k, v in net_val.items() %}
+        {{ k }}: {{ v }}
+        {%- endfor %}
+      {%- else %}
+      {{ net_name }}: {}
+      {%- endif %}
+      {%- endfor %}
+    {%- else %}
+    networks: {}
+    {%- endif %}
 
-  {% if instance.volumes %}
-  volumes:
-    {% for vol in instance.volumes %}
-    - {{ vol }}
-    {% endfor %}
-  {% else %}
-  volumes: []
-  {% endif %}
+    {%- if service.volumes %}
+    volumes:
+      {%- for vol in service.volumes %}
+      - "{{ vol }}"
+      {%- endfor %}
+    {%- else %}
+    volumes: []
+    {%- endif %}
 
-  {% if instance.env %}
-  environment:
-    {% for e in instance.env %}
-    - {{ e }}
-    {% endfor %}
-  {% else %}
-  volumes: []
-  {% endif %}
+    {%- if service.env %}
+    environment:
+      {%- for e in service.env %}
+      - {{ e }}
+      {%- endfor %}
+    {%- else %}
+    environment: []
+    {%- endif %}

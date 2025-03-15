@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import fit_ctf_utils
+from fit_ctf_utils.types import HealthCheckDict
 
 
 class ContainerClientInterface(ABC):
@@ -39,42 +40,42 @@ class ContainerClientInterface(ABC):
     @classmethod
     @abstractmethod
     def generate_container_prefix(cls, *names: str) -> str:
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
     def get_images(
         cls, contains: str | list[str] | None = None
     ) -> list[str]:  # pragma: no cover
-        """Get container images using `podman` command.
+        """Get container images using conatiner engine command.
 
         :param contains: A substring search filter. Defaults to `None`.
         :type contains: str | list[str] | None, optional
         :return: A list of found container image names.
         :rtype: list[str]
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
     def get_networks(
         cls, contains: str | list[str] | None = None
     ) -> list[str]:  # pragma: no cover
-        """Get a list of container network names using `podman` command.
+        """Get a list of container network names using container engine command.
 
         :param contains: A substring search filter. Defaults to `None`.
         :type contains: str | list[str] | None
         :return: A list of found network names.
         :rtype: list[str]
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
     def rm_images(
         cls, logger: Logger, contains: str | list[str], to_stdout: bool = False
     ) -> int:  # pragma: no cover
-        """Remove container images from the system using `podman` command.
+        """Remove container images from the system using container engine command.
 
         :param logger: A logger handler to write output to.
         :type logger: Logger
@@ -85,14 +86,14 @@ class ContainerClientInterface(ABC):
         :return: An exit code.
         :rtype: int
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
     def rm_networks(
         cls, logger: Logger, contains: str | list[str], to_stdout: bool = False
     ) -> int:  # pragma: no cover
-        """Remove container networks from the system using `podman` command.
+        """Remove container networks from the system using container engine command.
 
         :param logger: A logger handler to write output to.
         :type logger: Logger
@@ -103,14 +104,14 @@ class ContainerClientInterface(ABC):
         :return: An exit code.
         :rtype: int
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
     def compose_up(
         cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:  # pragma: no cover
-        """Run `podman-compose up` for the given file.
+        """Run compose up for the given file.
 
         :param logger: A logger handler to write output to.
         :type logger: Logger
@@ -121,14 +122,14 @@ class ContainerClientInterface(ABC):
         :return: An exit code.
         :rtype: int
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
     def compose_down(
         cls, logger: Logger, file: str | Path, to_stdout: bool = False
     ) -> int:  # pragma: no cover
-        """Run `podman-compose down` for the given file.
+        """Run compose down for the given file.
 
         :param logger: A logger handler to write output to.
         :type logger: Logger
@@ -139,33 +140,33 @@ class ContainerClientInterface(ABC):
         :return: An exit code.
         :rtype: int
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
     def compose_ps(cls, file: str | Path) -> list[str]:  # pragma: no cover
-        """Get container states using `podman-compose` command.
+        """Get container states using compose command.
 
         :param file: Path to the compose file.
         :type file: str | Path
         :return: A status info for each found container.
         :rtype: list[str]
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
     def compose_ps_json(
         cls, file: str | Path
     ) -> list[dict[str, Any]]:  # pragma: no cover
-        """Get container states in JSON format using `podman-compose` command.
+        """Get container states in JSON format using compose command.
 
         :param file: Path to the compose file.
         :type file: str | Path
         :return: A status info for each found container.
         :rtype: list[dict[str, Any]]
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
@@ -183,7 +184,7 @@ class ContainerClientInterface(ABC):
         :return: An exit code.
         :rtype: int
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
@@ -201,7 +202,7 @@ class ContainerClientInterface(ABC):
         :return: A completed process object.
         :rtype: subprocess.CompletedProcess
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
@@ -213,7 +214,7 @@ class ContainerClientInterface(ABC):
         :return: Stats data for the given project.
         :rtype: list[dict[str, str]]
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
@@ -225,7 +226,7 @@ class ContainerClientInterface(ABC):
         :return: Output lines from the `podman` command.
         :rtype: list[str]
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
@@ -237,7 +238,7 @@ class ContainerClientInterface(ABC):
         :return: A dict with Podman process data.
         :rtype: list[dict[str, Any]]
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
@@ -249,17 +250,23 @@ class ContainerClientInterface(ABC):
         :param output_file: The path to the destination file.
         :type output_file: pathlib.Path
         """
-        pass
+        raise NotImplementedError()
 
     @classmethod
     @abstractmethod
-    def compose_down_multiple_parallel(
-        cls, compose_files: list[Path]
-    ):  # pragma: no cover
-        """Run multiple compose down commands in parallel.
+    def compose_states(
+        cls, file: str | Path
+    ) -> list[HealthCheckDict]:  # pragma: no cover
+        """Returns a simple table that shows the state of each service in the cluster.
 
-        :param compose_files:
-            A list of compose files to run command against.
-        :type compose_files: list[Path]
+        :param file: Path to the compose file.
+        :type file: str | Path
+        :return: A basic status for each service.
+        :rtype: list[HealthCheckDict]
         """
-        pass
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    def project_stats(cls, project_name: str) -> list[dict]:  # pragma: no cover
+        raise NotImplementedError()
