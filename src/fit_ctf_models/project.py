@@ -2,14 +2,12 @@ import os
 import re
 import shutil
 from pathlib import Path
-from typing import Any
 
 from bson import ObjectId
 from pymongo.database import Database
 
 import fit_ctf_models.user_enrollment as _ue
-from fit_ctf_models.base import Base, BaseManagerInterface
-from fit_ctf_models.cluster import ClusterConfig, Service
+from fit_ctf_models.cluster import ClusterConfig, ClusterConfigManager, Service
 from fit_ctf_templates import (
     JINJA_TEMPLATE_DIRPATHS,
     get_template,
@@ -23,17 +21,19 @@ from fit_ctf_utils.exceptions import (
     ProjectExistsException,
     ProjectNamingFormatException,
     ProjectNotExistException,
+    SSHPortOutOfRangeException,
 )
 from fit_ctf_utils.mongo_queries import MongoQueries
 from fit_ctf_utils.types import (
     HealthCheckDict,
-    ModuleCount,
+    ModuleCountDict,
     PathDict,
-    ProjectPortListing,
+    ProjectPortListingDict,
+    RawProjectDict,
 )
 
 
-class Project(Base, ClusterConfig):
+class Project(ClusterConfig):
     """A class that represents a project.
 
     :param name: Project's name.
@@ -59,8 +59,12 @@ class Project(Base, ClusterConfig):
     starting_port_bind: int
     description: str = ""
 
+    @property
+    def max_port(self) -> int:
+        return self.starting_port_bind + self.max_nof_users - 1
 
-class ProjectManager(BaseManagerInterface[Project]):
+
+class ProjectManager(ClusterConfigManager[Project]):
     """A manager class that handles operations with `Project` objects."""
 
     def __init__(
@@ -115,7 +119,7 @@ class ProjectManager(BaseManagerInterface[Project]):
         return doc
 
     def get_project(
-        self, project_or_name: str | Project, active: bool = True
+        self, project_or_name: str | Project, active: bool | None = True
     ) -> Project:
         """Retrieve project data from the database.
 
@@ -124,8 +128,9 @@ class ProjectManager(BaseManagerInterface[Project]):
 
         :param project_or_name: Project name or the instance.
         :type name: str | Project
-        :param active: The document is valid and still in use. Defaults to True
-        :type active: bool
+        :param active: Fetch documents with the given active value. If set to None,
+            the function fetches both active and inactive documents. Defaults to True.
+        :type active: bool | None
         :raises ProjectNotExistException: Project data was not found in the database.
         :return: The retrieved project object.
         :rtype: Project
@@ -133,9 +138,12 @@ class ProjectManager(BaseManagerInterface[Project]):
         if isinstance(project_or_name, Project):
             return project_or_name
         name = project_or_name
-        prj = self.get_doc_by_filter(name=name, active=active)
+        _filter: dict = {"name": name}
+        if active is not None:
+            _filter["active"] = active
+        prj = self.get_doc_by_filter(**_filter)
         if not prj:
-            raise ProjectNotExistException(f"Project `{name}` does not exists.")
+            raise ProjectNotExistException(f"Project `{name}` does not exist.")
         return prj
 
     def get_compose_file(self, project: Project) -> Path:
@@ -169,18 +177,13 @@ class ProjectManager(BaseManagerInterface[Project]):
         if not lof_prjs:
             return DEFAULT_STARTING_PORT
 
-        # TODO: consider better calculation logic
-        # binary search algorithm can be used if the port numbers are sorted
+        return lof_prjs[0]["starting_port_bind"] + lof_prjs[0]["max_nof_users"]
 
-        # calculate the next starting port, leave 1000 number in case reallocation will
-        # be required later
-        return lof_prjs[0]["starting_port_bind"] + lof_prjs[0]["max_nof_users"] + 1000
-
-    def get_reserved_ports(self) -> list[ProjectPortListing]:
+    def get_reserved_ports(self) -> list[ProjectPortListingDict]:
         """Get a list of reserved ports.
 
         :return: A list of reserved port ranges.
-        :rtype: list[ProjectPortListing]
+        :rtype: list[ProjectPortListingDict]
         """
         pipeline = MongoQueries.project_get_reserved_ports()
         return [i for i in self._coll.aggregate(pipeline)]
@@ -222,7 +225,7 @@ class ProjectManager(BaseManagerInterface[Project]):
 
     def get_modules_count(
         self, project_or_name: str | Project | None
-    ) -> list[ModuleCount]:
+    ) -> list[ModuleCountDict]:
         _filter: dict = {"active": True}
         if project_or_name:
             project = self.get_project(project_or_name)
@@ -251,6 +254,11 @@ class ProjectManager(BaseManagerInterface[Project]):
 
         if starting_port_bind < 0:
             starting_port_bind = self._get_available_starting_port()
+
+        if starting_port_bind + max_nof_users > 65_535:
+            raise SSHPortOutOfRangeException(
+                "Not enough available ports."
+            )  # pragma: no cover
 
         dest_dir = self._paths["projects"] / name
         dest_dir.mkdir(parents=True)
@@ -445,12 +453,13 @@ class ProjectManager(BaseManagerInterface[Project]):
         self.update_doc(prj)
 
     def flush_project(self, project_or_name: str | Project):
-        prj = self.get_project(project_or_name)
-        if not prj:
-            return
+        try:
+            prj = self.get_project(project_or_name, None)
+            if prj.active:
+                raise ProjectExistsException("Cannot flush files of an active project.")
+        except ProjectNotExistException as e:
+            raise ProjectNotExistException(e)
 
-        if prj.active:
-            raise ProjectExistsException("Cannot flush files of an active project.")
         path = self._paths["projects"] / prj.name
         if path.exists():
             shutil.rmtree(path)
@@ -479,7 +488,7 @@ class ProjectManager(BaseManagerInterface[Project]):
         self.disable_project(prj)
         self.flush_project(prj)
 
-    def get_projects(self, include_inactive: bool = False) -> list[dict[str, Any]]:
+    def get_projects_raw(self, include_inactive: bool = False) -> list[RawProjectDict]:
         """Get list of all projects.
 
         The final directory has the following format:
@@ -504,70 +513,3 @@ class ProjectManager(BaseManagerInterface[Project]):
         projects = self.get_docs()
         for prj in projects:
             self.delete_project(prj)
-
-    # MANAGE INSTANCES
-
-    def register_service(
-        self,
-        project_or_name: str | Project,
-        service_name: str,
-        node_instance: Service,
-    ):
-        try:
-            project = self.get_project(project_or_name)
-        except ProjectNotExistException as e:
-            raise ProjectNotExistException(e)
-
-        project.register_node_service(service_name, node_instance)
-        self.update_doc(project)
-
-    def get_service(
-        self,
-        project_or_name: str | Project,
-        service_name: str,
-    ) -> Service:
-        try:
-            project = self.get_project(project_or_name)
-        except ProjectNotExistException as e:
-            raise ProjectNotExistException(e)
-
-        return project.get_node_service(service_name)
-
-    def update_service(
-        self,
-        project_or_name: str | Project,
-        service_name: str,
-        node_service: Service,
-    ):
-        try:
-            project = self.get_project(project_or_name)
-        except ProjectNotExistException as e:
-            raise ProjectNotExistException(e)
-
-        project.update_node_service(service_name, node_service)
-        self.update_doc(project)
-
-    def list_services(
-        self,
-        project_or_name: str | Project,
-    ) -> dict[str, Service]:
-        try:
-            project = self.get_project(project_or_name)
-        except ProjectNotExistException as e:
-            raise ProjectNotExistException(e)
-
-        return project.list_nodes_services()
-
-    def remove_service(
-        self,
-        project_or_name: str | Project,
-        service_name: str,
-    ) -> Service | None:
-        try:
-            project = self.get_project(project_or_name)
-        except ProjectNotExistException as e:
-            raise ProjectNotExistException(e)
-
-        service = project.remove_node_service(service_name)
-        self.update_doc(project)
-        return service

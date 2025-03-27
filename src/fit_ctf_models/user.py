@@ -1,6 +1,5 @@
 import logging
 import shutil
-from typing import Any
 
 from bson import ObjectId
 from passlib.hash import sha512_crypt
@@ -16,13 +15,11 @@ from fit_ctf_utils.container_client.container_client_interface import (
     ContainerClientInterface,
 )
 from fit_ctf_utils.exceptions import (
-    ComposeFileNotExist,
-    ShadowPathNotExistException,
     UserExistsException,
     UserNotExistsException,
 )
 from fit_ctf_utils.mongo_queries import MongoQueries
-from fit_ctf_utils.types import PathDict, UserRole
+from fit_ctf_utils.types import NewUserDict, PathDict, UserInfoDict, UserRole
 
 log = logging.getLogger()
 log.disabled = False
@@ -106,13 +103,16 @@ class UserManager(BaseManagerInterface[User]):
         self._coll.insert_one(doc.model_dump())
         return doc
 
-    def get_user(self, user_or_username: str | User, active: bool = True) -> User:
+    def get_user(
+        self, user_or_username: str | User, active: bool | None = True
+    ) -> User:
         """Retrieve a user from the database.
 
         :param user_or_username: User username or user object.
         :type user_or_username: str | User
-        :param active: The document is valid and still in use. Defaults to True
-        :type active: bool
+        :param active: Fetch documents with the given active value. If set to None,
+            the function fetches both active and inactive documents. Defaults to True.
+        :type active: bool | None
         :raises UserNotExistsException: User with the given username was not found.
         :return: A found user object.
         :rtype: User
@@ -120,9 +120,12 @@ class UserManager(BaseManagerInterface[User]):
         if isinstance(user_or_username, User):
             return user_or_username
         username = user_or_username
-        user = self.get_doc_by_filter(username=username, active=active)
+        _filter: dict = {"username": username}
+        if active is not None:
+            _filter["active"] = active
+        user = self.get_doc_by_filter(**_filter)
         if not user:
-            raise UserNotExistsException(f"User `{username}` does not exists.")
+            raise UserNotExistsException(f"User `{username}` does not exist.")
         return user
 
     def get_user_raw(self, user_or_username: str | User) -> dict:
@@ -176,10 +179,6 @@ class UserManager(BaseManagerInterface[User]):
         """
         user = self.get_user(username)
         shadow_path = self._paths["users"] / user.username / "shadow"
-        if not shadow_path.exists():
-            raise ShadowPathNotExistException(
-                f"Could not locate shadow file of the user `{user.username}`."
-            )
 
         # calculate and update hash for shadow
         log.info(f"Updating `{shadow_path.resolve()}`")
@@ -198,7 +197,7 @@ class UserManager(BaseManagerInterface[User]):
         role: UserRole = UserRole.USER,
         email: str = "",
         **kw,
-    ) -> tuple[User, dict[str, str]]:
+    ) -> tuple[User, NewUserDict]:
         """Create a new user.
 
         If user already exists function will raise an exception.
@@ -236,13 +235,13 @@ class UserManager(BaseManagerInterface[User]):
             role=role,
             email=email,
         )
-        return user, {username: password}
+        return user, {"username": username, "password": password}
 
     def create_multiple_users(
         self,
         lof_usernames: list[str],
         default_password: str | None = None,
-    ) -> dict[str, str]:
+    ) -> list[NewUserDict]:
         """Generate new users from the given list of usernames.
 
         Ignores usernames that already has an account.
@@ -252,8 +251,8 @@ class UserManager(BaseManagerInterface[User]):
         :param default_password: A default password that will be set to all new users.
             If set to None, the password will be randomly generated. Defaults to None.
         :type default_password: str | None
-        :return: Dictionary of usernames and passwords in plain-text format (not a hash).
-        :rtype: dict[str, str]
+        :return: A list of usernames and passwords in plain-text format (not a hash) objects.
+        :rtype: list[NewUserDict]
         """
         # eliminate duplicates
         existing_users = [
@@ -272,51 +271,28 @@ class UserManager(BaseManagerInterface[User]):
         )
         # generate random passwords for each new user
         lof_user_info = {username: password for username in new_usernames}
-        users = {}
+        users = []
 
         # create new users
         for username, password in lof_user_info.items():
-            user, data = self.create_new_user(username, password)
-            users[user.username] = data[user.username]
+            _, data = self.create_new_user(username, password)
+            users.append(data)
 
         return users
 
-    def get_list_users_raw(self, _all: bool) -> list[dict]:
-        """Get a list of user in raw data.
-
-        :param _all: If set to True it displays all users (including inactive).
-        :type _all: bool
-        :return: A list of user data in dictionary.
-        :rtype: list[dict]
-        """
-        filter = {} if _all else {"active": True}
-        users = self.get_docs_raw(filter, {"password": 0})
-        return users
-
-    def get_users(self, include_inactive: bool = False) -> list[dict[str, Any]]:
+    def get_users_info(self, active: bool | None = None) -> list[UserInfoDict]:
         """Get list of all users.
 
         Creates a query that look up all users in the database and their assigned project
         names.
 
-        The final directory has the following format:
-        {
-            "name": <username>,
-            "projects": [
-                {"name": <project1_name>},
-                {"name": <project2_name>},
-                ...
-            ],
-            "active": <active_state>
-        }
-
-        :param include_inactive: When set to `True`, the query result will also
-            include inactive users.
-        :type include_inactive: bool
+        :param active: Fetch documents with the given active value. If set to None,
+            the function fetches both active and inactive documents. Defaults to True.
+        :type active: bool | None
         :return: A list of users with aditional information.
-        :rtype: list[dict[str, Any]]
+        :rtype: list[UserInfoDict]
         """
-        pipeline = MongoQueries.user_get_users(include_inactive)
+        pipeline = MongoQueries.user_get_users(active)
         return [i for i in self.collection.aggregate(pipeline)]
 
     def disable_user(self, username: str):
@@ -330,10 +306,7 @@ class UserManager(BaseManagerInterface[User]):
 
         lof_projects = self._ue_mgr.get_enrolled_projects(user.username)
         for project in lof_projects:
-            try:
-                self._ue_mgr.stop_user_cluster(user, project)
-            except ComposeFileNotExist:
-                continue
+            self._ue_mgr.stop_user_cluster(user, project)
 
         self._ue_mgr.cancel_user_from_all_projects(user)
         user.active = False
@@ -346,13 +319,48 @@ class UserManager(BaseManagerInterface[User]):
         :param username: User's username.
         :type username: str
         """
-        user = self.get_doc_by_filter(username=username, active=True)
-        if user:
-            raise UserExistsException("Cannot flush files of an active user.")
+        try:
+            user = self.get_user(username, None)
+            if user.active:
+                raise UserExistsException("Cannot flush files of an active user.")
+        except UserNotExistsException as e:
+            raise UserNotExistsException(e)
 
         path = self._paths["users"] / username
         if path.exists():
             shutil.rmtree(path)
+        self.remove_doc_by_id(user.id)
+
+    def disable_multiple_users(self, lof_usernames: list[str]):
+        users = self.get_docs(username={"$in": lof_usernames}, active=True)
+        user_ids = [u.id for u in users]
+
+        pairs = []
+        for user in users:
+            self._ue_mgr.stop_all_clusters_of_a_user(user)
+            pairs.extend(
+                [(user, prj) for prj in self._ue_mgr.get_enrolled_projects(user)]
+            )
+
+        self._ue_mgr.disable_multiple_enrollments(pairs)
+        self.collection.update_many(
+            {"_id": {"$in": user_ids}}, {"$set": {"active": False}}
+        )
+
+    def flush_multiple_users(self, lof_usernames: list[str]):
+        users = self.get_docs(username={"$in": lof_usernames}, active=False)
+
+        pairs = []
+        for user in users:
+            pairs.extend(
+                [(user, prj) for prj in self._ue_mgr.get_enrolled_projects(user, True)]
+            )
+            path = self._paths["users"] / user.username
+            if path.exists():
+                shutil.rmtree(path)
+
+        self._ue_mgr.flush_multiple_enrollments(pairs)
+        self.remove_docs_by_id([u.id for u in users])
 
     def delete_a_user(self, username: str):
         """Completely remove user from the host machine.
@@ -361,10 +369,8 @@ class UserManager(BaseManagerInterface[User]):
         :type username: str
         :raises UserNotExistsException: Given user could not be found in the database.
         """
-        user = self.get_user(username)
         self.disable_user(username)
         self.flush_user(username)
-        self.remove_doc_by_id(user.id)
 
     def delete_users(self, lof_usernames: list[str]):
         """Deletes users from the list.
@@ -373,18 +379,11 @@ class UserManager(BaseManagerInterface[User]):
         :type lof_usernames: list[str]
         """
 
-        users = self.get_docs(username={"$in": list(lof_usernames)}, active=True)
-
-        ids = [u.id for u in users]
-
-        for user in users:
-            self.disable_user(user.username)
-            self.flush_user(user.username)
-
-        self.remove_docs_by_id(ids)
+        self.disable_multiple_users(lof_usernames)
+        self.flush_multiple_users(lof_usernames)
 
     def delete_all(self):
         """Remove all users from the host system and clear the database."""
 
-        users = [u["username"] for u in self.get_users()]
+        users = [u.username for u in self.get_docs()]
         self.delete_users(users)

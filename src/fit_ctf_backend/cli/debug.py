@@ -59,3 +59,14 @@ def db_clear(ctx: click.Context):
     if data_dir.exists():
         rmtree(data_dir)
         data_dir.mkdir()
+
+
+@debug.command(name="run")
+@click.pass_context
+def run(ctx):
+    ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    click.echo(
+        ctf_mgr.user_enrollment_mgr.get_all_forwarded_ports(
+            ctf_mgr.prj_mgr.get_project("prj1")
+        )
+    )

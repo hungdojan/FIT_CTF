@@ -2,8 +2,13 @@ import pathlib
 
 import click
 
-from fit_ctf_backend.cli.utils import project_option, yaml_suffix_validation
+from fit_ctf_backend.cli.utils import (
+    format_option,
+    project_option,
+    yaml_suffix_validation,
+)
 from fit_ctf_backend.ctf_manager import CTFManager
+from fit_ctf_utils.data_view import get_view
 from fit_ctf_utils.exceptions import CTFException
 
 
@@ -76,9 +81,14 @@ def import_data(ctx: click.Context, input_file: pathlib.Path):
     is_flag=True,
     help="Simulate running the setup without applying any changes.",
 )
+@format_option
 @click.pass_context
 def setup_data(
-    ctx: click.Context, input_file: pathlib.Path, exist_ok: bool, dry_run: bool
+    ctx: click.Context,
+    input_file: pathlib.Path,
+    exist_ok: bool,
+    dry_run: bool,
+    format: str,
 ):
     """Setup environment from the YAML config file."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
@@ -86,6 +96,11 @@ def setup_data(
     try:
         new_users = ctf_mgr.setup_env_from_file(input_file, exist_ok, dry_run)
         if new_users:
-            click.echo(new_users)
+            headers = ["Username", "Password"]
+            values = [
+                [user[label] for label in ["username", "password"]]
+                for user in new_users
+            ]
+            get_view(format).print_data(headers, values)
     except CTFException as e:
         click.echo(e)

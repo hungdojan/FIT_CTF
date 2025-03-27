@@ -1,6 +1,5 @@
 import logging
 from pathlib import Path
-from typing import Any
 
 from bson import DBRef, ObjectId
 from pydantic import Field
@@ -8,32 +7,34 @@ from pymongo.database import Database
 
 import fit_ctf_models.project as _project
 import fit_ctf_models.user as _user
-from fit_ctf_models.base import Base, BaseManagerInterface
-from fit_ctf_models.cluster import ClusterConfig, Service
+from fit_ctf_models.cluster import ClusterConfig, ClusterConfigManager, Service
 from fit_ctf_templates import JINJA_TEMPLATE_DIRPATHS, get_template
-from fit_ctf_utils import get_or_create_logger
+from fit_ctf_utils import get_missing_in_sequence, get_or_create_logger
 from fit_ctf_utils.container_client.container_client_interface import (
     ContainerClientInterface,
 )
 from fit_ctf_utils.exceptions import (
+    ContainerPortUsageCollisionException,
+    ForwardedPortUsageCollisionException,
     MaxUserCountReachedException,
-    PortUsageCollisionException,
+    ProjectNotExistException,
     SSHPortOutOfRangeException,
     UserEnrolledToProjectException,
     UserNotEnrolledToProjectException,
+    UserNotExistsException,
 )
 from fit_ctf_utils.mongo_queries import MongoQueries
 from fit_ctf_utils.types import (
     HealthCheckDict,
-    ModuleCount,
+    ModuleCountDict,
     PathDict,
-    RawEnrolledProjects,
+    RawEnrolledProjectsDict,
 )
 
 log = logging.getLogger()
 
 
-class UserEnrollment(Base, ClusterConfig):
+class UserEnrollment(ClusterConfig):
     """A class that represents a user enrollment document.
 
     It serves as a connections between the project and the user. When a user enrolls to a
@@ -60,16 +61,8 @@ class UserEnrollment(Base, ClusterConfig):
     forwarded_port: int
     progress: dict = Field(default_factory=dict)
 
-    def validate_dict(self) -> dict[str, Any]:
-        model = super().validate_dict()
-        model["user_id"] = {
-            "$id": str(model["user_id"]["$id"]),
-            "$ref": model["user_id"]["$ref"],
-        }
-        return model
 
-
-class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
+class UserEnrollmentManager(ClusterConfigManager[UserEnrollment]):
     """A manager class that handles operations with `UserEnrollment` objects."""
 
     def __init__(
@@ -166,7 +159,7 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         return user_enrollment is not None
 
     def get_user_enrollment(
-        self, user: _user.User, project: "_project.Project"
+        self, user: "_user.User", project: "_project.Project"
     ) -> UserEnrollment:
         """Get a user enrollment document.
 
@@ -188,19 +181,16 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             )
         return user_enrollment
 
-    def get_min_available_sshport(self, project: "_project.Project") -> int:
-        user_enrollments = (
-            self._coll.find(
-                filter={"project_id.$id": project.id},
-                projection={"_id": 0, "container_port": 1},
-            )
-            .sort({"container_port": -1})
-            .limit(1)
-        )
-        res = [uc["container_port"] for uc in user_enrollments]
-        if res:
-            return res[0] + 1
-        return project.starting_port_bind
+    def get_used_ports(self, project: "_project.Project") -> list[int]:
+        user_enrollments = self._coll.find(
+            filter={"project_id.$id": project.id},
+            projection={"_id": 0, "container_port": 1},
+        ).sort({"container_port": 1})
+        return [uc["container_port"] for uc in user_enrollments]
+
+    def get_all_forwarded_ports(self, project: "_project.Project | None") -> list[int]:
+        pipeline = MongoQueries.user_enrollment_get_forwarded_ports(project)
+        return [i["forwarded_ports"] for i in self.collection.aggregate(pipeline)][0]
 
     def get_doc_by_id(self, _id: ObjectId) -> UserEnrollment | None:
         res = self._coll.find_one({"_id": _id})
@@ -282,7 +272,8 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
 
     def filter_users_not_in_project(
         self, project_or_name: "str | _project.Project", lof_usernames: list[str]
-    ):
+    ) -> list[str]:
+        """Return list of new usernames."""
         prj = self._get_project(project_or_name)
         users = self.get_user_enrollments_for_project(prj)
         return list(
@@ -370,24 +361,35 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
                 f"Project `{project.name}` has already reached the maximum number of users."
             )
 
+        # checking container ports
+        used_container_ports = self.get_used_ports(project)
         if container_port < 0:
-            container_port = self.get_min_available_sshport(project)
+            container_port = get_missing_in_sequence(
+                used_container_ports, project.starting_port_bind
+            )
+        elif container_port in used_container_ports:
+            raise ContainerPortUsageCollisionException(
+                "Selected port is already in used."
+            )
+        elif (
+            container_port < project.starting_port_bind
+            or container_port > project.max_port
+        ):
+            raise SSHPortOutOfRangeException(
+                "The container port must be in range "
+                f"{project.starting_port_bind} and {project.max_port}."
+            )
 
+        # checking forwarded ports
         if forwarded_port < 0:
             forwarded_port = container_port
-
-        collision_test = [
-            i
-            for i in self._coll.aggregate(
-                MongoQueries.user_enrollment_port_collision(
-                    forwarded_port, container_port
-                )
+        elif forwarded_port in self.get_all_forwarded_ports(None):
+            raise ForwardedPortUsageCollisionException(
+                "The forwarded port is already in used."
             )
-        ]
-        if collision_test:
-            raise PortUsageCollisionException(
-                f"Either forwarded port `{forwarded_port}` or system port `{container_port}`"
-                "is already in use by another user in the project."
+        elif forwarded_port < 1 or forwarded_port > 65_535:
+            raise SSHPortOutOfRangeException(
+                "Forwarded port must be in range 1 to 65 535."
             )
 
         user_enrollment = self.create_and_insert_doc(
@@ -396,7 +398,7 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             container_port=container_port,
             forwarded_port=forwarded_port,
             services={
-                "base": self.create_base_user_service(user, project, container_port)
+                "login": self.create_base_user_service(user, project, container_port)
             },
         )
         return user_enrollment
@@ -427,25 +429,25 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
                 f"Project `{project.name}` has already reached the maximum number of users."
             )
 
-        min_sshport = self.get_min_available_sshport(project)
-        if min_sshport + len(new_users) - 1 > 65_535:
-            raise SSHPortOutOfRangeException(
-                "Not enough available ports."
-            )  # pragma: no cover
+        # get all the ports that can be used
+        ports = self.get_used_ports(project)
+        all_ports = [
+            project.starting_port_bind + i for i in range(project.max_nof_users)
+        ]
+        available_ports = sorted(list(set(all_ports).difference(set(ports))))
 
         users = self._user_mgr.get_docs(username={"$in": new_users}, active=True)
         user_enrollments = []
-        # TODO: collision_test
         for i, user in enumerate(users):
             user_enrollments.append(
                 UserEnrollment(
                     user_id=DBRef("user", user.id),
                     project_id=DBRef("project", project.id),
-                    container_port=min_sshport + i,
-                    forwarded_port=min_sshport + i,
+                    container_port=available_ports[i],
+                    forwarded_port=available_ports[i],
                     services={
-                        "base": self.create_base_user_service(
-                            user, project, min_sshport + i
+                        "login": self.create_base_user_service(
+                            user, project, available_ports[i]
                         )
                     },
                 )
@@ -538,7 +540,7 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
 
     def get_enrolled_projects_raw(
         self, user_or_username: "str | _user.User", include_inactive: bool = False
-    ) -> list[RawEnrolledProjects]:
+    ) -> list[RawEnrolledProjectsDict]:
         """Return list of projects that a user has enrolled to.
 
         The output of the function is in raw format
@@ -549,7 +551,7 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         :type include_inactive: bool
         :raises UserNotExistsException: Given user could not be found in the database.
         :return: A list of enrolled projects for the given user.
-        :rtype: list[dict]
+        :rtype: list[RawEnrolledProjectsDict]
         """
         user = self._get_user(user_or_username)
         pipeline = MongoQueries.user_enrollment_get_enrolled_projects_raw(
@@ -568,7 +570,7 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
 
     def get_modules_count(
         self, project_or_name: "str | _project.Project | None"
-    ) -> list[ModuleCount]:
+    ) -> list[ModuleCountDict]:
         _filter: dict = {"active": True}
         if project_or_name:
             project = self._get_project(project_or_name)
@@ -610,6 +612,9 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
     def disable_multiple_enrollments(
         self, user_project_pairs: list[tuple[_user.User, "_project.Project"]]
     ):
+        if not user_project_pairs:
+            return
+
         ue_ids = []
         for user, project in user_project_pairs:
             ue = self.get_doc_by_filter(
@@ -634,7 +639,11 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         user_or_username: "str | _user.User",
         project_or_name: "str | _project.Project",
     ):
-        user, project = self._get_user_and_project(user_or_username, project_or_name)
+        try:
+            user = self._user_mgr.get_user(user_or_username, None)
+            project = self._prj_mgr.get_project(project_or_name, None)
+        except (UserNotExistsException, ProjectNotExistException):
+            return
 
         user_enrollment = self.get_doc_by_filter(
             **{
@@ -664,10 +673,12 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
     def flush_multiple_enrollments(
         self, user_project_pairs: list[tuple["_user.User", "_project.Project"]]
     ):
+        if not user_project_pairs:
+            return
         pipeline = MongoQueries.user_enrollment_aggregate_pairs_user_project(
             user_project_pairs
         )
-        query_res = self.collection.aggregate(pipeline)
+        query_res = [i for i in self.collection.aggregate(pipeline)]
         for data in query_res:
             user = _user.User(**data["user"])
             project = _project.Project(**data["project"])
@@ -713,12 +724,10 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         :type project_or_name: str | _project.Project
         :raises ProjectNotExistException: Project data was not found in the database.
         """
-        project = self._get_project(project_or_name)
+        project = self._prj_mgr.get_project(project_or_name, None)
         pairs_user_project = [
             (user, project)
-            for user in self._user_mgr.get_docs(
-                username={"$in": lof_usernames}, active=True
-            )
+            for user in self._user_mgr.get_docs(username={"$in": lof_usernames})
         ]
         self.disable_multiple_enrollments(pairs_user_project)
         self.flush_multiple_enrollments(pairs_user_project)
@@ -730,7 +739,7 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         :type project_or_name: str | _project.Project
         :raises ProjectNotExistException: Project data was not found in the database.
         """
-        project = self._get_project(project_or_name)
+        project = self._prj_mgr.get_project(project_or_name, None)
         pairs_user_project = [
             (user, project) for user in self.get_user_enrollments_for_project(project)
         ]
@@ -752,86 +761,10 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         self.disable_multiple_enrollments(pairs_user_project)
         self.flush_multiple_enrollments(pairs_user_project)
 
-    def clear_database(self):
+    def delete_all(self):
         """Remove all canceled user enrollments."""
-        self.remove_docs_by_filter(active=False)
-
-    # MANAGE SERVICES
-
-    def register_service(
-        self,
-        user_or_username: "str | _user.User",
-        project_or_name: "str | _project.Project",
-        service_name: str,
-        node_service: Service,
-    ):
-        user, project = self._get_user_and_project(user_or_username, project_or_name)
-        try:
-            ue = self.get_user_enrollment(user, project)
-        except UserNotEnrolledToProjectException as e:
-            raise UserNotEnrolledToProjectException(e)
-
-        ue.register_node_service(service_name, node_service)
-        self.update_doc(ue)
-
-    def get_service(
-        self,
-        user_or_username: "str | _user.User",
-        project_or_name: "str | _project.Project",
-        service_name: str,
-    ) -> Service:
-        user, project = self._get_user_and_project(user_or_username, project_or_name)
-        try:
-            ue = self.get_user_enrollment(user, project)
-        except UserNotEnrolledToProjectException as e:
-            raise UserNotEnrolledToProjectException(e)
-
-        return ue.get_node_service(service_name)
-
-    def update_service(
-        self,
-        user_or_username: "str | _user.User",
-        project_or_name: "str | _project.Project",
-        service_name: str,
-        node_service: Service,
-    ):
-        user, project = self._get_user_and_project(user_or_username, project_or_name)
-        try:
-            ue = self.get_user_enrollment(user, project)
-        except UserNotEnrolledToProjectException as e:
-            raise UserNotEnrolledToProjectException(e)
-
-        ue.update_node_service(service_name, node_service)
-        self.update_doc(ue)
-
-    def list_services(
-        self,
-        user_or_username: "str | _user.User",
-        project_or_name: "str | _project.Project",
-    ) -> dict[str, Service]:
-        user, project = self._get_user_and_project(user_or_username, project_or_name)
-        try:
-            ue = self.get_user_enrollment(user, project)
-        except UserNotEnrolledToProjectException as e:
-            raise UserNotEnrolledToProjectException(e)
-
-        return ue.list_nodes_services()
-
-    def remove_service(
-        self,
-        user_or_username: "str | _user.User",
-        project_or_name: "str | _project.Project",
-        service_name: str,
-    ) -> Service | None:
-        user, project = self._get_user_and_project(user_or_username, project_or_name)
-        try:
-            ue = self.get_user_enrollment(user, project)
-        except UserNotEnrolledToProjectException as e:
-            raise UserNotEnrolledToProjectException(e)
-
-        service = ue.remove_node_service(service_name)
-        self.update_doc(ue)
-        return service
+        for prj in self._prj_mgr.get_docs():
+            self.cancel_all_project_enrollments(prj)
 
     # MANAGE CLUSTER
 
@@ -877,7 +810,6 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
         :type project_or_name: str | _project.Project
         :raises UserNotExistsException: User with the given username was not found.
         :raises ProjectNotExistException: Project data was not found in the database.
-        :raises ComposeFileNotExist: Compose file for the given user not found.
         :raises UserNotEnrolledToProjectException: Given user is not enrolled to the
             project.
         :return: An exit code.
@@ -1006,19 +938,25 @@ class UserEnrollmentManager(BaseManagerInterface[UserEnrollment]):
             self.c_client.compose_down(get_or_create_logger(project.name), cfile)
 
     def stop_all_user_clusters(self, project: "_project.Project"):
-        """Stop all user clusters.
+        """Stop all user clusters in the project.
 
         :param project: A project object.
         :type project: _project.Project
         """
         lof_users = self.get_user_enrollments_for_project(project)
 
-        compose_files = []
-        for user in lof_users:
-            try:
-                compose_files.append(self.get_compose_file(user, project))
-            except UserNotEnrolledToProjectException:
-                pass
-
+        compose_files = [self.get_compose_file(user, project) for user in lof_users]
         for cfile in compose_files:
             self.c_client.compose_down(get_or_create_logger(project.name), cfile)
+
+    def stop_all_clusters_of_a_user(self, user: "_user.User"):
+        """Stop all running clusters of a user.
+
+        :param project: A project object.
+        :type project: _project.Project
+        """
+        lof_projects = self.get_enrolled_projects(user)
+
+        compose_files = [self.get_compose_file(user, prj) for prj in lof_projects]
+        for cfile in compose_files:
+            self.c_client.compose_down(get_or_create_logger(__name__), cfile)

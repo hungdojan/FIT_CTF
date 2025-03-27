@@ -7,7 +7,7 @@ from subprocess import call
 
 from termcolor import colored
 
-from fit_ctf_utils.config_loader import YamlParser
+from fit_ctf_utils.data_parser import YamlParser
 from fit_ctf_utils.container_client.container_client_interface import (
     ContainerClientInterface,
 )
@@ -129,6 +129,22 @@ def color_state(state: str) -> str:
     else:
         out = colored(state, "red")
     return out
+
+
+def get_missing_in_sequence(arr: list[int], start_val: int) -> int:
+    if not arr:
+        return start_val
+    index = 0
+    step = len(arr) // 2
+    while step > 0:
+        while index + step < len(arr) and arr[index + step] == start_val + index + step:
+            index += step
+        step //= 2
+
+    value = arr[index]
+    if index == 0 and arr[index] != start_val:
+        return start_val
+    return value + 1
 
 
 # global logger writes to STDOUT

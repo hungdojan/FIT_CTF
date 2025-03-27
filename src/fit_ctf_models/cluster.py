@@ -1,5 +1,8 @@
+from typing import Generic, TypeVar
+
 from pydantic import BaseModel, Field
 
+from fit_ctf_models.base import Base, BaseManagerInterface
 from fit_ctf_utils.exceptions import ServiceExistException, ServiceNotExistException
 
 
@@ -14,7 +17,7 @@ class Service(BaseModel):
     other: dict = Field(default_factory=dict)
 
 
-class ClusterConfig(BaseModel):
+class ClusterConfig(Base):
     services: dict[str, Service] = Field(default_factory=dict)
     networks: dict[str, dict] = Field(default_factory=dict)
 
@@ -82,3 +85,28 @@ class ClusterConfig(BaseModel):
         :rtype: dict[str, Service]
         """
         return self.services
+
+
+T = TypeVar("T", bound=ClusterConfig)
+
+
+class ClusterConfigManager(BaseManagerInterface[T], Generic[T]):
+
+    def register_service(self, doc: T, service_name: str, node_instance: Service):
+        doc.register_node_service(service_name, node_instance)
+        self.update_doc(doc)
+
+    def get_service(self, doc: T, service_name: str) -> Service:
+        return doc.get_node_service(service_name)
+
+    def update_service(self, doc: T, service_name: str, node_service: Service):
+        doc.update_node_service(service_name, node_service)
+        self.update_doc(doc)
+
+    def list_services(self, doc: T) -> dict[str, Service]:
+        return doc.list_nodes_services()
+
+    def remove_service(self, doc: T, service_name: str) -> Service | None:
+        service = doc.remove_node_service(service_name)
+        self.update_doc(doc)
+        return service

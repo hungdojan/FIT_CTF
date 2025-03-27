@@ -1,8 +1,8 @@
 import click
-from tabulate import tabulate
 
-from fit_ctf_backend.cli.utils import module_name_option
+from fit_ctf_backend.cli.utils import format_option, module_name_option
 from fit_ctf_backend.ctf_manager import CTFManager
+from fit_ctf_utils.data_view import get_view
 from fit_ctf_utils.exceptions import (
     ModuleExistsException,
     ModuleInUseException,
@@ -23,7 +23,7 @@ def module(ctx: click.Context):
 def create(ctx: click.Context, module_name: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     try:
-        ctf_mgr.module_manager.create_module(module_name)
+        ctf_mgr.module_mgr.create_module(module_name)
     except ModuleExistsException as e:
         click.echo(e)
         exit(1)
@@ -32,14 +32,15 @@ def create(ctx: click.Context, module_name: str):
 
 
 @module.command(name="ls")
+@format_option
 @click.pass_context
-def lists(ctx: click.Context):
+def lists(ctx: click.Context, format: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    modules = ctf_mgr.module_manager.list_modules()
+    modules = ctf_mgr.module_mgr.list_modules()
     header = ["Name", "Path"]
     values = [[name, str(path.resolve())] for name, path in modules.items()]
 
-    click.echo(tabulate(values, header))
+    get_view(format).print_data(header, values)
 
 
 @module.command(name="get-path")
@@ -48,7 +49,7 @@ def lists(ctx: click.Context):
 def get(ctx: click.Context, module_name: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     try:
-        path = ctf_mgr.module_manager.get_path(module_name)
+        path = ctf_mgr.module_mgr.get_path(module_name)
         click.echo(str(path.resolve()))
     except ModuleNotExistsException as e:
         click.echo(e)
@@ -62,17 +63,18 @@ def get(ctx: click.Context, module_name: str):
     type=str,
     help="Project's name. If not set, the tool will do the referencing on all data.",
 )
+@format_option
 @click.pass_context
-def referenced(ctx: click.Context, project_name: str | None):
+def referenced(ctx: click.Context, project_name: str | None, format: str):
 
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     if project_name is None:
         raise NotImplementedError()
-    module_count = ctf_mgr.module_manager.reference_count(project_name)
+    module_count = ctf_mgr.module_mgr.reference_count(project_name)
 
     header = ["Module name", "Count"]
     values = [[name, count] for name, count in module_count.items()]
-    click.echo(tabulate(values, header))
+    get_view(format).print_data(header, values)
 
 
 @module.command(name="rm")
@@ -81,8 +83,8 @@ def referenced(ctx: click.Context, project_name: str | None):
 def remove(ctx: click.Context, module_name: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     try:
-        ctf_mgr.module_manager.get_path(module_name)
-        ctf_mgr.module_manager.remove_module(module_name)
+        ctf_mgr.module_mgr.get_path(module_name)
+        ctf_mgr.module_mgr.remove_module(module_name)
     except (ModuleNotExistsException, ModuleInUseException) as e:
         click.echo(e)
         exit(1)

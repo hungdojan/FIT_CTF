@@ -1,7 +1,7 @@
 import click
-from tabulate import tabulate
 
 from fit_ctf_backend.cli.utils import (
+    format_option,
     module_name_option,
     project_option,
     service_name_option,
@@ -10,7 +10,8 @@ from fit_ctf_backend.cli.utils import (
 from fit_ctf_backend.ctf_manager import CTFManager
 from fit_ctf_models.cluster import Service
 from fit_ctf_utils import color_state, document_editor
-from fit_ctf_utils.config_loader.yaml_parser import YamlParser
+from fit_ctf_utils.data_parser.yaml_parser import YamlParser
+from fit_ctf_utils.data_view import get_view
 from fit_ctf_utils.exceptions import (
     ConfigurationFileNotEditedException,
     CTFException,
@@ -61,8 +62,9 @@ def stop_cluster(ctx: click.Context):
 
 
 @user_cluster.command(name="health-check")
+@format_option
 @click.pass_context
-def health_check(ctx: click.Context):
+def health_check(ctx: click.Context, format: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     user = ctx.parent.obj["user"]  # pyright: ignore
     project = ctx.parent.obj["project"]  # pyright: ignore
@@ -70,7 +72,7 @@ def health_check(ctx: click.Context):
 
     header = ["Name", "Image", "State"]
     values = [[i["name"], i["image"], color_state(i["state"])] for i in cluster_data]
-    click.echo(tabulate(values, header))
+    get_view(format).print_data(header, values)
 
 
 @user_cluster.command(name="restart")
@@ -122,6 +124,14 @@ def build_images(ctx: click.Context):
 def services(ctx: click.Context):
     """Manages services of the particular enrollment service."""
     ctx.obj = ctx.parent.obj  # pyright: ignore
+    ctf_mgr: CTFManager = ctx.obj["ctf_mgr"]
+    try:
+        ctx.obj["user_enroll"] = ctf_mgr.user_enrollment_mgr.get_user_enrollment(
+            ctx.obj["user"], ctx.obj["project"]
+        )
+    except UserNotEnrolledToProjectException as e:
+        click.echo(e)
+        exit(1)
 
 
 @services.command(name="register")
@@ -141,12 +151,14 @@ def register_service(
 ):
     """Register a new instance to the user enrollment."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
+    user_enroll = ctx.parent.obj["user_enroll"]  # pyright: ignore
     user = ctx.parent.obj["user"]  # pyright: ignore
     project = ctx.parent.obj["project"]  # pyright: ignore
     try:
-        service = ctf_mgr.user_enrollment_mgr.get_service(user, project, service_name)
+        service = ctf_mgr.user_enrollment_mgr.get_service(user_enroll, service_name)
         if service:
             click.echo(f"Service {service.service_name} already exists.")
+            exit(0)
     except ServiceNotExistException:
         pass
 
@@ -159,7 +171,7 @@ def register_service(
             "service_editor",
         )
         ctf_mgr.user_enrollment_mgr.register_service(
-            user, project, service_name, Service(**doc)
+            user_enroll, service_name, Service(**doc)
         )
     except ConfigurationFileNotEditedException:
         click.echo("Aborting action.")
@@ -170,10 +182,9 @@ def register_service(
 def list_services(ctx: click.Context):
     """Display a list of services of the user enrollment."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    user = ctx.parent.obj["user"]  # pyright: ignore
-    project = ctx.parent.obj["project"]  # pyright: ignore
+    user_enroll = ctx.parent.obj["user_enroll"]  # pyright: ignore
     try:
-        services = ctf_mgr.user_enrollment_mgr.list_services(user, project)
+        services = ctf_mgr.user_enrollment_mgr.list_services(user_enroll)
     except UserNotEnrolledToProjectException as e:
         click.echo(e)
         exit(1)
@@ -188,10 +199,9 @@ def list_services(ctx: click.Context):
 def update_service(ctx: click.Context, service_name: str):
     """Update a particular service"""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    user = ctx.parent.obj["user"]  # pyright: ignore
-    project = ctx.parent.obj["project"]  # pyright: ignore
+    user_enroll = ctx.parent.obj["user_enroll"]  # pyright: ignore
     try:
-        service = ctf_mgr.user_enrollment_mgr.get_service(user, project, service_name)
+        service = ctf_mgr.user_enrollment_mgr.get_service(user_enroll, service_name)
     except ServiceNotExistException as e:
         click.echo(e)
         exit(1)
@@ -199,7 +209,7 @@ def update_service(ctx: click.Context, service_name: str):
     try:
         doc = document_editor(service.model_dump(), {"service_name"}, "service_editor")
         ctf_mgr.user_enrollment_mgr.update_service(
-            user, project, service_name, Service(**doc)
+            user_enroll, service_name, Service(**doc)
         )
     except ConfigurationFileNotEditedException:
         click.echo("Aborting action.")
@@ -211,10 +221,9 @@ def update_service(ctx: click.Context, service_name: str):
 def remove_service(ctx: click.Context, service_name: str):
     """Remove the attached module from the user."""
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    user = ctx.parent.obj["user"]  # pyright: ignore
-    project = ctx.parent.obj["project"]  # pyright: ignore
+    user_enroll = ctx.parent.obj["user_enroll"]  # pyright: ignore
 
-    service = ctf_mgr.user_enrollment_mgr.remove_service(user, project, service_name)
+    service = ctf_mgr.user_enrollment_mgr.remove_service(user_enroll, service_name)
     if not service:
         click.echo("Nothing to remove.")
     else:

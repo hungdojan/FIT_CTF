@@ -46,7 +46,7 @@ class ModuleManager:
         out = {}
         for path in self._paths["modules"].iterdir():
             if path.is_dir():
-                out[path.name] = str(path.resolve())
+                out[path.name] = path.resolve()
         return out
 
     def get_path(self, module_name: str) -> pathlib.Path:
@@ -64,7 +64,7 @@ class ModuleManager:
             item["_id"]: item["count"]
             for item in self._ue_mgr.get_modules_count(project_name)
         }
-        for mc in self._prj_mgr.get_modules_count(None):
+        for mc in self._prj_mgr.get_modules_count(project_name):
             module_count.setdefault(mc["_id"], 0)
             module_count[mc["_id"]] += mc["count"]
         return module_count

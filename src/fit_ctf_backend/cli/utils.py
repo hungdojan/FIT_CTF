@@ -18,6 +18,14 @@ module_name_option = click.option(
     "-mn", "--module-name", required=True, type=str, help="Module's name."
 )
 
+format_option = click.option(
+    "-f",
+    "--format",
+    type=click.Choice(["csv", "tabulate"]),
+    default="tabulate",
+    help="The output format.",
+)
+
 
 def yaml_suffix_validation(
     ctx: click.Context, param: click.Parameter, value: pathlib.Path

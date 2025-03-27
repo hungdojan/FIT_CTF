@@ -1,17 +1,16 @@
-import os
 import pathlib
-import sys
 
 import click
 import pymongo.errors
 
 from fit_ctf_backend.cli.debug import debug
 from fit_ctf_backend.ctf_manager import CTFManager
-from fit_ctf_utils.constants import MODULE_SHARE_PATH, PRJ_SHARE_PATH, USER_SHARE_PATH
+from fit_ctf_utils.constants import get_db_info, get_paths
 from fit_ctf_utils.types import PathDict
 
 from . import (
     completion,
+    data_mgmt,
     enrollment,
     module,
     project,
@@ -19,20 +18,7 @@ from . import (
     system,
     user,
     user_cluster,
-    data_mgmt,
 )
-
-
-def _get_db_info() -> tuple[str, str]:
-    # TODO: move config to SHARE DIR location
-    db_host = os.getenv("DB_HOST")
-    if not db_host:
-        sys.exit("Environment variable `DB_HOST` is not set.")
-
-    db_name = os.getenv("DB_NAME")
-    if not db_name:
-        sys.exit("Environment variable `DB_NAME` is not set.")
-    return db_host, db_name
 
 
 @click.group("cli")
@@ -62,21 +48,28 @@ def cli(
     module_dir: pathlib.Path | None,
 ):
     """A tool for CTF competition management."""
+
     paths = PathDict(
         **{
-            "projects": project_dir if project_dir is not None else PRJ_SHARE_PATH,
-            "users": user_dir if user_dir is not None else USER_SHARE_PATH,
-            "modules": module_dir if module_dir is not None else MODULE_SHARE_PATH,
+            key: value
+            for key, value in zip(["projects", "users", "modules"], get_paths())
         }
     )
+    if project_dir:  # pragma: no cover
+        paths["projects"] = project_dir
+    if user_dir:  # pragma: no cover
+        paths["users"] = user_dir
+    if module_dir:  # pragma: no cover
+        paths["modules"] = module_dir
+
     # system commands are offline commands that do not require database to be running
     # some commands like `start a database`, or `uninstall`
     # will be located in system group
-    if ctx.invoked_subcommand == "system":
+    if ctx.invoked_subcommand == "system":  # pragma: no cover
         ctx.obj["paths"] = paths
         return
 
-    db_host, db_name = _get_db_info()
+    db_host, db_name = get_db_info()
     try:
         ctf_mgr = CTFManager(db_host, db_name, paths)
 
@@ -85,7 +78,7 @@ def cli(
             "db_name": db_name,
             "ctf_mgr": ctf_mgr,
         }
-    except pymongo.errors.ServerSelectionTimeoutError:
+    except pymongo.errors.ServerSelectionTimeoutError:  # pragma: no cover
         click.echo(
             "Could not connect to the database. Make sure that the mongo database is running.\n"
             "Use the given script `./manage_db.sh` to manage the database.\n"

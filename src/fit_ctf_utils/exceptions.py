@@ -76,8 +76,14 @@ class MaxUserCountReachedException(CTFException):
     pass
 
 
-class PortUsageCollisionException(CTFException):
-    """A selected port is already in use."""
+class ContainerPortUsageCollisionException(CTFException):
+    """A selected container port is already in use."""
+
+    pass
+
+
+class ForwardedPortUsageCollisionException(CTFException):
+    """A selected forwarded port is already in use."""
 
     pass
 
@@ -90,12 +96,6 @@ class ModuleExistsException(CTFException):
 
 class ModuleNotExistsException(CTFException):
     """A module with the given name does not exist."""
-
-    pass
-
-
-class ComposeFileNotExist(CTFException):
-    """A selected compose file does not exist."""
 
     pass
 

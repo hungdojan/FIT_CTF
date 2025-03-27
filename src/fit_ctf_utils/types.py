@@ -16,14 +16,14 @@ class PathDict(TypedDict):
     modules: pathlib.Path
 
 
-class ProjectPortListing(TypedDict):
+class ProjectPortListingDict(TypedDict):
     id: str
     name: str
     min_port: int
     max_port: int
 
 
-class RawEnrolledProjects(TypedDict):
+class RawEnrolledProjectsDict(TypedDict):
     name: str
     active: bool
     max_nof_users: int
@@ -36,7 +36,7 @@ class HealthCheckDict(TypedDict):
     state: str
 
 
-class ModuleCount(TypedDict):
+class ModuleCountDict(TypedDict):
     _id: str
     count: int
 
@@ -53,3 +53,23 @@ class SetupDict(TypedDict):
     users: list
     enrollments: list
     options: dict
+
+
+class RawProjectDict(TypedDict):
+    name: str
+    max_nof_users: int
+    active_users: int
+    active: bool
+
+
+class UserInfoDict(TypedDict):
+    username: str
+    email: str
+    role: str
+    active: bool
+    projects: list[str]
+
+
+class NewUserDict(TypedDict):
+    username: str
+    password: str

@@ -1,15 +1,16 @@
 import click
-from tabulate import tabulate
 
 from fit_ctf_backend.cli.utils import (
     module_name_option,
     project_option,
     service_name_option,
+    format_option,
 )
 from fit_ctf_backend.ctf_manager import CTFManager
 from fit_ctf_models.cluster import Service
 from fit_ctf_utils import color_state, document_editor
-from fit_ctf_utils.config_loader.yaml_parser import YamlParser
+from fit_ctf_utils.data_parser.yaml_parser import YamlParser
+from fit_ctf_utils.data_view import get_view
 from fit_ctf_utils.exceptions import (
     ConfigurationFileNotEditedException,
     CTFException,
@@ -52,15 +53,16 @@ def stop_cluster(ctx: click.Context):
 
 
 @project_cluster.command(name="health-check")
+@format_option
 @click.pass_context
-def health_check(ctx: click.Context):
+def health_check(ctx: click.Context, format: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     project = ctx.parent.obj["project"]  # pyright: ignore
     cluster_data = ctf_mgr.prj_mgr.health_check(project)
 
     header = ["Name", "Image", "State"]
     values = [[i["name"], i["image"], color_state(i["state"])] for i in cluster_data]
-    click.echo(tabulate(values, header))
+    get_view(format).print_data(header, values)
 
 
 @project_cluster.command(name="resources")

@@ -20,17 +20,16 @@ from fit_ctf_models.module_manager import ModuleManager
 from fit_ctf_utils import get_c_client_by_name
 from fit_ctf_utils import log_print as log
 from fit_ctf_utils.auth.auth_interface import AuthInterface
-from fit_ctf_utils.config_loader.yaml_parser import YamlParser
 from fit_ctf_utils.constants import DEFAULT_PASSWORD_LENGTH
+from fit_ctf_utils.data_parser.yaml_parser import YamlParser
 from fit_ctf_utils.exceptions import (
     CTFException,
     ImportFileCorruptedException,
     ProjectExistsException,
-    ProjectNotExistException,
     UserExistsException,
 )
 from fit_ctf_utils.mongo_queries import MongoQueries
-from fit_ctf_utils.types import DatabaseDumpDict, PathDict, SetupDict
+from fit_ctf_utils.types import DatabaseDumpDict, NewUserDict, PathDict, SetupDict
 
 
 class CTFManager:
@@ -89,7 +88,7 @@ class CTFManager:
         return self._managers["user_enrollment"]
 
     @property
-    def module_manager(self) -> ModuleManager:
+    def module_mgr(self) -> ModuleManager:
         """Returns a user enrollment manager.
 
         :return: A user enrollment manager initialized in CTFManager.
@@ -152,42 +151,9 @@ class CTFManager:
             self.user_enrollment_mgr.collection.aggregate(pipeline)
         )
 
-        module_count = self.module_manager.reference_count(project.name)
+        module_count = self.module_mgr.reference_count(project.name)
         data["modules"] = [k for k, v in module_count.items() if v > 0]
         return data
-
-    def _add_project_files_to_zipfile(
-        self, zf: zipfile.ZipFile, project: "project.Project"
-    ):
-        project_root_dir = (self._paths["projects"] / project.name).resolve()
-
-        # this code snippet originates from: https://stackoverflow.com/a/46604244
-        for dirpath, dirs, filenames in os.walk(project_root_dir):
-            # ignore the content of log dir
-            if "logs" in dirs:
-                dirs.remove("logs")
-
-            for filename in filenames:
-
-                # Write the file named filename to the archive,
-                # giving it the archive name 'arcname'.
-                # filepath = os.path.join(dirpath, filename)
-                filepath = Path(dirpath) / filename
-                parentpath = os.path.relpath(filepath, project_root_dir)
-                arcname = os.path.join(
-                    self._paths["projects"].name,
-                    os.path.basename(project_root_dir),
-                    parentpath,
-                )
-
-                zf.write(filepath, arcname)
-        # add an empty logs directory to the archive
-        zf.writestr(
-            zipfile.ZipInfo(
-                os.path.join(self._paths["projects"].name, project.name, "logs/")
-            ),
-            "",
-        )
 
     def _add_user_files_to_zipfile(self, zf: zipfile.ZipFile, data: dict):
         for username in [u["username"] for u in data["users"]]:
@@ -241,8 +207,6 @@ class CTFManager:
         :raises ProjectNotExistException: Project was not found.
         """
         project = self.prj_mgr.get_project(project_name)
-        if not project:
-            raise ProjectNotExistException(f"Project `{project_name}` does not exist.")
         data = self._load_all_data_to_dict(project)
 
         with zipfile.ZipFile(output_zip_name, "w", zipfile.ZIP_DEFLATED) as zf:
@@ -256,7 +220,7 @@ class CTFManager:
         project = data["project"]
         if self.prj_mgr.get_doc_by_filter(name=project["name"]):
             raise ProjectExistsException(f"Project `{project['name']}` already exists.")
-        modules = list(self.module_manager.list_modules().keys())
+        modules = list(self.module_mgr.list_modules().keys())
         for module_name in data["modules"]:
             if module_name in modules:
                 log.warning(f"Module `{module_name}` is already present on the host.")
@@ -290,11 +254,11 @@ class CTFManager:
         for enrollment in data["enrollments"]:
             user = enrollment["user"]
             project = enrollment["project"]
-            self.user_enrollment_mgr.enroll_user_to_project(user, project)
-            self.user_enrollment_mgr.remove_service(user, project, "base")
+            user_enroll = self.user_enrollment_mgr.enroll_user_to_project(user, project)
+            self.user_enrollment_mgr.remove_service(user_enroll, "login")
             for name, service in enrollment["services"].items():
                 self.user_enrollment_mgr.register_service(
-                    user, project, name, Service(**service)
+                    user_enroll, name, Service(**service)
                 )
 
     def import_project(self, input_file: Path):
@@ -333,6 +297,7 @@ class CTFManager:
                         copytree(item, self._paths["modules"] / item.name)
 
     def _dry_run_setup(self, data: SetupDict):
+        out = {}
         if data.get("projects"):
             project_names = [prj["name"] for prj in data["projects"]]
             found_names = [
@@ -343,8 +308,8 @@ class CTFManager:
             ]
             new_names = set(project_names).difference(set(found_names))
             if new_names:
-                log.info(f"Project that would be added:\n\t{'\t\n'.join(new_names)}")
-                log.info("\n")
+                out["new_projects"] = list(new_names)
+
         if data.get("users"):
             user_names = [user["username"] for user in data["users"]]
             found_names = [
@@ -355,10 +320,11 @@ class CTFManager:
             ]
             new_names = set(user_names).difference(set(found_names))
             if new_names:
-                log.info(f"Users that would be added:\n\t{'\t\n'.join(new_names)}")
-                log.info("\n")
+                out["new_users"] = list(new_names)
+        if out:
+            log.info(YamlParser.dump_data(out))
 
-    def _run_setup(self, data: SetupDict, exist_ok: bool) -> list[dict]:
+    def _run_setup(self, data: SetupDict, exist_ok: bool) -> list[NewUserDict]:
         new_users = []
         if data.get("projects"):
             for prj in data["projects"]:
@@ -402,8 +368,8 @@ class CTFManager:
         return new_users
 
     def setup_env_from_file(
-        self, file: Path, exist_ok: bool, dry_run: bool
-    ) -> list[dict]:
+        self, file: Path, exist_ok: bool = False, dry_run: bool = False
+    ) -> list[NewUserDict]:
         data: SetupDict = cast(SetupDict, YamlParser.load_data_file(file, "setup"))
         if dry_run:
             self._dry_run_setup(data)

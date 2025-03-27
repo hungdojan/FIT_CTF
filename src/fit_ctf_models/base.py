@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
 from bson import ObjectId
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pymongo.collection import Collection
 from pymongo.database import Database
 
@@ -29,20 +29,13 @@ class Base(ABC, BaseModel):
     :type active: dict[str, str]
     """
 
-    class Config:
-        arbitrary_types_allowed = True
-        use_enum_values = True
+    model_config = ConfigDict(arbitrary_types_allowed=True, use_enum_values=True)
 
     id: ObjectId = Field(default_factory=ObjectId, alias="_id")
     active: bool = True
 
     def model_dump(self, by_alias: bool = True, **kw) -> dict[str, Any]:
         return super().model_dump(by_alias=by_alias, **kw)
-
-    def validate_dict(self) -> dict[str, Any]:
-        model = self.model_dump()
-        model["_id"] = str(model["_id"])
-        return model
 
 
 T = TypeVar("T", bound=Base)

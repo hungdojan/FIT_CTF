@@ -54,7 +54,6 @@ class MongoQueries:
                     "foreignField": "_id",
                     "as": "users",
                     "pipeline": [
-                        {"$match": {"active": True}},
                         {"$project": {"password": 0, "_id": 0}},
                     ],
                 }
@@ -140,7 +139,6 @@ class MongoQueries:
                     "localField": "project_id.$id",
                     "foreignField": "_id",
                     "as": "project",
-                    "pipeline": [{"$match": {"active": True}}],
                 }
             },
             {
@@ -166,7 +164,6 @@ class MongoQueries:
                     "localField": "_id",
                     "foreignField": "project_id.$id",
                     "as": "user_enrollments",
-                    "pipeline": [{"$match": {"active": True}}],
                 }
             },
             {
@@ -209,10 +206,10 @@ class MongoQueries:
         ]
 
     @staticmethod
-    def user_get_users(include_inactive: bool):
+    def user_get_users(active: bool | None):
         _filter = {}
-        if not include_inactive:
-            _filter["active"] = True
+        if active is not None:
+            _filter["active"] = active
 
         return [
             # get active/all users
@@ -226,7 +223,7 @@ class MongoQueries:
                     "as": "user_enrollments",
                     "pipeline": [
                         # get only enrolled projects and their names
-                        {"$match": {"active": True}},
+                        # {"$match": {"active": True}},
                         {"$project": {"project_id": 1, "_id": 0}},
                     ],
                 }
@@ -239,8 +236,7 @@ class MongoQueries:
                     "foreignField": "_id",
                     "as": "projects",
                     "pipeline": [
-                        # get only project name
-                        {"$project": {"name": 1, "_id": 0}}
+                        {"$project": {"_id": 0, "name": 1}},
                     ],
                 }
             },
@@ -248,9 +244,22 @@ class MongoQueries:
                 # list field to display
                 "$project": {
                     "username": 1,
+                    "email": 1,
+                    "role": 1,
                     "_id": 0,
                     "projects": 1,
                     "active": 1,
+                }
+            },
+            {
+                "$addFields": {
+                    "projects": {
+                        "$map": {
+                            "input": "$projects",
+                            "as": "projects",
+                            "in": "$$projects.name",
+                        }
+                    }
                 }
             },
         ]
@@ -280,10 +289,10 @@ class MongoQueries:
                     "localField": "user_id.$id",
                     "foreignField": "_id",
                     "as": "user",
-                    "pipelineuser_enrollment": [
+                    "pipeline": [
                         {
                             "$match": {
-                                "active": True,
+                                # "active": True,
                                 "username": {"$in": lof_usernames},
                             }
                         }
@@ -321,13 +330,6 @@ class MongoQueries:
                     "localField": "user_id.$id",
                     "foreignField": "_id",
                     "as": "user",
-                    "pipeline": [
-                        {
-                            "$match": {
-                                "active": True,
-                            }
-                        }
-                    ],
                 }
             },
             {
@@ -393,7 +395,7 @@ class MongoQueries:
                     "_id": 1,
                     "name": 1,
                     "min_port": "$starting_port_bind",
-                    "max_port": {"$add": ["$max_nof_users", "$starting_port_bind"]},
+                    "max_port": {"$add": ["$max_nof_users", "$starting_port_bind", -1]},
                 }
             },
         ]
@@ -494,6 +496,24 @@ class MongoQueries:
                     "progress": 1,
                     "services": 1,
                     "networks": 1,
+                }
+            },
+        ]
+
+    @staticmethod
+    def user_enrollment_get_forwarded_ports(
+        project: "prj.Project | None",
+    ) -> list[dict]:
+        _filter = {} if not project else {"project_id.$id": project.id}
+        return [
+            {"$match": _filter},
+            {"$group": {"_id": None, "forwarded_ports": {"$push": "$forwarded_port"}}},
+            {"$project": {"_id": 0, "forwarded_ports": 1}},
+            {
+                "$project": {
+                    "forwarded_ports": {
+                        "$sortArray": {"input": "$forwarded_ports", "sortBy": 1}
+                    }
                 }
             },
         ]

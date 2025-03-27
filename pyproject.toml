@@ -61,7 +61,8 @@ testpaths = ["tests"]
 env = [
     "CONTAINER_CLIENT=mock",
     "DB_CONNECTION_TIMEOUT=5",
-    "ENABLE_PODMAN_CLIENT_TESTING=0"
+    "DB_NAME=test-ctf-db",
+    "ENABLE_CONTAINER_CLIENT_TESTING=0"
 ]
 addopts = "-vs"
 
@@ -69,7 +70,13 @@ addopts = "-vs"
 directory = "tests/reports/htmlcov"
 
 [tool.coverage.run]
-omit = ["tests/*", "/tmp/*"]
+omit = [
+    "tests/*",
+    "/tmp/*",
+    "src/fit_ctf_utils/*.py",
+    "src/fit_ctf_utils/container_client/*",
+    "**/__init__.py",
+]
 command_line = "-m pytest -vv"
 
 [tool.flake8]

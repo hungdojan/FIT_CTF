@@ -1,0 +1,5 @@
+projects:
+  - name: prj1
+    max_nof_users: 3
+  - name: prj2
+    max_nof_users: 3

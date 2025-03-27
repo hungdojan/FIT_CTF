@@ -1,0 +1,23 @@
+users:
+  - username: user1
+    password: user1Password
+  - username: user2
+    password: user2Password
+  - username: user3
+    password: user3Password
+
+projects:
+  - name: prj1
+    max_nof_users: 3
+  - name: prj2
+    max_nof_users: 3
+
+enrollments:
+  - user: user1
+    project: prj2
+  - user: user2
+    project: prj1
+  - user: user2
+    project: prj2
+  - user: user3
+    project: prj1

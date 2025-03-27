@@ -4,7 +4,7 @@ import yaml
 from jsonschema.validators import validator_for
 from referencing import Registry, Resource
 
-from fit_ctf_utils.config_loader.data_parser_interface import DataParserInterface
+from fit_ctf_utils.data_parser.data_parser_interface import DataParserInterface
 from fit_ctf_utils.exceptions import (
     DataFileNotExistException,
     SchemaFileNotExistException,

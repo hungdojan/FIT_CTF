@@ -1,11 +1,11 @@
 import click
-from tabulate import tabulate
 
-from fit_ctf_backend.cli.utils import project_option
+from fit_ctf_backend.cli.utils import format_option, project_option
 from fit_ctf_backend.ctf_manager import CTFManager
 from fit_ctf_models.project import ProjectManager
 from fit_ctf_utils import color_state
-from fit_ctf_utils.config_loader.yaml_parser import YamlParser
+from fit_ctf_utils.data_parser.yaml_parser import YamlParser
+from fit_ctf_utils.data_view import get_view
 from fit_ctf_utils.exceptions import CTFException
 
 ##########################
@@ -75,9 +75,11 @@ def create_project(
         click.echo(f"Project `{prj.name}` was successfully generated.")
     except CTFException as e:
         click.echo(e)
+        exit(1)
 
 
 @project.command(name="ls")
+@format_option
 @click.option(
     "-a",
     "--all",
@@ -86,7 +88,7 @@ def create_project(
     help="Display both active and inactive projects.)",
 )
 @click.pass_context
-def list_projects(ctx: click.Context, _all: bool):
+def list_projects(ctx: click.Context, format: str, _all: bool):
     """Display existing projects.
 
     This command by default displays only active projects. Use `-a` flag to
@@ -99,13 +101,14 @@ def list_projects(ctx: click.Context, _all: bool):
         - number of active users enrolled to the project
     """
     prj_mgr: ProjectManager = ctx.parent.obj["ctf_mgr"].prj_mgr  # pyright: ignore
-    lof_prj = prj_mgr.get_projects(include_inactive=_all)
+    lof_prj = prj_mgr.get_projects_raw(include_inactive=_all)
     if not lof_prj:
         click.echo("No project found!")
         return
-    headers = list(lof_prj[0].keys())
-    values = [list(i.values()) for i in lof_prj]
-    click.echo(tabulate(values, headers))
+    header_order = ["name", "active", "active_users", "max_nof_users"]
+    headers = ["Name", "Active", "Users", "Capacity"]
+    values = [[i[key] for key in header_order] for i in lof_prj]
+    get_view(format).print_data(headers, values)
 
 
 @project.command(name="get-info")
@@ -118,7 +121,6 @@ def get_project_info(ctx: click.Context, project_name: str):
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     prj = ctf_mgr.prj_mgr.get_doc_by_filter_raw({"name": project_name}, {"_id": 0})
-    # TODO: format
     if prj:
         click.echo(YamlParser.dump_data(prj))
     else:
@@ -127,6 +129,7 @@ def get_project_info(ctx: click.Context, project_name: str):
 
 @project.command(name="enrolled-users")
 @project_option
+@format_option
 @click.option(
     "-a",
     "--all",
@@ -135,30 +138,34 @@ def get_project_info(ctx: click.Context, project_name: str):
     help="Display inactive enrollments as well.",
 )
 @click.pass_context
-def enrolled_users(ctx: click.Context, project_name: str, all: bool):
+def enrolled_users(ctx: click.Context, project_name: str, format: str, all: bool):
     """Get list of active users that are enrolled to the PROJECT_NAME.
 
     Displays following states:
-        - user ID
         - active state
         - account username
         - account role
-        - path to the shadow file
-        - email
         - path to home mounting directory/volume
         - forwarded port (visible from the outside)
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
-    lof_active_users = ctf_mgr.user_enrollment_mgr.get_user_enrollments_for_project_raw(
-        project_name, all
-    )
+    try:
+        lof_active_users = (
+            ctf_mgr.user_enrollment_mgr.get_user_enrollments_for_project_raw(
+                project_name, all
+            )
+        )
+    except CTFException as e:
+        click.echo(e)
+        exit(1)
     if not lof_active_users:
         click.echo("No active users found.")
         return
+
     header_order = ["username", "role", "active", "forwarded_port", "mount"]
     header = [" ".join([i.capitalize() for i in i.split("_")]) for i in header_order]
     values = [[i[key] for key in header_order] for i in lof_active_users]
-    click.echo(tabulate(values, header, stralign="center", numalign="center"))
+    get_view(format).print_data(header, values)
 
 
 @project.command(name="generate-firewall-rules")
@@ -181,8 +188,9 @@ def firewall_rules(ctx: click.Context, project_name: str, ip_addr: str, output: 
 
 
 @project.command(name="reserved-ports")
+@format_option
 @click.pass_context
-def used_ports(ctx: click.Context):
+def used_ports(ctx: click.Context, format: str):
     """Returns list of reserved ports.
 
     Displays a list of projects and their reserved port range."""
@@ -191,9 +199,11 @@ def used_ports(ctx: click.Context):
     if not lof_prj:
         click.echo("No project found!")
         return
-    header = list(lof_prj[0].keys())
-    values = [list(i.values()) for i in lof_prj]
-    click.echo(tabulate(values, header))
+    header = ["ID", "Name", "Min Port", "Max Port"]
+    values = [
+        [i[key] for key in ["_id", "name", "min_port", "max_port"]] for i in lof_prj
+    ]
+    get_view(format).print_data(header, values)
 
 
 @project.command(name="resources")
@@ -219,13 +229,14 @@ def delete_project(ctx: click.Context, project_name: str):
     """
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     ctf_mgr.prj_mgr.delete_project(project_name)
-    click.echo("Project deleted successfully.")
+    click.echo(f"Project `{project_name}` deleted successfully.")
 
 
 @project.command(name="running-cluster")
 @project_option
+@format_option
 @click.pass_context
-def running_clusters_info(ctx: click.Context, project_name: str):
+def running_clusters_info(ctx: click.Context, project_name: str, format: str):
     ctf_mgr: CTFManager = ctx.parent.obj["ctf_mgr"]  # pyright: ignore
     services_info = ctf_mgr.prj_mgr.get_all_services_info(project_name)
     data_buffer = []
@@ -248,10 +259,7 @@ def running_clusters_info(ctx: click.Context, project_name: str):
                 ),
             }
         )
-    # click.echo(services_info)
     header_order = ["name", "image", "cluster_type", "networks", "ports", "state"]
     header = [" ".join([i.capitalize() for i in i.split("_")]) for i in header_order]
     values = [[i[key] for key in header_order] for i in data_buffer]
-    click.echo(
-        tabulate(values, header, stralign="center", numalign="center", tablefmt="grid")
-    )
+    get_view(format).print_data(header, values)
