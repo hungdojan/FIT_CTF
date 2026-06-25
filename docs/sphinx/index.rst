@@ -1,15 +1,66 @@
-Welcome to fit-ctf's documentation!
-===================================
+FIT-CTF documentation
+=====================
 
-**FIT_CTF** is a basic container-oriented CTF framework build on top of Podman and
-Podman-compose. The tool is used for managing projects (or competitions) and users.
+**FIT-CTF** is a container-oriented Capture The Flag (CTF) platform developed at
+`FIT BUT <https://www.fit.vut.cz/>`__ (Brno University of Technology). It lets
+operators run classroom or competition-style CTF events where each participant gets
+isolated container instances, while shared infrastructure (login nodes, admin services)
+runs at the project level.
 
-This program consists of two parts: **CLI** tool that communicates with the back-end
-(logic) and the database, and **Rendezvous** tool which serves as a starting point to the
-users (for user authentication and starting their nodes).
+The platform is built around **Podman** and **podman-compose** (Docker is also supported
+as a container backend). State is stored in **MongoDB**; challenge environments are
+defined as **scenarios** compiled from Jinja2 templates into Docker Compose files.
+
+
+Documentation map
+-----------------
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting started
 
-   click-commands.rst
+   introduction
+   requirements
+   installation
+   configuration
+   quickstart
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Concepts and architecture
+
+   architecture
+   concepts
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Challenge authoring
+
+   challenge-authoring
+   modules
+   creating-scenarios
+   scenarios
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Operations
+
+   deployment
+   fit-ctf-virt
+   rendezvous
+   setup-file
+   click-commands
+   container-client
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Project
+
+   changelog
+   roadmap
+
+Indices and tables
+------------------
+
+* :ref:`genindex`
+* :ref:`search`
