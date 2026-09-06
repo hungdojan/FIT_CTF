@@ -1,0 +1,63 @@
+#admin-main-layout {
+    height: 1fr;
+}
+
+#admin-sidebar {
+    width: 28;
+    min-width: 22;
+    border-right: solid $primary;
+    padding: 1 1;
+}
+
+#sidebar-title {
+    text-style: bold;
+    width: 100%;
+    text-align: center;
+}
+
+#sidebar-nav {
+    height: 1fr;
+}
+
+#sidebar-nav Button {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#sidebar-nav Button.-active-page {
+    background: $primary;
+    color: $text;
+    text-style: bold;
+}
+
+#sidebar-mode-label {
+    width: 100%;
+    color: $text-muted;
+    text-align: center;
+}
+
+#admin-content {
+    padding: 0 1;
+}
+
+AdminPage {
+    height: 1fr;
+}
+
+.page-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.page-toolbar {
+    height: auto;
+    margin-bottom: 1;
+}
+
+.page-toolbar Button {
+    margin-right: 2;
+}
+
+RefreshableTable {
+    height: 1fr;
+}

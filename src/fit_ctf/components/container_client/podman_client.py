@@ -1,5 +1,4 @@
 import asyncio
-import json
 import subprocess
 import sys
 from pathlib import Path
@@ -104,22 +103,34 @@ class PodmanClient(c_client.ContainerClientInterface):
         return proc.returncode, not proc.returncode
 
     async def compose_ps(self, files: list[Path]) -> list[str]:
+        """Return container IDs from ``podman-compose ps -q``.
+
+        Uses ``ps -q`` instead of ``ps --format`` because podman-compose can print table
+        headers when no containers match, which breaks line-based parsing.
+        """
+        files = self._existing_files(files)
+        if not files:
+            return []
         file_flags = [f"-f {str(path.resolve())}" for path in files]
-        cmd = f'podman-compose {" ".join(file_flags)} ps --format "{{ .Names }}"'
+        cmd = f"podman-compose {' '.join(file_flags)} ps -q"
         proc = await asyncio.create_subprocess_shell(
             cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         stdout, _ = await proc.communicate()
-        return [data.strip('"') for data in stdout.decode().rsplit()]
+        return [line.strip() for line in stdout.decode().splitlines() if line.strip()]
 
     async def compose_ps_json(self, files: list[Path]) -> list[dict[str, Any]]:
+        files = self._existing_files(files)
+        if not files:
+            return []
+
         file_flags = [f"-f {str(path.resolve())}" for path in files]
         cmd = f"podman-compose {' '.join(file_flags)} ps --format json"
         proc = await asyncio.create_subprocess_shell(
             cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         stdout, _ = await proc.communicate()
-        data = json.loads(stdout)
+        data = self._parse_json_output("podman-compose ps", proc.returncode, stdout)
         return data
 
     async def compose_build(
@@ -162,6 +173,28 @@ class PodmanClient(c_client.ContainerClientInterface):
         await proc.wait()
         return proc.returncode if proc.returncode is not None else 255
 
+    async def compose_logs_text(
+        self,
+        files: list[Path],
+        *,
+        tail: int = 500,
+        service: str | None = None,
+    ) -> str:
+        files = self._existing_files(files)
+        if not files:
+            return ""
+        file_flags = [f"-f {str(path.resolve())}" for path in files]
+        parts = ["podman-compose"] + file_flags + ["logs", f"--tail={tail}"]
+        if service:
+            parts.append(service)
+        proc = await asyncio.create_subprocess_shell(
+            " ".join(parts),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        stdout, _ = await proc.communicate()
+        return stdout.decode(errors="replace")
+
     def compose_shell(
         self, files: list[Path], service: str, command: str
     ) -> subprocess.CompletedProcess:
@@ -182,7 +215,7 @@ class PodmanClient(c_client.ContainerClientInterface):
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         stdout, _ = await proc.communicate()
-        data = json.loads(stdout)
+        data = self._parse_json_output("podman stats", proc.returncode, stdout)
         return [d for d in data if d["name"].startswith(project_name)]
 
     async def ps(self, project_name: str) -> list[str]:
@@ -213,7 +246,7 @@ class PodmanClient(c_client.ContainerClientInterface):
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         stdout, _ = await proc.communicate()
-        data = json.loads(stdout)
+        data = self._parse_json_output("podman ps", proc.returncode, stdout)
         return data
 
     async def ps_csv(self, project_name: str, output_file: Path) -> None:
@@ -221,13 +254,17 @@ class PodmanClient(c_client.ContainerClientInterface):
         pass
 
     async def compose_states(self, files: list[Path]) -> list[HealthCheckDict]:
+        files = self._existing_files(files)
+        if not files:
+            return []
+
         file_flags = [f"-f {str(path.resolve())}" for path in files]
         cmd = f"podman-compose {' '.join(file_flags)} ps --format json"
         proc = await asyncio.create_subprocess_shell(
             cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         stdout, _ = await proc.communicate()
-        data = json.loads(stdout)
+        data = self._parse_json_output("podman-compose ps", proc.returncode, stdout)
         return [
             {
                 "name": service["Names"][0],
@@ -251,7 +288,7 @@ class PodmanClient(c_client.ContainerClientInterface):
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         stdout, _ = await proc.communicate()
-        data = json.loads(stdout)
+        data = self._parse_json_output("podman ps", proc.returncode, stdout)
         return data
 
     async def build_image(
@@ -294,3 +331,27 @@ class PodmanClient(c_client.ContainerClientInterface):
         await self._process_logging(proc, logger_name=logger_name, to_stdout=to_stdout)
         await proc.wait()
         return proc.returncode if proc.returncode is not None else 255
+
+    async def build_image_text(
+        self,
+        context_path: Path,
+        image_name: str,
+        containerfile: str = "Containerfile",
+    ) -> tuple[ErrorCode, str]:
+        cmd = [
+            "podman",
+            "build",
+            "-t",
+            image_name,
+            "-f",
+            str(context_path / containerfile),
+            str(context_path),
+        ]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        stdout, _ = await proc.communicate()
+        code = proc.returncode if proc.returncode is not None else 255
+        return code, stdout.decode(errors="replace")

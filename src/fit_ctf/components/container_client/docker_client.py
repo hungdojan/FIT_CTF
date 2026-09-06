@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import fit_ctf.components.container_client.container_client_interface as c_client
+from fit_ctf.components.exceptions import CTFComponentException
 from fit_ctf.components.types import ErrorCode, HealthCheckDict, TaskSuccess
 
 
@@ -29,8 +30,14 @@ def _decode_compose_ps_json(stdout: bytes) -> list[dict[str, Any]]:
         out: list[dict[str, Any]] = []
         for line in text.splitlines():
             line = line.strip()
-            if line:
+            if not line:
+                continue
+            try:
                 out.append(json.loads(line))
+            except json.JSONDecodeError as exc:
+                raise CTFComponentException(
+                    f"`docker compose ps` returned unexpected output: {text[:300]}"
+                ) from exc
         return out
     return data if isinstance(data, list) else [data]
 
@@ -143,6 +150,7 @@ class DockerClient(c_client.ContainerClientInterface):
         return proc.returncode, not proc.returncode
 
     async def compose_ps(self, files: list[Path]) -> list[str]:
+        files = self._existing_files(files)
         if not files:
             return []
         cmd = _docker_compose_prefix(files) + ["ps", "--format", "{{.Names}}"]
@@ -155,6 +163,7 @@ class DockerClient(c_client.ContainerClientInterface):
         return [line.strip().strip('"') for line in stdout.decode().splitlines() if line.strip()]
 
     async def compose_ps_json(self, files: list[Path]) -> list[dict[str, Any]]:
+        files = self._existing_files(files)
         if not files:
             return []
         cmd = _docker_compose_prefix(files) + ["ps", "--format", "json"]
@@ -204,6 +213,27 @@ class DockerClient(c_client.ContainerClientInterface):
         await proc.wait()
         return proc.returncode if proc.returncode is not None else 255
 
+    async def compose_logs_text(
+        self,
+        files: list[Path],
+        *,
+        tail: int = 500,
+        service: str | None = None,
+    ) -> str:
+        files = self._existing_files(files)
+        if not files:
+            return ""
+        cmd = _docker_compose_prefix(files) + ["logs", "--no-color", f"--tail={tail}"]
+        if service:
+            cmd.append(service)
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        stdout, _ = await proc.communicate()
+        return stdout.decode(errors="replace")
+
     def compose_shell(
         self, files: list[Path], service: str, command: str
     ) -> subprocess.CompletedProcess:  # pragma: no cover
@@ -225,7 +255,7 @@ class DockerClient(c_client.ContainerClientInterface):
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         stdout, _ = await proc.communicate()
-        data = json.loads(stdout)
+        data = self._parse_json_output("docker stats", proc.returncode, stdout)
         return [d for d in data if d["name"].startswith(project_name)]
 
     async def ps(self, project_name: str) -> list[str]:
@@ -256,7 +286,7 @@ class DockerClient(c_client.ContainerClientInterface):
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         stdout, _ = await proc.communicate()
-        data = json.loads(stdout)
+        data = self._parse_json_output("docker ps", proc.returncode, stdout)
         return data
 
     async def ps_csv(self, project_name: str, output_file: pathlib.Path):
@@ -277,6 +307,9 @@ class DockerClient(c_client.ContainerClientInterface):
         print([data.strip('"') for data in stdout.decode().rsplit("\n") if data])
 
     async def compose_states(self, files: list[Path]) -> list[HealthCheckDict]:  # pragma: no cover
+        files = self._existing_files(files)
+        if not files:
+            return []
         cmd = _docker_compose_prefix(files) + ["ps", "--format", "json"]
         proc = await asyncio.create_subprocess_exec(
             *cmd,
@@ -308,7 +341,7 @@ class DockerClient(c_client.ContainerClientInterface):
             *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT
         )
         stdout, _ = await proc.communicate()
-        data = json.loads(stdout)
+        data = self._parse_json_output("docker ps", proc.returncode, stdout)
         return data
 
     async def build_image(
@@ -351,3 +384,27 @@ class DockerClient(c_client.ContainerClientInterface):
         await self._process_logging(proc, logger_name=logger_name, to_stdout=to_stdout)
         await proc.wait()
         return proc.returncode if proc.returncode is not None else 255
+
+    async def build_image_text(
+        self,
+        context_path: Path,
+        image_name: str,
+        containerfile: str = "Containerfile",
+    ) -> tuple[ErrorCode, str]:
+        cmd = [
+            "docker",
+            "build",
+            "-t",
+            image_name,
+            "-f",
+            str(context_path / containerfile),
+            str(context_path),
+        ]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        stdout, _ = await proc.communicate()
+        code = proc.returncode if proc.returncode is not None else 255
+        return code, stdout.decode(errors="replace")

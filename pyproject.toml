@@ -9,6 +9,7 @@ packages = [
     { include = "fit_ctf", from = "src" },
     { include = "fit_ctf_cli", from = "src" },
     { include = "fit_ctf_rendezvous", from = "src" },
+    { include = "fit_ctf_admin", from = "src" },
 ]
 
 [tool.poetry.dependencies]
@@ -74,6 +75,12 @@ env = [
 ]
 addopts = "-vs"
 asyncio_mode = "auto"
+filterwarnings = [
+    # regression guard: workers must receive coroutine factories, not ready
+    # coroutines (see AdminPage.call_gateway) — a dropped pending worker would
+    # otherwise leak an un-awaited coroutine
+    "error:coroutine .* was never awaited:RuntimeWarning",
+]
 
 [tool.coverage.html]
 directory = "tests/reports/htmlcov"
@@ -123,3 +130,4 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.scripts]
 fit-ctf = "fit_ctf_cli.__main__:main"
 fit-rendezvous = "fit_ctf_rendezvous.__main__:main"
+fit-admin-page = "fit_ctf_admin.__main__:main"

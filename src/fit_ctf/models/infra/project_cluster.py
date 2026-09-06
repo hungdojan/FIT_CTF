@@ -447,6 +447,18 @@ class ProjectClusterManager(ClusterManagerMixin[ProjectCluster]):
             to_stdout=to_stdout,
         )
 
+    async def compose_logs_text(
+        self,
+        cluster: ProjectCluster,
+        *,
+        tail: int = 500,
+        service: str | None = None,
+    ) -> str:
+        """Return recent compose service logs as text (bounded tail)."""
+        return await self.c_client.compose_logs_text(
+            self.get_compose_files(cluster), tail=tail, service=service
+        )
+
     def shell_into_service(self, cluster: ProjectCluster, service: str, command: str = "bash"):
         """Shell into a cluster service.
 

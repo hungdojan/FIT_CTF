@@ -547,6 +547,18 @@ class UserClusterManager(ClusterManagerMixin[UserCluster]):
             to_stdout=to_stdout,
         )
 
+    async def compose_logs_text(
+        self,
+        cluster: UserCluster,
+        *,
+        tail: int = 500,
+        service: str | None = None,
+    ) -> str:
+        """Return recent compose service logs as text (bounded tail)."""
+        return await self.c_client.compose_logs_text(
+            self.get_compose_files(cluster), tail=tail, service=service
+        )
+
     async def cluster_health_check(self, cluster: UserCluster) -> list[HealthCheckDict]:
         """Get health check status for a cluster.
 

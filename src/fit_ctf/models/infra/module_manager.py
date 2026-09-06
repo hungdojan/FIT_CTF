@@ -82,6 +82,21 @@ class ModuleManager:
             to_stdout=to_stdout,
         )
 
+    async def build_module_text(self, module_name: str) -> "tuple[ErrorCode, str]":
+        """Build a module's image and return ``(exit_code, build output)``.
+
+        :param module_name: Name of the module to build
+        :type module_name: str
+        :return: Exit code and the combined build output text.
+        :rtype: tuple[ErrorCode, str]
+        """
+        dir_path = self.get_path(module_name)
+        return await self._c_client.build_image_text(
+            context_path=dir_path,
+            image_name=f"fit-ctf/{module_name}",
+            containerfile="Containerfile",
+        )
+
     def reference_count(
         self,
         project_name: str | None,

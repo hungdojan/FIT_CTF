@@ -7,6 +7,7 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
+import yaml
 from pydantic import Field
 
 from fit_ctf.models.base import Base, BaseManager
@@ -17,6 +18,7 @@ from fit_ctf.models.infra.scenario_compile import (
     ScenarioCompiler,
 )
 from fit_ctf.models.infra.scenario_manager import ScenarioManager
+from fit_ctf.models.infra.utils import lint_compiled_compose
 from fit_ctf.models.utils.exceptions import ScenarioNotExistException
 
 
@@ -105,6 +107,26 @@ class ClusterManagerMixin(BaseManager[ClusterT], ABC):
             scenario_cfg,
             compose_template_extras=self._compose_template_extras(cluster),
         )
+        # lint the compiled compose so engine-side schema errors (e.g. docker's
+        # "environment.[0] unexpected type map[string]interface {}") surface
+        # here, next to the authoring mistake, instead of at ps/up time
+        for w in self._lint_compiled_compose_file(dst_path / "scenario_compose.yaml"):
+            if template_warning_sink is not None:
+                template_warning_sink(w)
+            else:
+                log.warning(w)
+
+    @staticmethod
+    def _lint_compiled_compose_file(compose_file: Path) -> list[str]:
+        if not compose_file.is_file():
+            return []
+        try:
+            compiled = yaml.safe_load(compose_file.read_text())
+        except yaml.YAMLError as exc:
+            return [f"compiled {compose_file.name} is not valid YAML: {exc}"]
+        if not isinstance(compiled, dict):
+            return []
+        return lint_compiled_compose(compiled)
 
     def remove_scenario_config(self, cluster: ClusterT, scenario_name: str) -> None:
         if scenario_name in cluster.scenario_configs:

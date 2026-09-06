@@ -10,11 +10,13 @@ from fit_ctf.components.data_view import get_view
 from fit_ctf.components.exceptions import ConfigurationFileNotEditedException
 from fit_ctf.components.utils import yaml_doc_editor
 from fit_ctf.ctf_app import CTFApp
-from fit_ctf.models.infra.config_models import ScenarioConfig, ServiceConfig
-from fit_ctf.models.infra.scenario_manager import ScenarioManager
+from fit_ctf.models.infra.config_models import ServiceConfig
 from fit_ctf.models.infra.utils import (
     scenario_config_from_dict,
     validate_canonical_scenario_yaml_dict,
+)
+from fit_ctf.models.infra.utils import (
+    warnings_after_secrets_trial as _warnings_after_secrets_trial,
 )
 from fit_ctf.models.utils.exceptions import (
     CTFModelException,
@@ -26,27 +28,6 @@ from fit_ctf_cli.cli.utils import (
     requires_database,
     user_option,
 )
-
-
-def _warnings_after_secrets_trial(
-    scenario_mgr: ScenarioManager,
-    scenario_name: str,
-    scenario_config: ScenarioConfig,
-    secrets_delta: dict[str, str | None],
-) -> list[str]:
-    """Deep-copy ``scenario_config``, apply ``secrets_delta``, validate vs templates.
-
-    ``None`` in ``secrets_delta`` removes that secret key. May raise
-    :class:`CTFModelException` when the post-mutation config is invalid.
-    Returns template validation warning strings.
-    """
-    trial = scenario_config.model_copy(deep=True)
-    for k, v in secrets_delta.items():
-        if v is None:
-            trial.secrets.pop(k, None)
-        else:
-            trial.secrets[k] = v
-    return scenario_mgr.validate_scenario_config_against_templates(scenario_name, trial)
 
 
 def _echo_cli_warning(message: str) -> None:

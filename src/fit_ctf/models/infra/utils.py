@@ -23,6 +23,60 @@ if TYPE_CHECKING:
         ServiceConfig,
         VolumeConfig,
     )
+    from fit_ctf.models.infra.scenario_manager import ScenarioManager
+
+
+def lint_compiled_compose(compose: dict) -> list[str]:
+    """Warnings for compiled-compose constructs the engines reject at runtime.
+
+    Docker compose validates strictly and fails commands like ``ps`` with
+    cryptic schema errors (e.g. ``environment.[0] unexpected type
+    map[string]interface {}``) long after compilation. This lint runs right
+    after compile so the author is pointed at the offending template line.
+    Currently checked: list-form ``environment`` entries must be strings —
+    an unquoted ``- KEY: value`` line parses as a YAML mapping.
+    """
+    warnings: list[str] = []
+    services = compose.get("services")
+    if not isinstance(services, dict):
+        return warnings
+    for service_name, service in services.items():
+        if not isinstance(service, dict):
+            continue
+        environment = service.get("environment")
+        if not isinstance(environment, list):
+            continue  # map form (or absent) is valid compose
+        for index, entry in enumerate(environment):
+            if not isinstance(entry, str):
+                warnings.append(
+                    f"service '{service_name}': environment entry {index} is "
+                    f"{type(entry).__name__ if entry is not None else 'empty'}, not a string — "
+                    'write it as a quoted "KEY=value" line in scenario_compose.yaml.j2 '
+                    "(docker compose rejects mapping entries)"
+                )
+    return warnings
+
+
+def warnings_after_secrets_trial(
+    scenario_mgr: "ScenarioManager",
+    scenario_name: str,
+    scenario_config: "ScenarioConfig",
+    secrets_delta: dict[str, str | None],
+) -> list[str]:
+    """Deep-copy ``scenario_config``, apply ``secrets_delta``, validate vs templates.
+
+    ``None`` in ``secrets_delta`` removes that secret key. May raise
+    :class:`CTFModelException` when the post-mutation config is invalid.
+    Returns template validation warning strings. Shared by the CLI secret
+    commands and the admin TUI.
+    """
+    trial = scenario_config.model_copy(deep=True)
+    for key, value in secrets_delta.items():
+        if value is None:
+            trial.secrets.pop(key, None)
+        else:
+            trial.secrets[key] = value
+    return scenario_mgr.validate_scenario_config_against_templates(scenario_name, trial)
 
 
 # Secret ID Utilities

@@ -72,6 +72,15 @@ class MockClient(c_client.ContainerClientInterface):
     ) -> ErrorCode:  # pragma: no cover
         return 0
 
+    async def compose_logs_text(
+        self,
+        files: list[Path],
+        *,
+        tail: int = 500,
+        service: str | None = None,
+    ) -> str:  # pragma: no cover
+        return ""
+
     def compose_shell(
         self, files: list[Path], service: str, command: str
     ) -> subprocess.CompletedProcess:  # pragma: no cover
@@ -101,6 +110,14 @@ class MockClient(c_client.ContainerClientInterface):
         to_stdout: bool = False,
     ) -> ErrorCode:  # pragma: no cover
         return 0
+
+    async def build_image_text(
+        self,
+        context_path: Path,
+        image_name: str,
+        containerfile: str = "Containerfile",
+    ) -> tuple[ErrorCode, str]:  # pragma: no cover
+        return 0, ""
 
     async def compose_states(self, files: list[Path]) -> list[HealthCheckDict]:
         return []

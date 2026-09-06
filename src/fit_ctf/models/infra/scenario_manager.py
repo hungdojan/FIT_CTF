@@ -29,6 +29,20 @@ _VOL_MAP_TPL_PARAM_RE = re.compile(r"^(.+?)__volume_map__(.+?)__(.+)$")
 _SC_TRIPLE_RE = re.compile(r"^(.*)__(.*)__(.*)$")
 _SECRET_MAP_RE = re.compile(r"^secret_map__(.+)$")
 
+_SCENARIO_NAME_RE = re.compile(r"^[a-z0-9_]+$")
+
+# Variables that the cluster compile step supplies without any config entry
+# (see ``ClusterManagerMixin`` subclasses' ``_compose_template_extras``).
+_COMPILE_SUPPLIED_VARIABLES = frozenset(
+    {
+        "project_name",
+        "username",
+        "container_port",
+        "forwarded_port",
+        "login_node_module",
+    }
+)
+
 
 class ScenarioManager:
     """Manager for CTF scenario templates and configurations."""
@@ -50,6 +64,23 @@ class ScenarioManager:
         """
         return self._paths.scenario_global
 
+    @staticmethod
+    def validate_scenario_name(scenario_name: str) -> None:
+        """Raise :class:`CTFModelException` unless the name is a safe slug.
+
+        Restricting names to ``[a-z0-9_]+`` also rules out path traversal in
+        every place that joins the name onto the scenario root.
+
+        :param scenario_name: Name to validate.
+        :type scenario_name: str
+        :raises CTFModelException: If the name is empty or contains other characters.
+        """
+        if not _SCENARIO_NAME_RE.fullmatch(scenario_name):
+            raise CTFModelException(
+                f"Invalid scenario name {scenario_name!r}: use lowercase letters, "
+                "digits, and underscores only."
+            )
+
     def create_scenario(self, scenario_name: str):
         """Create a new scenario template.
 
@@ -57,9 +88,10 @@ class ScenarioManager:
 
         :param scenario_name: Name for the new scenario
         :type scenario_name: str
+        :raises CTFModelException: If the scenario name is not a valid slug
         :raises ScenarioExistException: If scenario already exists
         """
-        # TODO: check security
+        self.validate_scenario_name(scenario_name)
         path = self.scenario_root / scenario_name
         if path.exists():
             raise ScenarioExistException(f"Scenario {scenario_name} already exists.")
@@ -84,14 +116,123 @@ class ScenarioManager:
         :type scenario_name: str
         :return: Path to scenario directory
         :rtype: pathlib.Path
+        :raises CTFModelException: If the scenario name is not a valid slug
         :raises ScenarioNotExistException: If scenario does not exist
         """
+        self.validate_scenario_name(scenario_name)
         path = self.scenario_root / scenario_name
         if not path.exists():
             raise ScenarioNotExistException(f"Scenario {scenario_name} does not exist")
         return path
 
-    def fetch_variables(self, scenario_name: str) -> dict[str, str]:
+    def read_compose_template(self, scenario_name: str) -> str:
+        """Return the raw ``scenario_compose.yaml.j2`` text of a scenario.
+
+        :param scenario_name: Name of the scenario
+        :type scenario_name: str
+        :return: Template file content
+        :rtype: str
+        :raises ScenarioNotExistException: If scenario does not exist
+        """
+        path = self.get_scenario_dir(scenario_name) / "scenario_compose.yaml.j2"
+        if not path.is_file():
+            raise ScenarioNotExistException(
+                f"Scenario {scenario_name} has no scenario_compose.yaml.j2"
+            )
+        return path.read_text(encoding="utf-8")
+
+    def save_scenario_files(
+        self,
+        scenario_name: str,
+        compose_text: str,
+        volume_files: dict[str, str] | None = None,
+        extra_files: dict[str, str] | None = None,
+        *,
+        overwrite: bool = False,
+    ) -> pathlib.Path:
+        """Write a scenario directory from in-memory file contents.
+
+        Centralized write-back used by tooling (e.g. the admin TUI designer):
+        creates ``<scenario_root>/<name>/scenario_compose.yaml.j2``, files under
+        ``volumes/`` from ``volume_files`` (keyed by file name), and arbitrary
+        top-level ``extra_files`` (e.g. a design sidecar). Existing files that
+        are not part of the given mappings are left untouched.
+
+        :param scenario_name: Target scenario name (validated slug).
+        :type scenario_name: str
+        :param compose_text: Content for ``scenario_compose.yaml.j2``.
+        :type compose_text: str
+        :param volume_files: Mapping of ``volumes/`` file names to contents.
+        :type volume_files: dict[str, str] | None
+        :param extra_files: Mapping of scenario-root file names to contents.
+        :type extra_files: dict[str, str] | None
+        :param overwrite: Allow writing into an existing scenario directory.
+        :type overwrite: bool
+        :return: The scenario directory path.
+        :rtype: pathlib.Path
+        :raises CTFModelException: If the scenario name is not a valid slug or
+            a target file name escapes the scenario directory.
+        :raises ScenarioExistException: If the scenario exists and ``overwrite``
+            is not set.
+        """
+        self.validate_scenario_name(scenario_name)
+        path = self.scenario_root / scenario_name
+        created = not path.exists()
+        if not created and not overwrite:
+            raise ScenarioExistException(f"Scenario {scenario_name} already exists.")
+
+        def _safe_target(root: pathlib.Path, file_name: str) -> pathlib.Path:
+            target = (root / file_name).resolve()
+            if root.resolve() not in target.parents:
+                raise CTFModelException(f"Invalid scenario file name {file_name!r}")
+            return target
+
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            (path / "scenario_compose.yaml.j2").write_text(compose_text, encoding="utf-8")
+            if volume_files:
+                volume_root = path / "volumes"
+                volume_root.mkdir(exist_ok=True)
+                for file_name, content in volume_files.items():
+                    _safe_target(volume_root, file_name).write_text(content, encoding="utf-8")
+            for file_name, content in (extra_files or {}).items():
+                _safe_target(path, file_name).write_text(content, encoding="utf-8")
+        except BaseException:  # CTFModelException derives from BaseException
+            if created and path.exists():
+                shutil.rmtree(path)
+            raise
+        return path
+
+    def fetch_unmapped_variables(self, scenario_name: str) -> set[str]:
+        """Compose variables that must come from ``ScenarioConfig.config_params``.
+
+        Returns every variable of ``scenario_compose.yaml.j2`` that is neither
+        a path/network placeholder, a service map triple, a secret slot, nor a
+        variable the cluster compile step supplies itself (``project_name``,
+        ``username``, ``container_port``, ``forwarded_port``,
+        ``login_node_module``). Missing entries only fail late inside
+        ``write_compose``; callers can require values for these up front.
+
+        :param scenario_name: Name of the scenario
+        :type scenario_name: str
+        :return: Set of free variable names.
+        :rtype: set[str]
+        """
+        scenario_dir = self.get_scenario_dir(scenario_name)
+        unmapped: set[str] = set()
+        for variable in get_jinja_variables("scenario_compose.yaml.j2", scenario_dir):
+            if variable in _COMPILE_SUPPLIED_VARIABLES:
+                continue
+            if variable.startswith("paths__") or variable.startswith("network_map__"):
+                continue
+            if _SECRET_MAP_RE.fullmatch(variable):
+                continue
+            if _VOL_MAP_TPL_PARAM_RE.fullmatch(variable) or _SC_TRIPLE_RE.fullmatch(variable):
+                continue
+            unmapped.add(variable)
+        return unmapped
+
+    def fetch_variables(self, scenario_name: str) -> dict[str, dict]:
         """Fetch Jinja2 template variables from scenario templates.
 
         Parses scenario compose templates and volume templates to extract

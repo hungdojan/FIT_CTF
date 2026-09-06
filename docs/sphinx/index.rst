@@ -48,9 +48,16 @@ Documentation map
    deployment
    fit-ctf-virt
    rendezvous
+   admin-page
    setup-file
    click-commands
    container-client
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API reference
+
+   admin-page-api
 
 .. toctree::
    :maxdepth: 1
