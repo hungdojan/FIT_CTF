@@ -127,7 +127,9 @@ class RendezvousCore(_VariableRegistry):
             return
         if not self.auth_client.local_login:
             raise CannotChangePassword("The Auth client does not support password update.")
-        self.ctf_base.user_mgr.change_password(self._active_user.username, password)
+        self._active_user = self.ctf_base.user_mgr.change_password(
+            self._active_user.username, password
+        )
 
     def get_active_projects(self) -> list[Project]:
         """Get a list of enrolled projects.
