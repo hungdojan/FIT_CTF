@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deployment &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Production infrastructure (fit-ctf-virt)" href="fit-ctf-virt.html" />
+    <link rel="prev" title="Scenarios" href="scenarios.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Deployment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#local-development">Local development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#user-level-systemd-mongodb-via-quadlet">User-level systemd (MongoDB via Quadlet)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#production-vm-fit-ctf-virt">Production VM (fit-ctf-virt)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rendezvous-over-ssh">Rendezvous over SSH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#container-engine-in-production">Container engine in production</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pre-event-checklist">Pre-event checklist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#backup-and-migration">Backup and migration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#hosted-documentation">Hosted documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Deployment</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/deployment.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="deployment">
+<h1>Deployment<a class="headerlink" href="#deployment" title="Link to this heading"></a></h1>
+<p>FIT-CTF supports three deployment modes, from simplest to full production.</p>
+<section id="local-development">
+<h2>Local development<a class="headerlink" href="#local-development" title="Link to this heading"></a></h2>
+<p>Best for operators learning the platform or developing scenarios.</p>
+<ol class="arabic">
+<li><p>Install dependencies (<a class="reference internal" href="installation.html"><span class="doc">Installation</span></a>).</p></li>
+<li><p>Generate <code class="docutils literal notranslate"><span class="pre">.env</span></code> and start MongoDB:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>generate-env<span class="w"> </span>--db-username<span class="o">=</span>ctf_user<span class="w"> </span>--db-password<span class="o">=</span>changeme<span class="w"> </span>--db-name<span class="o">=</span>ctf_db
+<span class="c1"># add DB_ADMIN_USERNAME / DB_ADMIN_PASSWORD to .env</span>
+poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>db-start
+</pre></div>
+</div>
+</li>
+<li><p>Run CLI commands directly from the repository:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>project<span class="w"> </span>create<span class="w"> </span>--project-name<span class="w"> </span>demo
+poetry<span class="w"> </span>run<span class="w"> </span>fit-rendezvous
+</pre></div>
+</div>
+</li>
+<li><p>Data accumulates under <code class="docutils literal notranslate"><span class="pre">~/.local/share/fit-ctf/</span></code>.</p></li>
+</ol>
+<p>Podman/Docker runs challenge containers on the same host. No SSH forwarding is required
+if you launch Rendezvous locally.</p>
+</section>
+<section id="user-level-systemd-mongodb-via-quadlet">
+<h2>User-level systemd (MongoDB via Quadlet)<a class="headerlink" href="#user-level-systemd-mongodb-via-quadlet" title="Link to this heading"></a></h2>
+<p>For a single-server setup where MongoDB should survive reboots without Docker Compose,
+deploy a Podman Quadlet unit:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>db-deploy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--db-admin-username<span class="o">=</span>admin<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--db-admin-password<span class="o">=</span>admin_secret<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--db-username<span class="o">=</span>ctf_user<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--db-password<span class="o">=</span>changeme<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--db-name<span class="o">=</span>ctf_db
+</pre></div>
+</div>
+<p>This renders <code class="docutils literal notranslate"><span class="pre">mongodb.container</span></code> and <code class="docutils literal notranslate"><span class="pre">mongodb.volume</span></code> into
+<code class="docutils literal notranslate"><span class="pre">~/.config/containers/systemd/</span></code> and runs <code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">daemon-reload</span></code>.</p>
+<p>Start the database:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>systemctl<span class="w"> </span>--user<span class="w"> </span>start<span class="w"> </span>mongodb.container
+</pre></div>
+</div>
+</section>
+<section id="production-vm-fit-ctf-virt">
+<h2>Production VM (fit-ctf-virt)<a class="headerlink" href="#production-vm-fit-ctf-virt" title="Link to this heading"></a></h2>
+<p>For a full CTF event with multiple participants connecting over SSH, use the
+<strong>fit-ctf-virt</strong> companion repository. It provisions Incus instances (playground VM,
+MongoDB container, optional monitoring) and runs Ansible to install FIT-CTF in
+production layout.</p>
+<p>See <a class="reference internal" href="fit-ctf-virt.html"><span class="doc">Production infrastructure (fit-ctf-virt)</span></a> for architecture, configuration, and the full installation
+workflow.</p>
+<p>FIT-CTF (this repo) remains the application layer; fit-ctf-virt handles infrastructure.</p>
+</section>
+<section id="rendezvous-over-ssh">
+<h2>Rendezvous over SSH<a class="headerlink" href="#rendezvous-over-ssh" title="Link to this heading"></a></h2>
+<p>See <a class="reference internal" href="rendezvous.html"><span class="doc">Rendezvous (SSH and TUI)</span></a> for the full guide (gatekeeper Linux user, <code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">setup-sshd</span></code>,
+installing <code class="docutils literal notranslate"><span class="pre">99-ctf-rule.conf</span></code>, firewall, TUI usage, and troubleshooting).</p>
+<p>Short version:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>setup-sshd<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--user<span class="o">=</span>ctfparticipant<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--rdz-port<span class="o">=</span><span class="m">2222</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--fitctf-dirpath<span class="o">=</span>/home/operator/fit-ctf
+
+sudo<span class="w"> </span>cp<span class="w"> </span><span class="m">99</span>-ctf-rule.conf<span class="w"> </span>/etc/ssh/sshd_config.d/
+sudo<span class="w"> </span>sshd<span class="w"> </span>-t<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>systemctl<span class="w"> </span>reload<span class="w"> </span>sshd
+</pre></div>
+</div>
+<p>Participants connect with <code class="docutils literal notranslate"><span class="pre">ssh</span> <span class="pre">-p</span> <span class="pre">2222</span> <span class="pre">ctfparticipant&#64;&lt;host&gt;</span></code> and then log into the
+TUI with their FIT-CTF username and password.</p>
+</section>
+<section id="container-engine-in-production">
+<h2>Container engine in production<a class="headerlink" href="#container-engine-in-production" title="Link to this heading"></a></h2>
+<p>Set <code class="docutils literal notranslate"><span class="pre">CONTAINER_CLIENT=podman</span></code> in <code class="docutils literal notranslate"><span class="pre">.env</span></code>. Ensure <code class="docutils literal notranslate"><span class="pre">podman-compose</span></code> is on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>
+for the user running <code class="docutils literal notranslate"><span class="pre">fit-ctf</span></code> commands.</p>
+<p>Rootless Podman is supported; volume mounts in compiled scenarios use paths under the
+share directory.</p>
+</section>
+<section id="pre-event-checklist">
+<h2>Pre-event checklist<a class="headerlink" href="#pre-event-checklist" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 5.0%" />
+<col style="width: 45.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>#</p></th>
+<th class="head"><p>Task</p></th>
+<th class="head"><p>Command / note</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>MongoDB running and reachable</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">db-start</span></code> or <code class="docutils literal notranslate"><span class="pre">systemctl</span> <span class="pre">--user</span> <span class="pre">start</span> <span class="pre">mongodb.container</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">.env</span></code> complete</p></td>
+<td><p>All required DB variables set</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>Share directories initialized</p></td>
+<td><p>First <code class="docutils literal notranslate"><span class="pre">fit-ctf</span></code> command seeds templates</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>Project created and scenarios compiled</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">project-cluster</span> <span class="pre">compile</span></code>, <code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">user-cluster</span> <span class="pre">compile</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>Module images built</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">user-cluster</span> <span class="pre">build</span></code> / <code class="docutils literal notranslate"><span class="pre">project-cluster</span> <span class="pre">build</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>6</p></td>
+<td><p>Shared infrastructure started</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">project-cluster</span> <span class="pre">start</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>7</p></td>
+<td><p>Users enrolled</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">enrollment</span> <span class="pre">enroll</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>8</p></td>
+<td><p>SSH / Rendezvous configured</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">setup-sshd</span></code> (automated by fit-ctf-virt on playground); publish port
+<a class="reference internal" href="fit-ctf-virt.html"><span class="doc">Production infrastructure (fit-ctf-virt)</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p>9</p></td>
+<td><p>Smoke test</p></td>
+<td><p>Enroll a test user, start instance, submit a secret</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="backup-and-migration">
+<h2>Backup and migration<a class="headerlink" href="#backup-and-migration" title="Link to this heading"></a></h2>
+<p>Export a project’s filesystem data and database records:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span><span class="nb">export</span><span class="w"> </span>-p<span class="w"> </span>&lt;project_name&gt;<span class="w"> </span>-o<span class="w"> </span>backup.zip
+</pre></div>
+</div>
+<p>Import on another host:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span>import<span class="w"> </span>-i<span class="w"> </span>backup.zip
+</pre></div>
+</div>
+</section>
+<section id="hosted-documentation">
+<h2>Hosted documentation<a class="headerlink" href="#hosted-documentation" title="Link to this heading"></a></h2>
+<p>Documentation is built with Sphinx and published to GitHub Pages on pushes to <code class="docutils literal notranslate"><span class="pre">main</span></code>
+(<code class="docutils literal notranslate"><span class="pre">.github/workflows/build-documentation.yaml</span></code>).</p>
+<p>Build locally:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs/sphinx<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>poetry<span class="w"> </span>run<span class="w"> </span>make<span class="w"> </span>html
+</pre></div>
+</div>
+<p>Hosted: <a class="reference external" href="https://hungdojan.github.io/fit-ctf/">hungdojan.github.io/fit-ctf</a></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scenarios.html" class="btn btn-neutral float-left" title="Scenarios" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fit-ctf-virt.html" class="btn btn-neutral float-right" title="Production infrastructure (fit-ctf-virt)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

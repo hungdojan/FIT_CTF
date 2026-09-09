@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CLI commands &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Container client" href="container-client.html" />
+    <link rel="prev" title="Bulk setup file" href="setup-file.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">CLI commands</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#fit-ctf">fit-ctf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#fit-ctf-project">fit-ctf project</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-create">create</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-delete">delete</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-enrolled-users">enrolled-users</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-generate-firewall-rules">generate-firewall-rules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-get-info">get-info</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-leaderboard">leaderboard</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-ls">ls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-reserved-ports">reserved-ports</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-resources">resources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-running-cluster">running-cluster</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-sync-leaderboard-data">sync-leaderboard-data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fit-ctf-user">fit-ctf user</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-change-password">change-password</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-create">create</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-create-multiple">create-multiple</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-delete">delete</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-enrolled-projects">enrolled-projects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-get">get</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-ls">ls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-upload-key">upload-key</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fit-ctf-user-cluster">fit-ctf user-cluster</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-add-scenario">add-scenario</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-add-secret">add-secret</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-build">build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-compile">compile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-edit-service">edit-service</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-health">health</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-info">info</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-list-scenarios">list-scenarios</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-list-secrets">list-secrets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-logs">logs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-remove-scenario">remove-scenario</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-remove-secret">remove-secret</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-restart">restart</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-start">start</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-status">status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-stop">stop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-user-cluster-update-secret">update-secret</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fit-ctf-project-cluster">fit-ctf project-cluster</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-add-scenario">add-scenario</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-add-secret">add-secret</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-build">build</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-compile">compile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-edit-service">edit-service</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-health">health</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-info">info</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-list-scenarios">list-scenarios</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-list-secrets">list-secrets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-logs">logs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-remove-scenario">remove-scenario</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-remove-secret">remove-secret</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-restart">restart</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-start">start</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-status">status</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-stop">stop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-project-cluster-update-secret">update-secret</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#fit-ctf-scenario">fit-ctf scenario</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-scenario-create">create</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-scenario-delete">delete</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-scenario-edit">edit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-scenario-info">info</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-scenario-ls">ls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-scenario-usage">usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-scenario-vars-template">vars-template</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-scenario-view">view</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">CLI commands</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/click-commands.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cli-commands">
+<h1>CLI commands<a class="headerlink" href="#cli-commands" title="Link to this heading"></a></h1>
+<section id="fit-ctf">
+<h2>fit-ctf<a class="headerlink" href="#fit-ctf" title="Link to this heading"></a></h2>
+<p>A tool for CTF competition management.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-pd">
+<span id="cmdoption-fit-ctf-project-dir"></span><span class="sig-name descname"><span class="pre">-pd</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_dir&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-pd" title="Link to this definition"></a></dt>
+<dd><p>Directory that contains project folders.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-ud">
+<span id="cmdoption-fit-ctf-user-dir"></span><span class="sig-name descname"><span class="pre">-ud</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--user-dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;user_dir&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-ud" title="Link to this definition"></a></dt>
+<dd><p>Directory that contains user folders.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-md">
+<span id="cmdoption-fit-ctf-module-dir"></span><span class="sig-name descname"><span class="pre">-md</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--module-dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;module_dir&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-md" title="Link to this definition"></a></dt>
+<dd><p>Directory that contains module folders.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-sd">
+<span id="cmdoption-fit-ctf-scenario-dir"></span><span class="sig-name descname"><span class="pre">-sd</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario-dir</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario_dir&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-sd" title="Link to this definition"></a></dt>
+<dd><p>Directory that contains scenario folders.</p>
+</dd></dl>
+
+<p class="rubric">Commands</p>
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">completion</span></span></dt>
+<dd><p>Generate a shell completion script.</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">data-mgmt</span></span></dt>
+<dd><p>Manage data with config files.</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">enrollment</span></span></dt>
+<dd><p>Manage all enrollments.</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">module</span></span></dt>
+<dd><p>Manage local modules.</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">project</span></span></dt>
+<dd><p>A command for project management.</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">project-cluster</span></span></dt>
+<dd><p>Manage project-level cluster (shared…</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">scenario</span></span></dt>
+<dd><p>Manage scenarios (CTF challenge templates).</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">user</span></span></dt>
+<dd><p>A command for user management.</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">user-cluster</span></span></dt>
+<dd><p>Manage user clusters (user scenario…</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">user-cluster</span></span></dt>
+<dd><p>Manage user clusters (user scenario…</p>
+</dd></dl>
+
+<dl class="object">
+<dt class="sig sig-object">
+<span class="sig-name descname"><span class="pre">user-progress</span></span></dt>
+<dd><p>A command to display progresses of users</p>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="fit-ctf-project">
+<h2>fit-ctf project<a class="headerlink" href="#fit-ctf-project" title="Link to this heading"></a></h2>
+<p>A command for project management.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="fit-ctf-project-create">
+<h3>create<a class="headerlink" href="#fit-ctf-project-create" title="Link to this heading"></a></h3>
+<p>Create and initialize a new project.</p>
+<p>This command generate a basic project from the template and stores
+it in the <cite>dest_dir</cite> directory. Make sure that <cite>dest_dir</cite> exists.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-create-pn">
+<span id="cmdoption-fit-ctf-project-create-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-create-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name (also serves as project id).</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-create-mu">
+<span id="cmdoption-fit-ctf-project-create-max-nof-users"></span><span class="sig-name descname"><span class="pre">-mu</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--max-nof-users</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;max_nof_users&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-create-mu" title="Link to this definition"></a></dt>
+<dd><p>Max number of users.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">1000</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-create-p">
+<span id="cmdoption-fit-ctf-project-create-starting-port-bind"></span><span class="sig-name descname"><span class="pre">-p</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--starting-port-bind</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;starting_port_bind&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-create-p" title="Link to this definition"></a></dt>
+<dd><p>A starting port value for each user. Each user will received a port from the range from &lt;starting-port-bind&gt;to &lt;starting-port-bind + max-nof-users&gt;. If set to -1, the tool will automatically assign an available port value.User can choose a number between 10_000 to 65_535.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">-1</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-create-de">
+<span id="cmdoption-fit-ctf-project-create-description"></span><span class="sig-name descname"><span class="pre">-de</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--description</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;description&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-create-de" title="Link to this definition"></a></dt>
+<dd><p>A project description.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">''</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-delete">
+<h3>delete<a class="headerlink" href="#fit-ctf-project-delete" title="Link to this heading"></a></h3>
+<p>Delete an existing project.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-delete-pn">
+<span id="cmdoption-fit-ctf-project-delete-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-delete-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-enrolled-users">
+<h3>enrolled-users<a class="headerlink" href="#fit-ctf-project-enrolled-users" title="Link to this heading"></a></h3>
+<p>Get list of active users that are enrolled to the PROJECT_NAME.</p>
+<dl class="simple">
+<dt>Displays following states:</dt><dd><ul class="simple">
+<li><p>active state</p></li>
+<li><p>account username</p></li>
+<li><p>account role</p></li>
+<li><p>path to home mounting directory/volume</p></li>
+<li><p>forwarded port (visible from the outside)</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>enrolled-users<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-enrolled-users-pn">
+<span id="cmdoption-fit-ctf-project-enrolled-users-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-enrolled-users-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-enrolled-users-f">
+<span id="cmdoption-fit-ctf-project-enrolled-users-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-enrolled-users-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-enrolled-users-a">
+<span id="cmdoption-fit-ctf-project-enrolled-users-all"></span><span class="sig-name descname"><span class="pre">-a</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--all</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-enrolled-users-a" title="Link to this definition"></a></dt>
+<dd><p>Display inactive enrollments as well.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-generate-firewall-rules">
+<h3>generate-firewall-rules<a class="headerlink" href="#fit-ctf-project-generate-firewall-rules" title="Link to this heading"></a></h3>
+<p>Generate a BASH script with port forwarding rules for PROJECT_NAME.</p>
+<p>The command used in the script are written for <cite>firewalld</cite> application.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>generate-firewall-rules<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-generate-firewall-rules-ip">
+<span id="cmdoption-fit-ctf-project-generate-firewall-rules-ip-addr"></span><span class="sig-name descname"><span class="pre">-ip</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--ip-addr</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;ip_addr&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-generate-firewall-rules-ip" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> The destination IP address.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-generate-firewall-rules-o">
+<span id="cmdoption-fit-ctf-project-generate-firewall-rules-output"></span><span class="sig-name descname"><span class="pre">-o</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--output</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;output&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-generate-firewall-rules-o" title="Link to this definition"></a></dt>
+<dd><p>Destination file where the script content will be written.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-generate-firewall-rules-pn">
+<span id="cmdoption-fit-ctf-project-generate-firewall-rules-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-generate-firewall-rules-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-get-info">
+<h3>get-info<a class="headerlink" href="#fit-ctf-project-get-info" title="Link to this heading"></a></h3>
+<p>Display project PROJECT_NAME’s information.</p>
+<p>Dumps all information about a selected project.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>get-info<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-get-info-pn">
+<span id="cmdoption-fit-ctf-project-get-info-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-get-info-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-leaderboard">
+<h3>leaderboard<a class="headerlink" href="#fit-ctf-project-leaderboard" title="Link to this heading"></a></h3>
+<p>Display the leaderboard of top NUM users.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>leaderboard<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-leaderboard-pn">
+<span id="cmdoption-fit-ctf-project-leaderboard-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-leaderboard-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-leaderboard-f">
+<span id="cmdoption-fit-ctf-project-leaderboard-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-leaderboard-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-ls">
+<h3>ls<a class="headerlink" href="#fit-ctf-project-ls" title="Link to this heading"></a></h3>
+<p>Display existing projects.</p>
+<p>This command by default displays only active projects. Use <cite>-a</cite> flag to
+display inactive projects.</p>
+<dl class="simple">
+<dt>Displays following states:</dt><dd><ul class="simple">
+<li><p>active state</p></li>
+<li><p>project name</p></li>
+<li><p>max number of users</p></li>
+<li><p>number of active users enrolled to the project</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-ls-f">
+<span id="cmdoption-fit-ctf-project-ls-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-ls-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-ls-a">
+<span id="cmdoption-fit-ctf-project-ls-all"></span><span class="sig-name descname"><span class="pre">-a</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--all</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-ls-a" title="Link to this definition"></a></dt>
+<dd><p>Display both active and inactive projects.)</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-reserved-ports">
+<h3>reserved-ports<a class="headerlink" href="#fit-ctf-project-reserved-ports" title="Link to this heading"></a></h3>
+<p>Returns list of reserved ports.</p>
+<p>Displays a list of projects and their reserved port range.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>reserved-ports<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-reserved-ports-f">
+<span id="cmdoption-fit-ctf-project-reserved-ports-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-reserved-ports-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-resources">
+<h3>resources<a class="headerlink" href="#fit-ctf-project-resources" title="Link to this heading"></a></h3>
+<p>Display the resource usage of project cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>resources<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-resources-pn">
+<span id="cmdoption-fit-ctf-project-resources-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-resources-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-running-cluster">
+<h3>running-cluster<a class="headerlink" href="#fit-ctf-project-running-cluster" title="Link to this heading"></a></h3>
+<p>Display all the status of all the active clusters.</p>
+<p>When tabulate format is used, the status column is colored.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>running-cluster<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-running-cluster-pn">
+<span id="cmdoption-fit-ctf-project-running-cluster-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-running-cluster-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-running-cluster-f">
+<span id="cmdoption-fit-ctf-project-running-cluster-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-running-cluster-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-sync-leaderboard-data">
+<h3>sync-leaderboard-data<a class="headerlink" href="#fit-ctf-project-sync-leaderboard-data" title="Link to this heading"></a></h3>
+<p>Synchronize misaligned progress data.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project<span class="w"> </span>sync-leaderboard-data<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-sync-leaderboard-data-pn">
+<span id="cmdoption-fit-ctf-project-sync-leaderboard-data-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-sync-leaderboard-data-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+</section>
+<hr class="docutils" />
+<section id="fit-ctf-user">
+<h2>fit-ctf user<a class="headerlink" href="#fit-ctf-user" title="Link to this heading"></a></h2>
+<p>A command for user management.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="fit-ctf-user-change-password">
+<h3>change-password<a class="headerlink" href="#fit-ctf-user-change-password" title="Link to this heading"></a></h3>
+<p>Update user’s password.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user<span class="w"> </span>change-password<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-change-password-u">
+<span id="cmdoption-fit-ctf-user-change-password-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-change-password-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-change-password-p">
+<span id="cmdoption-fit-ctf-user-change-password-password"></span><span class="sig-name descname"><span class="pre">-p</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--password</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;password&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-change-password-p" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> New password.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-create">
+<h3>create<a class="headerlink" href="#fit-ctf-user-create" title="Link to this heading"></a></h3>
+<p>Create a new user.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-create-u">
+<span id="cmdoption-fit-ctf-user-create-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-create-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-create-p">
+<span id="cmdoption-fit-ctf-user-create-password"></span><span class="sig-name descname"><span class="pre">-p</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--password</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;password&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-create-p" title="Link to this definition"></a></dt>
+<dd><p>Account password.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-create-generate-password">
+<span class="sig-name descname"><span class="pre">--generate-password</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-create-generate-password" title="Link to this definition"></a></dt>
+<dd><p>Computer generate a password.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-create-e">
+<span id="cmdoption-fit-ctf-user-create-email"></span><span class="sig-name descname"><span class="pre">-e</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--email</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;email&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-create-e" title="Link to this definition"></a></dt>
+<dd><p>Account email.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-create-f">
+<span id="cmdoption-fit-ctf-user-create-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-create-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-create-multiple">
+<h3>create-multiple<a class="headerlink" href="#fit-ctf-user-create-multiple" title="Link to this heading"></a></h3>
+<p>Create multiple new users.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user<span class="w"> </span>create-multiple<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-create-multiple-i">
+<span id="cmdoption-fit-ctf-user-create-multiple-input_file"></span><span class="sig-name descname"><span class="pre">-i</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--input_file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;input_file&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-create-multiple-i" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Filepath to a file with new usernames.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-create-multiple-dp">
+<span id="cmdoption-fit-ctf-user-create-multiple-default-password"></span><span class="sig-name descname"><span class="pre">-dp</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--default-password</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;default_password&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-create-multiple-dp" title="Link to this definition"></a></dt>
+<dd><p>Set default passwords to all new users.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-create-multiple-f">
+<span id="cmdoption-fit-ctf-user-create-multiple-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-create-multiple-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-delete">
+<h3>delete<a class="headerlink" href="#fit-ctf-user-delete" title="Link to this heading"></a></h3>
+<p>Remove user from the database.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span><span class="o">[</span>USERNAMES<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Arguments</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-delete-arg-USERNAMES">
+<span class="sig-name descname"><span class="pre">USERNAMES</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-delete-arg-USERNAMES" title="Link to this definition"></a></dt>
+<dd><p>Optional argument(s)</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-enrolled-projects">
+<h3>enrolled-projects<a class="headerlink" href="#fit-ctf-user-enrolled-projects" title="Link to this heading"></a></h3>
+<p>Get a list of projects that a user is enrolled to.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user<span class="w"> </span>enrolled-projects<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-enrolled-projects-u">
+<span id="cmdoption-fit-ctf-user-enrolled-projects-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-enrolled-projects-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-enrolled-projects-f">
+<span id="cmdoption-fit-ctf-user-enrolled-projects-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-enrolled-projects-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-enrolled-projects-a">
+<span id="cmdoption-fit-ctf-user-enrolled-projects-all"></span><span class="sig-name descname"><span class="pre">-a</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--all</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-enrolled-projects-a" title="Link to this definition"></a></dt>
+<dd><p>Display inactive projects as well.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-get">
+<h3>get<a class="headerlink" href="#fit-ctf-user-get" title="Link to this heading"></a></h3>
+<p>Get user information.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user<span class="w"> </span>get<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-get-u">
+<span id="cmdoption-fit-ctf-user-get-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-get-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-ls">
+<h3>ls<a class="headerlink" href="#fit-ctf-user-ls" title="Link to this heading"></a></h3>
+<p>Get a list of registered users in the database.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-ls-f">
+<span id="cmdoption-fit-ctf-user-ls-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-ls-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-ls-a">
+<span id="cmdoption-fit-ctf-user-ls-all"></span><span class="sig-name descname"><span class="pre">-a</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--all</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-ls-a" title="Link to this definition"></a></dt>
+<dd><p>Display all users (even inactive).</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-upload-key">
+<h3>upload-key<a class="headerlink" href="#fit-ctf-user-upload-key" title="Link to this heading"></a></h3>
+<p>Upload a user’s public key for easier SSH access.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user<span class="w"> </span>upload-key<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-upload-key-u">
+<span id="cmdoption-fit-ctf-user-upload-key-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-upload-key-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-upload-key-f">
+<span id="cmdoption-fit-ctf-user-upload-key-file"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;file&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-upload-key-f" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Path to the public key.</p>
+</dd></dl>
+
+</section>
+</section>
+<hr class="docutils" />
+<section id="fit-ctf-user-cluster">
+<h2>fit-ctf user-cluster<a class="headerlink" href="#fit-ctf-user-cluster" title="Link to this heading"></a></h2>
+<p>Manage user clusters (user scenario instances).</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="fit-ctf-user-cluster-add-scenario">
+<h3>add-scenario<a class="headerlink" href="#fit-ctf-user-cluster-add-scenario" title="Link to this heading"></a></h3>
+<p>Add a scenario to a user’s cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>add-scenario<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-scenario-u">
+<span id="cmdoption-fit-ctf-user-cluster-add-scenario-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-scenario-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-scenario-pn">
+<span id="cmdoption-fit-ctf-user-cluster-add-scenario-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-scenario-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-scenario-s">
+<span id="cmdoption-fit-ctf-user-cluster-add-scenario-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-scenario-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name to add</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-scenario-i">
+<span id="cmdoption-fit-ctf-user-cluster-add-scenario-interactive"></span><span class="sig-name descname"><span class="pre">-i</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--interactive</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-scenario-i" title="Link to this definition"></a></dt>
+<dd><p>Interactively set values</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-scenario-f">
+<span id="cmdoption-fit-ctf-user-cluster-add-scenario-file"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;file&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-scenario-f" title="Link to this definition"></a></dt>
+<dd><p>Service configuration file</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-add-secret">
+<h3>add-secret<a class="headerlink" href="#fit-ctf-user-cluster-add-secret" title="Link to this heading"></a></h3>
+<p>Add a new secret to a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>add-secret<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-secret-u">
+<span id="cmdoption-fit-ctf-user-cluster-add-secret-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-secret-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-secret-pn">
+<span id="cmdoption-fit-ctf-user-cluster-add-secret-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-secret-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-secret-s">
+<span id="cmdoption-fit-ctf-user-cluster-add-secret-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-secret-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-secret-k">
+<span id="cmdoption-fit-ctf-user-cluster-add-secret-key"></span><span class="sig-name descname"><span class="pre">-k</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--key</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;key&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-secret-k" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret key</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-add-secret-v">
+<span id="cmdoption-fit-ctf-user-cluster-add-secret-value"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--value</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;value&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-add-secret-v" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret value</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-build">
+<h3>build<a class="headerlink" href="#fit-ctf-user-cluster-build" title="Link to this heading"></a></h3>
+<p>Build/rebuild user cluster images.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>build<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-build-u">
+<span id="cmdoption-fit-ctf-user-cluster-build-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-build-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-build-pn">
+<span id="cmdoption-fit-ctf-user-cluster-build-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-build-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-build-v">
+<span id="cmdoption-fit-ctf-user-cluster-build-verbose"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--verbose</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-build-v" title="Link to this definition"></a></dt>
+<dd><p>Show build output</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-compile">
+<h3>compile<a class="headerlink" href="#fit-ctf-user-cluster-compile" title="Link to this heading"></a></h3>
+<p>Compile scenario templates for a cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>compile<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-compile-u">
+<span id="cmdoption-fit-ctf-user-cluster-compile-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-compile-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-compile-pn">
+<span id="cmdoption-fit-ctf-user-cluster-compile-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-compile-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-compile-s">
+<span id="cmdoption-fit-ctf-user-cluster-compile-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-compile-s" title="Link to this definition"></a></dt>
+<dd><p>Scenario name (compile all if not specified)</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-edit-service">
+<h3>edit-service<a class="headerlink" href="#fit-ctf-user-cluster-edit-service" title="Link to this heading"></a></h3>
+<p>Edit service configuration with YAML editor.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>edit-service<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-edit-service-u">
+<span id="cmdoption-fit-ctf-user-cluster-edit-service-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-edit-service-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-edit-service-pn">
+<span id="cmdoption-fit-ctf-user-cluster-edit-service-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-edit-service-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-edit-service-s">
+<span id="cmdoption-fit-ctf-user-cluster-edit-service-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-edit-service-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-edit-service-service">
+<span class="sig-name descname"><span class="pre">--service</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;service&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-edit-service-service" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Service name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-edit-service-y">
+<span id="cmdoption-fit-ctf-user-cluster-edit-service-yes"></span><span class="sig-name descname"><span class="pre">-y</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--yes</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-edit-service-y" title="Link to this definition"></a></dt>
+<dd><p>Confirm changes</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-health">
+<h3>health<a class="headerlink" href="#fit-ctf-user-cluster-health" title="Link to this heading"></a></h3>
+<p>Check health of all services in cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>health<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-health-u">
+<span id="cmdoption-fit-ctf-user-cluster-health-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-health-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-health-pn">
+<span id="cmdoption-fit-ctf-user-cluster-health-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-health-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-health-f">
+<span id="cmdoption-fit-ctf-user-cluster-health-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-health-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-info">
+<h3>info<a class="headerlink" href="#fit-ctf-user-cluster-info" title="Link to this heading"></a></h3>
+<p>Show detailed cluster information.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>info<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-info-u">
+<span id="cmdoption-fit-ctf-user-cluster-info-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-info-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-info-pn">
+<span id="cmdoption-fit-ctf-user-cluster-info-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-info-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-list-scenarios">
+<h3>list-scenarios<a class="headerlink" href="#fit-ctf-user-cluster-list-scenarios" title="Link to this heading"></a></h3>
+<p>List all scenarios in a user’s cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>list-scenarios<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-list-scenarios-u">
+<span id="cmdoption-fit-ctf-user-cluster-list-scenarios-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-list-scenarios-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-list-scenarios-pn">
+<span id="cmdoption-fit-ctf-user-cluster-list-scenarios-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-list-scenarios-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-list-scenarios-f">
+<span id="cmdoption-fit-ctf-user-cluster-list-scenarios-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-list-scenarios-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-list-secrets">
+<h3>list-secrets<a class="headerlink" href="#fit-ctf-user-cluster-list-secrets" title="Link to this heading"></a></h3>
+<p>List all secrets in a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>list-secrets<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-list-secrets-u">
+<span id="cmdoption-fit-ctf-user-cluster-list-secrets-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-list-secrets-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-list-secrets-pn">
+<span id="cmdoption-fit-ctf-user-cluster-list-secrets-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-list-secrets-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-list-secrets-s">
+<span id="cmdoption-fit-ctf-user-cluster-list-secrets-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-list-secrets-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-list-secrets-f">
+<span id="cmdoption-fit-ctf-user-cluster-list-secrets-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-list-secrets-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-logs">
+<h3>logs<a class="headerlink" href="#fit-ctf-user-cluster-logs" title="Link to this heading"></a></h3>
+<p>Show recent container logs for a user’s cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>logs<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-logs-u">
+<span id="cmdoption-fit-ctf-user-cluster-logs-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-logs-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-logs-pn">
+<span id="cmdoption-fit-ctf-user-cluster-logs-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-logs-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-logs-tail">
+<span class="sig-name descname"><span class="pre">--tail</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;tail&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-logs-tail" title="Link to this definition"></a></dt>
+<dd><p>Max lines per service</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">500</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-logs-s">
+<span id="cmdoption-fit-ctf-user-cluster-logs-service"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--service</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;service&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-logs-s" title="Link to this definition"></a></dt>
+<dd><p>Limit to one compose service</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-logs-no-log-stdout">
+<span class="sig-name descname"><span class="pre">--no-log-stdout</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-logs-no-log-stdout" title="Link to this definition"></a></dt>
+<dd><p>Write logs only to LOG_DEST files, not the terminal</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-remove-scenario">
+<h3>remove-scenario<a class="headerlink" href="#fit-ctf-user-cluster-remove-scenario" title="Link to this heading"></a></h3>
+<p>Remove a scenario from a user’s cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>remove-scenario<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-remove-scenario-u">
+<span id="cmdoption-fit-ctf-user-cluster-remove-scenario-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-remove-scenario-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-remove-scenario-pn">
+<span id="cmdoption-fit-ctf-user-cluster-remove-scenario-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-remove-scenario-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-remove-scenario-s">
+<span id="cmdoption-fit-ctf-user-cluster-remove-scenario-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-remove-scenario-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name to remove</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-remove-secret">
+<h3>remove-secret<a class="headerlink" href="#fit-ctf-user-cluster-remove-secret" title="Link to this heading"></a></h3>
+<p>Remove a secret from a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>remove-secret<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-remove-secret-u">
+<span id="cmdoption-fit-ctf-user-cluster-remove-secret-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-remove-secret-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-remove-secret-pn">
+<span id="cmdoption-fit-ctf-user-cluster-remove-secret-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-remove-secret-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-remove-secret-s">
+<span id="cmdoption-fit-ctf-user-cluster-remove-secret-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-remove-secret-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-remove-secret-k">
+<span id="cmdoption-fit-ctf-user-cluster-remove-secret-key"></span><span class="sig-name descname"><span class="pre">-k</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--key</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;key&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-remove-secret-k" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret key to remove</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-remove-secret-y">
+<span id="cmdoption-fit-ctf-user-cluster-remove-secret-yes"></span><span class="sig-name descname"><span class="pre">-y</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--yes</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-remove-secret-y" title="Link to this definition"></a></dt>
+<dd><p>Confirm removal</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-restart">
+<h3>restart<a class="headerlink" href="#fit-ctf-user-cluster-restart" title="Link to this heading"></a></h3>
+<p>Restart all scenarios in a user’s cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>restart<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-restart-u">
+<span id="cmdoption-fit-ctf-user-cluster-restart-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-restart-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-restart-pn">
+<span id="cmdoption-fit-ctf-user-cluster-restart-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-restart-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-restart-v">
+<span id="cmdoption-fit-ctf-user-cluster-restart-verbose"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--verbose</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-restart-v" title="Link to this definition"></a></dt>
+<dd><p>Show compose engine output</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-start">
+<h3>start<a class="headerlink" href="#fit-ctf-user-cluster-start" title="Link to this heading"></a></h3>
+<p>Start all scenarios in a user’s cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>start<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-start-u">
+<span id="cmdoption-fit-ctf-user-cluster-start-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-start-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-start-pn">
+<span id="cmdoption-fit-ctf-user-cluster-start-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-start-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-start-v">
+<span id="cmdoption-fit-ctf-user-cluster-start-verbose"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--verbose</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-start-v" title="Link to this definition"></a></dt>
+<dd><p>Show compose engine output</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-status">
+<h3>status<a class="headerlink" href="#fit-ctf-user-cluster-status" title="Link to this heading"></a></h3>
+<p>Check if cluster is running.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-status-u">
+<span id="cmdoption-fit-ctf-user-cluster-status-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-status-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-status-pn">
+<span id="cmdoption-fit-ctf-user-cluster-status-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-status-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-stop">
+<h3>stop<a class="headerlink" href="#fit-ctf-user-cluster-stop" title="Link to this heading"></a></h3>
+<p>Stop all scenarios in a user’s cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>stop<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-stop-u">
+<span id="cmdoption-fit-ctf-user-cluster-stop-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-stop-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-stop-pn">
+<span id="cmdoption-fit-ctf-user-cluster-stop-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-stop-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-stop-v">
+<span id="cmdoption-fit-ctf-user-cluster-stop-verbose"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--verbose</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-stop-v" title="Link to this definition"></a></dt>
+<dd><p>Show compose engine output</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-user-cluster-update-secret">
+<h3>update-secret<a class="headerlink" href="#fit-ctf-user-cluster-update-secret" title="Link to this heading"></a></h3>
+<p>Update an existing secret in a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>update-secret<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-update-secret-u">
+<span id="cmdoption-fit-ctf-user-cluster-update-secret-username"></span><span class="sig-name descname"><span class="pre">-u</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--username</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;username&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-update-secret-u" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Account username.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-update-secret-pn">
+<span id="cmdoption-fit-ctf-user-cluster-update-secret-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-update-secret-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-update-secret-s">
+<span id="cmdoption-fit-ctf-user-cluster-update-secret-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-update-secret-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-update-secret-k">
+<span id="cmdoption-fit-ctf-user-cluster-update-secret-key"></span><span class="sig-name descname"><span class="pre">-k</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--key</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;key&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-update-secret-k" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret key</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-user-cluster-update-secret-v">
+<span id="cmdoption-fit-ctf-user-cluster-update-secret-value"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--value</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;value&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-user-cluster-update-secret-v" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret value</p>
+</dd></dl>
+
+</section>
+</section>
+<hr class="docutils" />
+<section id="fit-ctf-project-cluster">
+<h2>fit-ctf project-cluster<a class="headerlink" href="#fit-ctf-project-cluster" title="Link to this heading"></a></h2>
+<p>Manage project-level cluster (shared infrastructure).</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-pn">
+<span id="cmdoption-fit-ctf-project-cluster-project-name"></span><span class="sig-name descname"><span class="pre">-pn</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--project-name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;project_name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-pn" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Project’s name.</p>
+</dd></dl>
+
+<section id="fit-ctf-project-cluster-add-scenario">
+<h3>add-scenario<a class="headerlink" href="#fit-ctf-project-cluster-add-scenario" title="Link to this heading"></a></h3>
+<p>Add a scenario to the project cluster (shared infrastructure).</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>add-scenario<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-add-scenario-s">
+<span id="cmdoption-fit-ctf-project-cluster-add-scenario-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-add-scenario-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name to add</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-add-scenario-i">
+<span id="cmdoption-fit-ctf-project-cluster-add-scenario-interactive"></span><span class="sig-name descname"><span class="pre">-i</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--interactive</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-add-scenario-i" title="Link to this definition"></a></dt>
+<dd><p>Interactively set values</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-add-scenario-f">
+<span id="cmdoption-fit-ctf-project-cluster-add-scenario-file"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--file</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;file&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-add-scenario-f" title="Link to this definition"></a></dt>
+<dd><p>Scenario configuration file</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-add-secret">
+<h3>add-secret<a class="headerlink" href="#fit-ctf-project-cluster-add-secret" title="Link to this heading"></a></h3>
+<p>Add a new secret to a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>add-secret<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-add-secret-s">
+<span id="cmdoption-fit-ctf-project-cluster-add-secret-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-add-secret-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-add-secret-k">
+<span id="cmdoption-fit-ctf-project-cluster-add-secret-key"></span><span class="sig-name descname"><span class="pre">-k</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--key</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;key&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-add-secret-k" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret key</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-add-secret-v">
+<span id="cmdoption-fit-ctf-project-cluster-add-secret-value"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--value</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;value&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-add-secret-v" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret value</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-build">
+<h3>build<a class="headerlink" href="#fit-ctf-project-cluster-build" title="Link to this heading"></a></h3>
+<p>Build/rebuild project cluster images.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>build<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-build-v">
+<span id="cmdoption-fit-ctf-project-cluster-build-verbose"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--verbose</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-build-v" title="Link to this definition"></a></dt>
+<dd><p>Show build output</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-compile">
+<h3>compile<a class="headerlink" href="#fit-ctf-project-cluster-compile" title="Link to this heading"></a></h3>
+<p>Compile project cluster scenarios.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>compile<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-compile-s">
+<span id="cmdoption-fit-ctf-project-cluster-compile-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-compile-s" title="Link to this definition"></a></dt>
+<dd><p>Specific scenario to compile (default: all)</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-edit-service">
+<h3>edit-service<a class="headerlink" href="#fit-ctf-project-cluster-edit-service" title="Link to this heading"></a></h3>
+<p>Edit service configuration with YAML editor.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>edit-service<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-edit-service-s">
+<span id="cmdoption-fit-ctf-project-cluster-edit-service-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-edit-service-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-edit-service-service">
+<span class="sig-name descname"><span class="pre">--service</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;service&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-edit-service-service" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Service name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-edit-service-y">
+<span id="cmdoption-fit-ctf-project-cluster-edit-service-yes"></span><span class="sig-name descname"><span class="pre">-y</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--yes</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-edit-service-y" title="Link to this definition"></a></dt>
+<dd><p>Confirm changes</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-health">
+<h3>health<a class="headerlink" href="#fit-ctf-project-cluster-health" title="Link to this heading"></a></h3>
+<p>Display health check of all services in project cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>health<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-health-f">
+<span id="cmdoption-fit-ctf-project-cluster-health-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-health-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-info">
+<h3>info<a class="headerlink" href="#fit-ctf-project-cluster-info" title="Link to this heading"></a></h3>
+<p>Show detailed project cluster information.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>info<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-project-cluster-list-scenarios">
+<h3>list-scenarios<a class="headerlink" href="#fit-ctf-project-cluster-list-scenarios" title="Link to this heading"></a></h3>
+<p>List all scenarios in project cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>list-scenarios<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-list-scenarios-f">
+<span id="cmdoption-fit-ctf-project-cluster-list-scenarios-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-list-scenarios-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-list-secrets">
+<h3>list-secrets<a class="headerlink" href="#fit-ctf-project-cluster-list-secrets" title="Link to this heading"></a></h3>
+<p>List all secrets in a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>list-secrets<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-list-secrets-s">
+<span id="cmdoption-fit-ctf-project-cluster-list-secrets-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-list-secrets-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-list-secrets-f">
+<span id="cmdoption-fit-ctf-project-cluster-list-secrets-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-list-secrets-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-logs">
+<h3>logs<a class="headerlink" href="#fit-ctf-project-cluster-logs" title="Link to this heading"></a></h3>
+<p>Show recent container logs from the project cluster compose stack.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>logs<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-logs-tail">
+<span class="sig-name descname"><span class="pre">--tail</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;tail&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-logs-tail" title="Link to this definition"></a></dt>
+<dd><p>Max lines per service</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default<span class="colon">:</span></dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">500</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-logs-s">
+<span id="cmdoption-fit-ctf-project-cluster-logs-service"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--service</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;service&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-logs-s" title="Link to this definition"></a></dt>
+<dd><p>Limit to one compose service</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-logs-no-log-stdout">
+<span class="sig-name descname"><span class="pre">--no-log-stdout</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-logs-no-log-stdout" title="Link to this definition"></a></dt>
+<dd><p>Write logs only to LOG_DEST files, not the terminal</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-remove-scenario">
+<h3>remove-scenario<a class="headerlink" href="#fit-ctf-project-cluster-remove-scenario" title="Link to this heading"></a></h3>
+<p>Remove a scenario from the project cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>remove-scenario<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-remove-scenario-s">
+<span id="cmdoption-fit-ctf-project-cluster-remove-scenario-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-remove-scenario-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name to remove</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-remove-secret">
+<h3>remove-secret<a class="headerlink" href="#fit-ctf-project-cluster-remove-secret" title="Link to this heading"></a></h3>
+<p>Remove a secret from a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>remove-secret<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-remove-secret-s">
+<span id="cmdoption-fit-ctf-project-cluster-remove-secret-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-remove-secret-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-remove-secret-k">
+<span id="cmdoption-fit-ctf-project-cluster-remove-secret-key"></span><span class="sig-name descname"><span class="pre">-k</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--key</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;key&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-remove-secret-k" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret key to remove</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-remove-secret-y">
+<span id="cmdoption-fit-ctf-project-cluster-remove-secret-yes"></span><span class="sig-name descname"><span class="pre">-y</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--yes</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-remove-secret-y" title="Link to this definition"></a></dt>
+<dd><p>Confirm removal</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-restart">
+<h3>restart<a class="headerlink" href="#fit-ctf-project-cluster-restart" title="Link to this heading"></a></h3>
+<p>Restart project cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>restart<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-restart-v">
+<span id="cmdoption-fit-ctf-project-cluster-restart-verbose"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--verbose</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-restart-v" title="Link to this definition"></a></dt>
+<dd><p>Show compose engine output</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-start">
+<h3>start<a class="headerlink" href="#fit-ctf-project-cluster-start" title="Link to this heading"></a></h3>
+<p>Start project cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>start<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-start-v">
+<span id="cmdoption-fit-ctf-project-cluster-start-verbose"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--verbose</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-start-v" title="Link to this definition"></a></dt>
+<dd><p>Show compose engine output</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-status">
+<h3>status<a class="headerlink" href="#fit-ctf-project-cluster-status" title="Link to this heading"></a></h3>
+<p>Check if project cluster is running.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>status<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="fit-ctf-project-cluster-stop">
+<h3>stop<a class="headerlink" href="#fit-ctf-project-cluster-stop" title="Link to this heading"></a></h3>
+<p>Stop project cluster.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>stop<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-stop-v">
+<span id="cmdoption-fit-ctf-project-cluster-stop-verbose"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--verbose</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-stop-v" title="Link to this definition"></a></dt>
+<dd><p>Show compose engine output</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-project-cluster-update-secret">
+<h3>update-secret<a class="headerlink" href="#fit-ctf-project-cluster-update-secret" title="Link to this heading"></a></h3>
+<p>Update an existing secret in a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>update-secret<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-update-secret-s">
+<span id="cmdoption-fit-ctf-project-cluster-update-secret-scenario"></span><span class="sig-name descname"><span class="pre">-s</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--scenario</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;scenario&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-update-secret-s" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-update-secret-k">
+<span id="cmdoption-fit-ctf-project-cluster-update-secret-key"></span><span class="sig-name descname"><span class="pre">-k</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--key</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;key&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-update-secret-k" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret key</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-project-cluster-update-secret-v">
+<span id="cmdoption-fit-ctf-project-cluster-update-secret-value"></span><span class="sig-name descname"><span class="pre">-v</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--value</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;value&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-project-cluster-update-secret-v" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Secret value</p>
+</dd></dl>
+
+</section>
+</section>
+<hr class="docutils" />
+<section id="fit-ctf-scenario">
+<h2>fit-ctf scenario<a class="headerlink" href="#fit-ctf-scenario" title="Link to this heading"></a></h2>
+<p>Manage scenarios (CTF challenge templates).</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span><span class="w"> </span>COMMAND<span class="w"> </span><span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<section id="fit-ctf-scenario-create">
+<h3>create<a class="headerlink" href="#fit-ctf-scenario-create" title="Link to this heading"></a></h3>
+<p>Create a new scenario template.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span>create<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-create-n">
+<span id="cmdoption-fit-ctf-scenario-create-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-create-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-scenario-delete">
+<h3>delete<a class="headerlink" href="#fit-ctf-scenario-delete" title="Link to this heading"></a></h3>
+<p>Delete a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span>delete<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-delete-n">
+<span id="cmdoption-fit-ctf-scenario-delete-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-delete-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-delete-yes">
+<span class="sig-name descname"><span class="pre">--yes</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-delete-yes" title="Link to this definition"></a></dt>
+<dd><p>Confirm the action without prompting.</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-scenario-edit">
+<h3>edit<a class="headerlink" href="#fit-ctf-scenario-edit" title="Link to this heading"></a></h3>
+<p>Edit scenario template file.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span>edit<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-edit-n">
+<span id="cmdoption-fit-ctf-scenario-edit-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-edit-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-edit-skip-recompile">
+<span class="sig-name descname"><span class="pre">--skip-recompile</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-edit-skip-recompile" title="Link to this definition"></a></dt>
+<dd><p>Skip recompiling clusters after editing</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-edit-q">
+<span id="cmdoption-fit-ctf-scenario-edit-quiet"></span><span class="sig-name descname"><span class="pre">-q</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--quiet</span></span><span class="sig-prename descclassname"></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-edit-q" title="Link to this definition"></a></dt>
+<dd><p>Suppress per-cluster recompilation messages</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-scenario-info">
+<h3>info<a class="headerlink" href="#fit-ctf-scenario-info" title="Link to this heading"></a></h3>
+<p>Show detailed information about a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span>info<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-info-n">
+<span id="cmdoption-fit-ctf-scenario-info-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-info-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-scenario-ls">
+<h3>ls<a class="headerlink" href="#fit-ctf-scenario-ls" title="Link to this heading"></a></h3>
+<p>List all scenarios.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span>ls<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-ls-f">
+<span id="cmdoption-fit-ctf-scenario-ls-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-ls-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-scenario-usage">
+<h3>usage<a class="headerlink" href="#fit-ctf-scenario-usage" title="Link to this heading"></a></h3>
+<p>Show which clusters use a scenario.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span>usage<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-usage-n">
+<span id="cmdoption-fit-ctf-scenario-usage-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-usage-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-usage-f">
+<span id="cmdoption-fit-ctf-scenario-usage-format"></span><span class="sig-name descname"><span class="pre">-f</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-usage-f" title="Link to this definition"></a></dt>
+<dd><p>The output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>csv | tabulate</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-scenario-vars-template">
+<h3>vars-template<a class="headerlink" href="#fit-ctf-scenario-vars-template" title="Link to this heading"></a></h3>
+<p>Generate template file with variables for scenario configs.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span>vars-template<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-vars-template-n">
+<span id="cmdoption-fit-ctf-scenario-vars-template-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-vars-template-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-vars-template-of">
+<span id="cmdoption-fit-ctf-scenario-vars-template-output-format"></span><span class="sig-name descname"><span class="pre">-of</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--output-format</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;output_format&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-vars-template-of" title="Link to this definition"></a></dt>
+<dd><p>Output format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options<span class="colon">:</span></dt>
+<dd class="field-odd"><p>yaml | json</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="fit-ctf-scenario-view">
+<h3>view<a class="headerlink" href="#fit-ctf-scenario-view" title="Link to this heading"></a></h3>
+<p>Edit scenario template file.</p>
+<p class="rubric">Usage</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span>view<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt class="sig sig-object std" id="cmdoption-fit-ctf-scenario-view-n">
+<span id="cmdoption-fit-ctf-scenario-view-name"></span><span class="sig-name descname"><span class="pre">-n</span></span><span class="sig-prename descclassname"></span><span class="sig-prename descclassname"><span class="pre">,</span> </span><span class="sig-name descname"><span class="pre">--name</span></span><span class="sig-prename descclassname"> <span class="pre">&lt;name&gt;</span></span><a class="headerlink" href="#cmdoption-fit-ctf-scenario-view-n" title="Link to this definition"></a></dt>
+<dd><p><strong>Required</strong> Scenario name</p>
+</dd></dl>
+
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="setup-file.html" class="btn btn-neutral float-left" title="Bulk setup file" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="container-client.html" class="btn btn-neutral float-right" title="Container client" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

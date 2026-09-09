@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Production infrastructure (fit-ctf-virt) &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Rendezvous (SSH and TUI)" href="rendezvous.html" />
+    <link rel="prev" title="Deployment" href="deployment.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Production infrastructure (fit-ctf-virt)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#relationship-to-fit-ctf">Relationship to FIT-CTF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#architecture">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#repository-layout">Repository layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#installation-workflow">Installation workflow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#phase-1-host-bootstrap">Phase 1 — Host bootstrap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#phase-2-create-incus-infrastructure">Phase 2 — Create Incus infrastructure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#phase-3-initialize-instances">Phase 3 — Initialize instances</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-reference">Configuration reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#common-infrastructure">Common infrastructure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#playground">Playground</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#database">Database</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monitoring">Monitoring</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#invoke-tasks">Invoke tasks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#what-each-instance-receives">What each instance receives</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#playground-vm">Playground VM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#database-container">Database container</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#monitoring-container">Monitoring container</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#participant-access">Participant access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#operator-workflow">Operator workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#monitoring-access">Monitoring access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#teardown">Teardown</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#security-notes">Security notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Production infrastructure (fit-ctf-virt)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/fit-ctf-virt.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="production-infrastructure-fit-ctf-virt">
+<h1>Production infrastructure (fit-ctf-virt)<a class="headerlink" href="#production-infrastructure-fit-ctf-virt" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://github.com/hungdojan/fit-ctf-virt">fit-ctf-virt</a> is a companion
+repository that provisions and configures FIT-CTF on a production-style host using
+<a class="reference external" href="https://linuxcontainers.org/incus/">Incus</a> (the LXD successor). It is <strong>not</strong>
+the CTF application itself — it handles infrastructure automation while this
+repository remains the application layer.</p>
+<p>Use fit-ctf-virt when you need:</p>
+<ul class="simple">
+<li><p>A dedicated playground <strong>virtual machine</strong> for Podman challenge containers</p></li>
+<li><p>A separate <strong>MongoDB</strong> instance on a private network</p></li>
+<li><p>Optional <strong>Prometheus + Grafana</strong> monitoring</p></li>
+<li><p>Participant access over SSH into <a class="reference internal" href="rendezvous.html"><span class="doc">Rendezvous (SSH and TUI)</span></a></p></li>
+</ul>
+<p>For local development or a single-server setup without Incus, see <a class="reference internal" href="deployment.html"><span class="doc">Deployment</span></a>
+instead.</p>
+<section id="relationship-to-fit-ctf">
+<h2>Relationship to FIT-CTF<a class="headerlink" href="#relationship-to-fit-ctf" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Repository</p></th>
+<th class="head"><p>Responsibility</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>fit-ctf</strong> (this repo)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span></code> CLI, <code class="docutils literal notranslate"><span class="pre">fit-rendezvous</span></code> TUI, MongoDB schema, scenarios/modules,
+Podman clusters, <code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">generate-env</span></code>, <code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">setup-sshd</span></code>, <code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">db-deploy</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>fit-ctf-virt</strong></p></td>
+<td><p>Incus storage/network/profile/instances, Ansible provisioning, monitoring
+stack, production directory layout on the playground VM</p></td>
+</tr>
+</tbody>
+</table>
+<p>During playground initialization, fit-ctf-virt clones FIT-CTF to <code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf</span></code> and
+runs FIT-CTF’s own Invoke tasks to generate <code class="docutils literal notranslate"><span class="pre">.env</span></code> and configure SSH/Rendezvous.</p>
+</section>
+<section id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Link to this heading"></a></h2>
+<p>fit-ctf-virt deploys three Incus instances on a private bridge network:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Incus host (Rocky Linux 10)
+└── fitctfbr0  (10.100.0.1/24, NAT)
+    ├── fit-ctf-playground   VM         10.100.0.2
+    │   FIT-CTF, Podman, SSH :5555, node-exporter :9100
+    ├── fit-ctf-database     container  10.100.0.3
+    │   MongoDB 7
+    └── fit-ctf-monitoring   container  10.100.0.4
+        Prometheus :9090, Grafana :3000
+</pre></div>
+</div>
+<p><strong>Why a VM for the playground?</strong> Nested Podman workloads, disk resize, and fuller
+kernel isolation are easier on a virtual machine. Database and monitoring run as
+lighter containers.</p>
+<p>Instance names resolve as DNS hostnames on the Incus bridge (for example,
+<code class="docutils literal notranslate"><span class="pre">fit-ctf-database</span></code> from the playground VM).</p>
+</section>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p><strong>Incus host</strong> (bare metal or VM):</p>
+<ul class="simple">
+<li><p>Rocky Linux 10 (tested)</p></li>
+<li><p>Incus <code class="docutils literal notranslate"><span class="pre">&gt;=</span> <span class="pre">0.5.1</span></code> (tested on 6.21)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mkisofs</span></code> and <code class="docutils literal notranslate"><span class="pre">qemu-system-x86_64</span></code> — required for the playground VM</p></li>
+<li><p>Python 3.12+ with Poetry</p></li>
+</ul>
+<p><strong>Inside each instance</strong> (installed automatically by Ansible):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ansible-core</span></code>, Podman or Docker (depending on role), and Galaxy collections
+<code class="docutils literal notranslate"><span class="pre">community.general</span></code>, <code class="docutils literal notranslate"><span class="pre">community.mongodb</span></code>, <code class="docutils literal notranslate"><span class="pre">community.docker</span></code></p></li>
+</ul>
+</section>
+<section id="repository-layout">
+<h2>Repository layout<a class="headerlink" href="#repository-layout" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>fit-ctf-virt/
+├── tasks.py                 # Invoke entry point
+├── env-example.yaml         # Configuration template
+├── env-config.yaml          # Active config (gitignored — contains secrets)
+├── scripts/init.sh          # One-time host bootstrap
+└── resources/
+    ├── init.sh              # In-instance bootstrap (Ansible install)
+    ├── ansible_extra_vals.yaml.j2
+    ├── playground/ansible/  # FIT-CTF + node-exporter roles
+    ├── database/ansible/    # MongoDB 7 role
+    └── monitoring/ansible/  # Prometheus + Grafana via Docker
+</pre></div>
+</div>
+</section>
+<section id="installation-workflow">
+<h2>Installation workflow<a class="headerlink" href="#installation-workflow" title="Link to this heading"></a></h2>
+<p>The deployment has two phases: create Incus objects on the host, then configure each
+instance with Ansible.</p>
+<section id="phase-1-host-bootstrap">
+<h3>Phase 1 — Host bootstrap<a class="headerlink" href="#phase-1-host-bootstrap" title="Link to this heading"></a></h3>
+<p>On a fresh Rocky Linux 10 host, install Incus and clone fit-ctf-virt. The repository
+ships <code class="docutils literal notranslate"><span class="pre">scripts/init.sh</span></code> as a reference bootstrap script; you can run it or perform
+equivalent steps manually:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># On the Incus host</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/hungdojan/fit-ctf-virt
+<span class="nb">cd</span><span class="w"> </span>fit-ctf-virt
+cp<span class="w"> </span>env-example.yaml<span class="w"> </span>env-config.yaml<span class="w">   </span><span class="c1"># edit secrets and sizing</span>
+poetry<span class="w"> </span>install
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">scripts/init.sh</span></code> additionally installs Incus from the <code class="docutils literal notranslate"><span class="pre">neelc/incus</span></code> COPR,
+configures firewall masquerade rules, runs <code class="docutils literal notranslate"><span class="pre">incus</span> <span class="pre">admin</span> <span class="pre">init</span> <span class="pre">--minimal</span></code>, and calls
+<code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">setup</span></code>.</p>
+</section>
+<section id="phase-2-create-incus-infrastructure">
+<h3>Phase 2 — Create Incus infrastructure<a class="headerlink" href="#phase-2-create-incus-infrastructure" title="Link to this heading"></a></h3>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>setup
+</pre></div>
+</div>
+<p>This task is idempotent — existing storage pools, networks, profiles, and instances
+are skipped. It creates:</p>
+<ol class="arabic simple">
+<li><p>Storage pool <code class="docutils literal notranslate"><span class="pre">fit-ctf-pool</span></code> (btrfs)</p></li>
+<li><p>Bridge network <code class="docutils literal notranslate"><span class="pre">fitctfbr0</span></code> (<code class="docutils literal notranslate"><span class="pre">10.100.0.1/24</span></code>, NAT)</p></li>
+<li><p>Profile <code class="docutils literal notranslate"><span class="pre">fit-ctf-profile</span></code> (NIC on bridge + root disk)</p></li>
+<li><p>Three instances via <code class="docutils literal notranslate"><span class="pre">incus</span> <span class="pre">init</span></code> (playground as <code class="docutils literal notranslate"><span class="pre">--vm</span></code>, database and
+monitoring as containers)</p></li>
+</ol>
+<p>Instances are created but <strong>not yet configured</strong> after <code class="docutils literal notranslate"><span class="pre">setup</span></code>.</p>
+</section>
+<section id="phase-3-initialize-instances">
+<h3>Phase 3 — Initialize instances<a class="headerlink" href="#phase-3-initialize-instances" title="Link to this heading"></a></h3>
+<p>Run in this order — the database must exist before the playground generates <code class="docutils literal notranslate"><span class="pre">.env</span></code>:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>init_database
+poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>init_monitoring<span class="w">    </span><span class="c1"># optional</span>
+poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>init_playground
+</pre></div>
+</div>
+<p>Each <code class="docutils literal notranslate"><span class="pre">init_*</span></code> task:</p>
+<ol class="arabic simple">
+<li><p>Starts the Incus instance if stopped</p></li>
+<li><p>Waits until the configured static IP is assigned (up to 120 seconds)</p></li>
+<li><p>Renders Ansible extra-vars from <code class="docutils literal notranslate"><span class="pre">env-config.yaml</span></code> into <code class="docutils literal notranslate"><span class="pre">resources/&lt;instance&gt;/vals.yaml</span></code></p></li>
+<li><p>Pushes <code class="docutils literal notranslate"><span class="pre">resources/&lt;instance&gt;/*</span></code> to <code class="docutils literal notranslate"><span class="pre">/tmp/setup/</span></code> inside the instance</p></li>
+<li><p>Runs <code class="docutils literal notranslate"><span class="pre">resources/init.sh</span></code> (installs Ansible and Galaxy collections)</p></li>
+<li><p>Runs <code class="docutils literal notranslate"><span class="pre">ansible-playbook</span></code> with the rendered <code class="docutils literal notranslate"><span class="pre">vals.yaml</span></code></p></li>
+<li><p>Removes <code class="docutils literal notranslate"><span class="pre">/tmp/setup</span></code></p></li>
+</ol>
+<p>Verify instances:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>incus<span class="w"> </span>list
+</pre></div>
+</div>
+</section>
+</section>
+<section id="configuration-reference">
+<h2>Configuration reference<a class="headerlink" href="#configuration-reference" title="Link to this heading"></a></h2>
+<p>Copy <code class="docutils literal notranslate"><span class="pre">env-example.yaml</span></code> to <code class="docutils literal notranslate"><span class="pre">env-config.yaml</span></code> and fill in credentials. The file
+is gitignored.</p>
+<section id="common-infrastructure">
+<h3>Common infrastructure<a class="headerlink" href="#common-infrastructure" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">common.storage</span></code></p></td>
+<td><p>Btrfs pool name, driver, and size (default <code class="docutils literal notranslate"><span class="pre">10GiB</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">common.network</span></code></p></td>
+<td><p>Bridge name <code class="docutils literal notranslate"><span class="pre">fitctfbr0</span></code>, IPv4 subnet <code class="docutils literal notranslate"><span class="pre">10.100.0.1/24</span></code>, NAT enabled</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">common.profile</span></code></p></td>
+<td><p>Default NIC and root-disk devices attached to every instance</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="playground">
+<h3>Playground<a class="headerlink" href="#playground" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">playground.config.limits.cpu</span></code></p></td>
+<td><p>vCPU limit for the VM</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">playground.config.limits.memory</span></code></p></td>
+<td><p>RAM limit (e.g. <code class="docutils literal notranslate"><span class="pre">4096MiB</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">playground.config.devices.root.size</span></code></p></td>
+<td><p>Root disk size (default <code class="docutils literal notranslate"><span class="pre">20GiB</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">playground.envs.db_host</span></code></p></td>
+<td><p>MongoDB hostname — use <code class="docutils literal notranslate"><span class="pre">fit-ctf-database</span></code> (Incus DNS)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">playground.envs.db_name</span></code></p></td>
+<td><p>Application database name</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">playground.envs.db_username</span></code> / <code class="docutils literal notranslate"><span class="pre">db_password</span></code></p></td>
+<td><p>MongoDB credentials for FIT-CTF</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="database">
+<h3>Database<a class="headerlink" href="#database" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">database.envs.mongo_admin_user</span></code> / <code class="docutils literal notranslate"><span class="pre">mongo_admin_pass</span></code></p></td>
+<td><p>MongoDB admin account</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">database.envs.mongo_app_db</span></code></p></td>
+<td><p>Application database (must match <code class="docutils literal notranslate"><span class="pre">playground.envs.db_name</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">database.envs.mongo_app_user</span></code> / <code class="docutils literal notranslate"><span class="pre">mongo_app_pass</span></code></p></td>
+<td><p>Application user (must match playground <code class="docutils literal notranslate"><span class="pre">db_username</span></code> / <code class="docutils literal notranslate"><span class="pre">db_password</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="monitoring">
+<h3>Monitoring<a class="headerlink" href="#monitoring" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">monitoring.envs.prometheus_port</span></code></p></td>
+<td><p>Prometheus listen port (default <code class="docutils literal notranslate"><span class="pre">9090</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">monitoring.envs.grafana_port</span></code></p></td>
+<td><p>Grafana listen port (default <code class="docutils literal notranslate"><span class="pre">3000</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">monitoring.envs.grafana_admin_user</span></code> / <code class="docutils literal notranslate"><span class="pre">grafana_admin_password</span></code></p></td>
+<td><p>Grafana admin credentials</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">monitoring.envs.playground_ip</span></code></p></td>
+<td><p>IP scraped for node-exporter metrics (default <code class="docutils literal notranslate"><span class="pre">10.100.0.2</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">monitoring.envs.node_exporter_port</span></code></p></td>
+<td><p>node-exporter port on the playground (default <code class="docutils literal notranslate"><span class="pre">9100</span></code>)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="invoke-tasks">
+<h2>Invoke tasks<a class="headerlink" href="#invoke-tasks" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Task</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">setup</span></code></p></td>
+<td><p>Create Incus storage, network, profile, and all three instances</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">init_database</span></code></p></td>
+<td><p>Install and configure MongoDB 7 on the database container</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">init_monitoring</span></code></p></td>
+<td><p>Deploy Prometheus and Grafana via Docker Compose</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">init_playground</span></code></p></td>
+<td><p>Install FIT-CTF, configure production paths, set up SSH/Rendezvous</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">teardown</span></code></p></td>
+<td><p>Delete instances, profile, network, and storage (reverse order)</p></td>
+</tr>
+</tbody>
+</table>
+<p>List all tasks:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>--list
+</pre></div>
+</div>
+</section>
+<section id="what-each-instance-receives">
+<h2>What each instance receives<a class="headerlink" href="#what-each-instance-receives" title="Link to this heading"></a></h2>
+<section id="playground-vm">
+<h3>Playground VM<a class="headerlink" href="#playground-vm" title="Link to this heading"></a></h3>
+<p>The Ansible <code class="docutils literal notranslate"><span class="pre">fit-ctf</span></code> role on the playground:</p>
+<ol class="arabic simple">
+<li><p>Resizes the VM root disk</p></li>
+<li><p>Raises kernel keyring limits (needed for many Podman containers)</p></li>
+<li><p>Installs <code class="docutils literal notranslate"><span class="pre">openssh-server</span></code>, <code class="docutils literal notranslate"><span class="pre">git</span></code>, <code class="docutils literal notranslate"><span class="pre">pipx</span></code>, <code class="docutils literal notranslate"><span class="pre">podman</span></code>, <code class="docutils literal notranslate"><span class="pre">podman-compose</span></code></p></li>
+<li><p>Creates Linux user <code class="docutils literal notranslate"><span class="pre">user</span></code> (passwordless SSH login)</p></li>
+<li><p>Clones FIT-CTF <code class="docutils literal notranslate"><span class="pre">main</span></code> → <code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf</span></code> and runs <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">install</span></code></p></li>
+<li><p>Runs <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">inv</span> <span class="pre">generate-env</span></code> with database credentials from <code class="docutils literal notranslate"><span class="pre">vals.yaml</span></code></p></li>
+<li><p>Sets production share directories under <code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf-data/</span></code></p></li>
+<li><p>Runs <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">inv</span> <span class="pre">setup-sshd</span></code> and installs <code class="docutils literal notranslate"><span class="pre">99-ctf-rule.conf</span></code></p></li>
+<li><p>Deploys node-exporter as a rootless Podman Quadlet unit on port <code class="docutils literal notranslate"><span class="pre">9100</span></code></p></li>
+</ol>
+<p>Production paths on the playground:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 35.0%" />
+<col style="width: 65.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Path</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf</span></code></p></td>
+<td><p>Cloned FIT-CTF application</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf/.env</span></code></p></td>
+<td><p>Generated by <code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">generate-env</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf-data/projects</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PROJECT_SHARE_DIR</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf-data/users</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">USER_SHARE_DIR</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf-data/modules</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">MODULE_SHARE_DIR</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf-data/scenarios</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SCENARIO_SHARE_DIR</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="database-container">
+<h3>Database container<a class="headerlink" href="#database-container" title="Link to this heading"></a></h3>
+<p>Installs MongoDB 7 natively (not containerized):</p>
+<ul class="simple">
+<li><p>Adds the MongoDB 7.0 yum repository</p></li>
+<li><p>Binds <code class="docutils literal notranslate"><span class="pre">mongod</span></code> to <code class="docutils literal notranslate"><span class="pre">0.0.0.0</span></code></p></li>
+<li><p>Creates admin and application users from <code class="docutils literal notranslate"><span class="pre">env-config.yaml</span></code></p></li>
+<li><p>Enables authentication</p></li>
+</ul>
+</section>
+<section id="monitoring-container">
+<h3>Monitoring container<a class="headerlink" href="#monitoring-container" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Installs Docker CE</p></li>
+<li><p>Renders Prometheus config scraping <code class="docutils literal notranslate"><span class="pre">playground_ip:node_exporter_port</span></code></p></li>
+<li><p>Runs Prometheus <code class="docutils literal notranslate"><span class="pre">v3.5.1</span></code> and Grafana <code class="docutils literal notranslate"><span class="pre">12.3</span></code> via Docker Compose</p></li>
+<li><p>Provisions a Grafana datasource and the <code class="docutils literal notranslate"><span class="pre">fit-ctf_graphs.json</span></code> dashboard</p></li>
+<li><p>Enables a systemd unit that starts the stack at boot</p></li>
+</ul>
+</section>
+</section>
+<section id="participant-access">
+<h2>Participant access<a class="headerlink" href="#participant-access" title="Link to this heading"></a></h2>
+<p>After <code class="docutils literal notranslate"><span class="pre">init_playground</span></code>, participants connect to Rendezvous over SSH:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>ssh<span class="w"> </span>-p<span class="w"> </span><span class="m">5555</span><span class="w"> </span>user@&lt;playground-public-ip&gt;
+</pre></div>
+</div>
+<p>The playground must be reachable on port <code class="docutils literal notranslate"><span class="pre">5555</span></code> from participant networks. Publish
+the port from the Incus host (for example <code class="docutils literal notranslate"><span class="pre">incus</span> <span class="pre">config</span> <span class="pre">device</span> <span class="pre">add</span></code> or host
+firewall/NAT rules) — fit-ctf-virt does not automate public port forwarding today.</p>
+<p>Inside the TUI, participants sign in with their FIT-CTF username and password. See
+<a class="reference internal" href="rendezvous.html"><span class="doc">Rendezvous (SSH and TUI)</span></a> for the full SSH and TUI guide.</p>
+</section>
+<section id="operator-workflow">
+<h2>Operator workflow<a class="headerlink" href="#operator-workflow" title="Link to this heading"></a></h2>
+<p>After infrastructure is ready, operators manage the event from the playground VM.
+Use the <a class="reference internal" href="deployment.html"><span class="doc">Deployment</span></a> pre-event checklist — adapted for the production paths
+above:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># Shell into the playground</span>
+incus<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>fit-ctf-playground<span class="w"> </span>--<span class="w"> </span>bash
+
+<span class="c1"># Or SSH after port publishing is configured</span>
+ssh<span class="w"> </span>-p<span class="w"> </span><span class="m">5555</span><span class="w"> </span>user@&lt;playground-ip&gt;
+
+<span class="nb">cd</span><span class="w"> </span>/opt/fit-ctf
+
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>project<span class="w"> </span>create<span class="w"> </span>--project-name<span class="w"> </span>demo
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>compile
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>build
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>compile
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>start
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>enrollment<span class="w"> </span>enroll<span class="w"> </span>-u<span class="w"> </span>alice<span class="w"> </span>--project-name<span class="w"> </span>demo
+</pre></div>
+</div>
+<p>fit-ctf-virt does <strong>not</strong> author or compile scenarios — that remains operator work
+using FIT-CTF commands and content under <code class="docutils literal notranslate"><span class="pre">/opt/fit-ctf-data/</span></code>.</p>
+</section>
+<section id="monitoring-access">
+<h2>Monitoring access<a class="headerlink" href="#monitoring-access" title="Link to this heading"></a></h2>
+<p>From the Incus host or a machine that can reach the private bridge:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Service</p></th>
+<th class="head"><p>Default endpoint</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Prometheus</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">http://10.100.0.4:9090</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Grafana</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">http://10.100.0.4:3000</span></code> (credentials from <code class="docutils literal notranslate"><span class="pre">env-config.yaml</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p>node-exporter</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">http://10.100.0.2:9100/metrics</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="teardown">
+<h2>Teardown<a class="headerlink" href="#teardown" title="Link to this heading"></a></h2>
+<p>To destroy all Incus objects created by fit-ctf-virt:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>teardown
+</pre></div>
+</div>
+<p>This stops running instances and deletes monitoring → database → playground, then
+the profile, network, and storage pool.</p>
+</section>
+<section id="security-notes">
+<h2>Security notes<a class="headerlink" href="#security-notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">env-config.yaml</span></code> holds plaintext database and Grafana passwords — never commit
+it to version control.</p></li>
+<li><p>The playground SSH user <code class="docutils literal notranslate"><span class="pre">user</span></code> has its password removed with
+<code class="docutils literal notranslate"><span class="pre">PermitEmptyPasswords</span> <span class="pre">yes</span></code> — use only behind appropriate network controls.</p></li>
+<li><p>MongoDB on the database instance binds <code class="docutils literal notranslate"><span class="pre">0.0.0.0</span></code>; it should be reachable only
+on the private Incus bridge.</p></li>
+</ul>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<p><strong>``init_*`` times out waiting for IP</strong></p>
+<ul class="simple">
+<li><p>Check <code class="docutils literal notranslate"><span class="pre">incus</span> <span class="pre">list</span></code> — the instance may still be booting or failed cloud-init.</p></li>
+<li><p>Verify the static IP in <code class="docutils literal notranslate"><span class="pre">env-config.yaml</span></code> matches the device configuration.</p></li>
+</ul>
+<p><strong>Playground ``generate-env`` fails</strong></p>
+<ul class="simple">
+<li><p>Ensure <code class="docutils literal notranslate"><span class="pre">init_database</span></code> completed successfully and credentials in
+<code class="docutils literal notranslate"><span class="pre">playground.envs</span></code> match <code class="docutils literal notranslate"><span class="pre">database.envs</span></code>.</p></li>
+<li><p>From the playground VM, test connectivity: <code class="docutils literal notranslate"><span class="pre">nc</span> <span class="pre">-zv</span> <span class="pre">fit-ctf-database</span> <span class="pre">27017</span></code>.</p></li>
+</ul>
+<p><strong>Ansible Galaxy collection install fails inside an instance</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">resources/init.sh</span></code> prefers IPv4 in <code class="docutils literal notranslate"><span class="pre">/etc/gai.conf</span></code> as a workaround for IPv6
+routing issues on Incus bridges.</p></li>
+</ul>
+<p><strong>VM disk resize fails</strong></p>
+<ul class="simple">
+<li><p>The resize role uses <code class="docutils literal notranslate"><span class="pre">resize2fs</span></code> (ext4). Verify the root filesystem type on Rocky
+Linux 10 if resize errors occur.</p></li>
+</ul>
+<p><strong>MongoDB version conflicts</strong></p>
+<ul class="simple">
+<li><p>The database role pins MongoDB 7.x and rejects MongoDB 8.x packages.</p></li>
+</ul>
+</section>
+<section id="see-also">
+<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="deployment.html"><span class="doc">Deployment</span></a> — deployment modes and pre-event checklist</p></li>
+<li><p><a class="reference internal" href="rendezvous.html"><span class="doc">Rendezvous (SSH and TUI)</span></a> — SSH gatekeeper setup and TUI usage</p></li>
+<li><p><a class="reference internal" href="configuration.html"><span class="doc">Configuration</span></a> — FIT-CTF <code class="docutils literal notranslate"><span class="pre">.env</span></code> variables</p></li>
+<li><p><a class="reference external" href="https://github.com/hungdojan/fit-ctf-virt">fit-ctf-virt repository</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="deployment.html" class="btn btn-neutral float-left" title="Deployment" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rendezvous.html" class="btn btn-neutral float-right" title="Rendezvous (SSH and TUI)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

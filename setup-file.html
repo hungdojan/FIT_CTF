@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bulk setup file &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="CLI commands" href="click-commands.html" />
+    <link rel="prev" title="Rendezvous (SSH and TUI)" href="rendezvous.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Bulk setup file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#schema">Schema</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#processing-order">Processing order</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#users-section">Users section</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#projects-section">Projects section</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enrollments-section">Enrollments section</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#progress">Progress</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#login-node">Login node</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#challenge-scenarios">Challenge scenarios</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#jinja-variables-in-src-path">Jinja variables in <code class="docutils literal notranslate"><span class="pre">src_path</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#full-repository-examples">Full repository examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#apply-the-setup-file">Apply the setup file</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#post-setup-deployment">Post-setup deployment</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#setup-file-vs-zip-import">Setup file vs ZIP import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#see-also">See also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Bulk setup file</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/setup-file.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="bulk-setup-file">
+<h1>Bulk setup file<a class="headerlink" href="#bulk-setup-file" title="Link to this heading"></a></h1>
+<p>A <strong>setup file</strong> is a YAML document that creates projects, users, enrollments, and
+scenario configurations in one step. Use it to bootstrap a classroom or competition
+instead of running dozens of CLI commands.</p>
+<p>Apply a setup file with:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span>setup<span class="w"> </span>-i<span class="w"> </span>my_setup.yaml
+</pre></div>
+</div>
+<p>This is <strong>not</strong> the same as <code class="docutils literal notranslate"><span class="pre">data-mgmt</span> <span class="pre">import</span></code> (which restores a <strong>ZIP</strong> archive from
+<code class="docutils literal notranslate"><span class="pre">data-mgmt</span> <span class="pre">export</span></code>). See <a class="reference internal" href="#setup-vs-import"><span class="std std-ref">Setup file vs ZIP import</span></a> below.</p>
+<section id="schema">
+<h2>Schema<a class="headerlink" href="#schema" title="Link to this heading"></a></h2>
+<p>The file is validated against <code class="docutils literal notranslate"><span class="pre">src/fit_ctf/components/schemas/v1/setup.yaml</span></code>. Top-level
+keys (all optional, but typically you use all three):</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 78.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">users</span></code></p></td>
+<td><p>FIT-CTF accounts to create</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">projects</span></code></p></td>
+<td><p>Competitions / projects and <strong>project-cluster</strong> scenario configs</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">enrollments</span></code></p></td>
+<td><p>Link users to projects, restore progress, and set <strong>user-cluster</strong> scenario configs</p></td>
+</tr>
+</tbody>
+</table>
+<section id="processing-order">
+<h3>Processing order<a class="headerlink" href="#processing-order" title="Link to this heading"></a></h3>
+<p>FIT-CTF applies sections in this order:</p>
+<ol class="arabic simple">
+<li><p><strong>projects</strong> — creates each project and attaches scenarios to the <strong>project cluster</strong></p></li>
+<li><p><strong>users</strong> — creates accounts (prints generated passwords when requested)</p></li>
+<li><p><strong>enrollments</strong> — enrolls users, restores <code class="docutils literal notranslate"><span class="pre">progress</span></code>, attaches scenarios to each
+<strong>user cluster</strong></p></li>
+</ol>
+<p>Users and projects referenced in <code class="docutils literal notranslate"><span class="pre">enrollments</span></code> must be defined in the same file (or
+already exist in the database when using <code class="docutils literal notranslate"><span class="pre">--exist-ok</span></code>).</p>
+</section>
+</section>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>MongoDB running and <code class="docutils literal notranslate"><span class="pre">.env</span></code> configured (<a class="reference internal" href="installation.html"><span class="doc">Installation</span></a>)</p></li>
+<li><p>Global <strong>scenario templates</strong> must exist for every scenario name you reference
+(bundled: <code class="docutils literal notranslate"><span class="pre">template</span></code>, <code class="docutils literal notranslate"><span class="pre">login_node</span></code>, <code class="docutils literal notranslate"><span class="pre">admin_node</span></code>; or create your own with
+<code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">scenario</span> <span class="pre">create</span></code>)</p></li>
+<li><p>Custom <strong>modules</strong> built if scenarios reference them (<code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">module</span> <span class="pre">build</span></code>)</p></li>
+</ul>
+<p>After <code class="docutils literal notranslate"><span class="pre">data-mgmt</span> <span class="pre">setup</span></code>, you still need <strong>compile / build / start</strong> on clusters unless
+you only needed database metadata.</p>
+</section>
+<section id="minimal-example">
+<h2>Minimal example<a class="headerlink" href="#minimal-example" title="Link to this heading"></a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">users</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">alice</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AlicePass123!</span>
+
+<span class="nt">projects</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class="w">    </span><span class="nt">max_nof_users</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">    </span><span class="nt">cluster.scenario_configs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+
+<span class="nt">enrollments</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">alice</span>
+<span class="w">    </span><span class="nt">project</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo</span>
+<span class="w">    </span><span class="nt">progress</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">solved_secrets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">      </span><span class="nt">submission_log</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+<span class="w">      </span><span class="nt">found_secrets</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">      </span><span class="nt">last_submit_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<span class="w">    </span><span class="nt">cluster.scenario_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">login_node</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">secrets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">        </span><span class="nt">service_configs</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">login_node</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">volume_map</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">home</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">src_path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">paths__users</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">username</span><span class="nv"> </span><span class="s">}}/home/"</span>
+<span class="w">                </span><span class="nt">template_params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">              </span><span class="nt">shadow</span><span class="p">:</span>
+<span class="w">                </span><span class="nt">src_path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">paths__users</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">username</span><span class="nv"> </span><span class="s">}}/shadow"</span>
+<span class="w">                </span><span class="nt">template_params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+</pre></div>
+</div>
+<p>Save as <code class="docutils literal notranslate"><span class="pre">my_setup.yaml</span></code>, then:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span>setup<span class="w"> </span>-i<span class="w"> </span>my_setup.yaml
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>compile<span class="w"> </span>-p<span class="w"> </span>demo<span class="w"> </span>-u<span class="w"> </span>alice
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>build<span class="w"> </span>-p<span class="w"> </span>demo<span class="w"> </span>-u<span class="w"> </span>alice
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>start<span class="w"> </span>-p<span class="w"> </span>demo<span class="w"> </span>-u<span class="w"> </span>alice
+</pre></div>
+</div>
+</section>
+<section id="users-section">
+<h2>Users section<a class="headerlink" href="#users-section" title="Link to this heading"></a></h2>
+<p>Each entry requires <code class="docutils literal notranslate"><span class="pre">username</span></code> and either <code class="docutils literal notranslate"><span class="pre">password</span></code> or <code class="docutils literal notranslate"><span class="pre">generate_password:</span> <span class="pre">true</span></code>.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">users</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">user1</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">user1Password</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">user2</span>
+<span class="w">    </span><span class="nt">generate_password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">    </span><span class="c1"># printed after setup</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin1</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AdminPass123!</span>
+<span class="w">    </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<span class="w">    </span><span class="nt">email</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin@example.com</span>
+</pre></div>
+</div>
+</section>
+<section id="projects-section">
+<h2>Projects section<a class="headerlink" href="#projects-section" title="Link to this heading"></a></h2>
+<p>Each project requires <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">max_nof_users</span></code>, and <code class="docutils literal notranslate"><span class="pre">cluster.scenario_configs</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cluster.scenario_configs</span></code> is a map of scenario name → config for the <strong>shared project
+cluster</strong> (e.g. <code class="docutils literal notranslate"><span class="pre">admin_node</span></code>).</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">projects</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prj1</span>
+<span class="w">    </span><span class="nt">max_nof_users</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<span class="w">    </span><span class="nt">starting_port_bind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10000</span>
+<span class="w">    </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Spring</span><span class="nv"> </span><span class="s">2026</span><span class="nv"> </span><span class="s">CTF"</span>
+<span class="w">    </span><span class="nt">cluster.scenario_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">admin_node</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">secrets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">        </span><span class="nt">service_configs</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">admin_node</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">port_map</span><span class="p">:</span>
+<span class="w">              </span><span class="nt">http</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8080</span>
+</pre></div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">cluster.scenario_configs:</span> <span class="pre">{}</span></code> when the project has no shared scenarios yet.</p>
+</section>
+<section id="enrollments-section">
+<h2>Enrollments section<a class="headerlink" href="#enrollments-section" title="Link to this heading"></a></h2>
+<p>Each enrollment requires <code class="docutils literal notranslate"><span class="pre">user</span></code>, <code class="docutils literal notranslate"><span class="pre">project</span></code>, <code class="docutils literal notranslate"><span class="pre">progress</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">cluster.scenario_configs</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cluster.scenario_configs</span></code> configures the <strong>per-user cluster</strong> for that enrollment
+(login node, challenges, flags).</p>
+<section id="progress">
+<h3>Progress<a class="headerlink" href="#progress" title="Link to this heading"></a></h3>
+<p>Required shape (use empty values for a fresh event):</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">progress</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">solved_secrets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="nt">submission_log</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+<span class="w">  </span><span class="nt">found_secrets</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">  </span><span class="nt">last_submit_time</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+</pre></div>
+</div>
+<p>To restore solved flags from a backup, populate <code class="docutils literal notranslate"><span class="pre">solved_secrets</span></code> and <code class="docutils literal notranslate"><span class="pre">submission_log</span></code>
+(see <code class="docutils literal notranslate"><span class="pre">tests/fixtures/connected_data.yaml</span></code> for an example with a solved secret).</p>
+</section>
+<section id="login-node">
+<h3>Login node<a class="headerlink" href="#login-node" title="Link to this heading"></a></h3>
+<p>If <code class="docutils literal notranslate"><span class="pre">login_node</span></code> appears under <code class="docutils literal notranslate"><span class="pre">cluster.scenario_configs</span></code>, FIT-CTF enrolls the user
+<strong>and</strong> attaches the bundled login scenario. Default module: <code class="docutils literal notranslate"><span class="pre">ssh_ubi</span></code>. Override via
+<code class="docutils literal notranslate"><span class="pre">config_params</span></code>:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">cluster.scenario_configs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">login_node</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">config_params</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">login_node_module</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ssh_debian</span>
+<span class="w">    </span><span class="nt">secrets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">    </span><span class="nt">service_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">login_node</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">volume_map</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">home</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">src_path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">paths__users</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">username</span><span class="nv"> </span><span class="s">}}/home/"</span>
+<span class="w">            </span><span class="nt">template_params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">          </span><span class="nt">shadow</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">src_path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">paths__users</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">username</span><span class="nv"> </span><span class="s">}}/shadow"</span>
+<span class="w">            </span><span class="nt">template_params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+</pre></div>
+</div>
+</section>
+<section id="challenge-scenarios">
+<h3>Challenge scenarios<a class="headerlink" href="#challenge-scenarios" title="Link to this heading"></a></h3>
+<p>Add more scenarios under the same <code class="docutils literal notranslate"><span class="pre">cluster.scenario_configs</span></code> map. Each needs
+<code class="docutils literal notranslate"><span class="pre">service_configs</span></code> (and <code class="docutils literal notranslate"><span class="pre">secrets</span></code> for flags).</p>
+<p>Discover required slots for a scenario:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>scenario<span class="w"> </span>vars-template<span class="w"> </span>-n<span class="w"> </span>buffer-overflow
+</pre></div>
+</div>
+<p>Example with flags (from <code class="docutils literal notranslate"><span class="pre">connected_data.yaml</span></code> in the repository):</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">cluster.scenario_configs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">login_node</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">secrets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">    </span><span class="nt">service_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">login_node</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">volume_map</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">home</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">src_path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">paths__users</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">username</span><span class="nv"> </span><span class="s">}}/home/"</span>
+<span class="w">            </span><span class="nt">template_params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">          </span><span class="nt">shadow</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">src_path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">paths__users</span><span class="nv"> </span><span class="s">}}/{{</span><span class="nv"> </span><span class="s">username</span><span class="nv"> </span><span class="s">}}/shadow"</span>
+<span class="w">            </span><span class="nt">template_params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+<span class="w">  </span><span class="nt">buffer-overflow</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">secrets</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">flag</span><span class="p">:</span><span class="w"> </span><span class="s">"FLAG_lfHMTJjbwen5veCt"</span>
+<span class="w">    </span><span class="nt">service_configs</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">node</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">volume_map</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">flagfile</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">src_path</span><span class="p">:</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">scenario_dir</span><span class="nv"> </span><span class="s">}}/volumes/flag.txt.template"</span>
+<span class="w">            </span><span class="nt">template_params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+</pre></div>
+</div>
+</section>
+<section id="jinja-variables-in-src-path">
+<h3>Jinja variables in <code class="docutils literal notranslate"><span class="pre">src_path</span></code><a class="headerlink" href="#jinja-variables-in-src-path" title="Link to this heading"></a></h3>
+<p>Common placeholders (resolved at <strong>compile</strong> time):</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">paths__users</span> <span class="pre">}}</span></code></p></td>
+<td><p>Global user share directory</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">username</span> <span class="pre">}}</span></code></p></td>
+<td><p>Enrolled user’s name</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">scenario_dir</span> <span class="pre">}}</span></code></p></td>
+<td><p>Global scenario template directory for this scenario name</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">paths__projects</span> <span class="pre">}}</span></code></p></td>
+<td><p>Global project share directory</p></td>
+</tr>
+</tbody>
+</table>
+<p>Secret names must <strong>not</strong> contain <code class="docutils literal notranslate"><span class="pre">__</span></code>. Values are injected into <code class="docutils literal notranslate"><span class="pre">volumes/*.template</span></code>
+as <code class="docutils literal notranslate"><span class="pre">secret_map__&lt;name&gt;</span></code> at compile time.</p>
+</section>
+</section>
+<section id="full-repository-examples">
+<h2>Full repository examples<a class="headerlink" href="#full-repository-examples" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">connected_data.yaml</span></code> — multi-user project with several challenges per enrollment</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">tests/fixtures/connected_data.yaml</span></code> — test fixture with project-cluster <code class="docutils literal notranslate"><span class="pre">template</span></code>
+scenario and progress restoration example</p></li>
+</ul>
+<p>Apply either after scenarios exist globally:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span>setup<span class="w"> </span>-i<span class="w"> </span>connected_data.yaml
+</pre></div>
+</div>
+</section>
+<section id="apply-the-setup-file">
+<h2>Apply the setup file<a class="headerlink" href="#apply-the-setup-file" title="Link to this heading"></a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="c1"># validate + apply</span>
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span>setup<span class="w"> </span>-i<span class="w"> </span>my_setup.yaml
+
+<span class="c1"># show what would be created (no changes)</span>
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span>setup<span class="w"> </span>-i<span class="w"> </span>my_setup.yaml<span class="w"> </span>--dry-run
+
+<span class="c1"># skip errors when project/user already exists</span>
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span>setup<span class="w"> </span>-i<span class="w"> </span>my_setup.yaml<span class="w"> </span>--exist-ok
+</pre></div>
+</div>
+<p>When <code class="docutils literal notranslate"><span class="pre">generate_password:</span> <span class="pre">true</span></code> users are created, the command prints a table of
+usernames and passwords.</p>
+<section id="post-setup-deployment">
+<h3>Post-setup deployment<a class="headerlink" href="#post-setup-deployment" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">data-mgmt</span> <span class="pre">setup</span></code> writes to MongoDB and configures cluster metadata. It does <strong>not</strong>
+compile Compose files or start containers:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>compile<span class="w"> </span>-p<span class="w"> </span>demo<span class="w"> </span>-u<span class="w"> </span>alice
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>build<span class="w"> </span>-p<span class="w"> </span>demo<span class="w"> </span>-u<span class="w"> </span>alice
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>start<span class="w"> </span>-p<span class="w"> </span>demo<span class="w"> </span>-u<span class="w"> </span>alice
+
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>-pn<span class="w"> </span>demo<span class="w"> </span>compile
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>-pn<span class="w"> </span>demo<span class="w"> </span>build
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>-pn<span class="w"> </span>demo<span class="w"> </span>start
+</pre></div>
+</div>
+</section>
+</section>
+<section id="setup-file-vs-zip-import">
+<span id="setup-vs-import"></span><h2>Setup file vs ZIP import<a class="headerlink" href="#setup-file-vs-zip-import" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 35.0%" />
+<col style="width: 40.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Mechanism</p></th>
+<th class="head"><p>Input</p></th>
+<th class="head"><p>Command</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Setup file</strong></p></td>
+<td><p>YAML (<code class="docutils literal notranslate"><span class="pre">setup.yaml</span></code> schema)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">data-mgmt</span> <span class="pre">setup</span> <span class="pre">-i</span> <span class="pre">file.yaml</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>ZIP import</strong></p></td>
+<td><p>Archive from <code class="docutils literal notranslate"><span class="pre">data-mgmt</span> <span class="pre">export</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">data-mgmt</span> <span class="pre">import</span> <span class="pre">-i</span> <span class="pre">backup.zip</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>Use a <strong>setup file</strong> to declaratively create a new environment from scratch (or extend
+with <code class="docutils literal notranslate"><span class="pre">--exist-ok</span></code>).</p>
+<p>Use <strong>ZIP import</strong> to clone an existing project’s database records and filesystem trees
+from another host.</p>
+<p>Export for migration:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span><span class="nb">export</span><span class="w"> </span>-p<span class="w"> </span>demo<span class="w"> </span>-o<span class="w"> </span>demo_backup.zip
+poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span>import<span class="w"> </span>-i<span class="w"> </span>demo_backup.zip
+</pre></div>
+</div>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<p><strong>Validation error on load</strong></p>
+<ul class="simple">
+<li><p>Compare your file to <code class="docutils literal notranslate"><span class="pre">setup.yaml</span></code> schema; common mistakes: missing <code class="docutils literal notranslate"><span class="pre">progress</span></code> on
+enrollments, missing <code class="docutils literal notranslate"><span class="pre">service_configs</span></code> under a scenario, invalid <code class="docutils literal notranslate"><span class="pre">role</span></code> value.</p></li>
+</ul>
+<p><strong>Enrollment skipped</strong></p>
+<ul class="simple">
+<li><p>User or project name typo; scenario template does not exist under <code class="docutils literal notranslate"><span class="pre">scenario/</span></code>; invalid
+scenario config vs template (run <code class="docutils literal notranslate"><span class="pre">scenario</span> <span class="pre">vars-template</span></code>).</p></li>
+</ul>
+<p><strong>Scenario config does not satisfy templates</strong></p>
+<ul class="simple">
+<li><p>A <code class="docutils literal notranslate"><span class="pre">service_configs</span></code> or <code class="docutils literal notranslate"><span class="pre">secrets</span></code> key does not match what
+<code class="docutils literal notranslate"><span class="pre">scenario_compose.yaml.j2</span></code> expects. Use <code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">scenario</span> <span class="pre">vars-template</span> <span class="pre">-n</span> <span class="pre">&lt;name&gt;</span></code>.</p></li>
+</ul>
+<p><strong>Project already exists</strong></p>
+<ul class="simple">
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">--exist-ok</span></code> or pick a new project name.</p></li>
+</ul>
+</section>
+<section id="see-also">
+<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a> — collapsible command reference (bulk setup panel)</p></li>
+<li><p><a class="reference internal" href="creating-scenarios.html"><span class="doc">Creating scenarios</span></a> — authoring scenarios referenced in setup files</p></li>
+<li><p><a class="reference internal" href="configuration.html"><span class="doc">Configuration</span></a> — environment variables and paths</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="rendezvous.html" class="btn btn-neutral float-left" title="Rendezvous (SSH and TUI)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="click-commands.html" class="btn btn-neutral float-right" title="CLI commands" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

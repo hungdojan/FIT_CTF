@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scenarios &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Deployment" href="deployment.html" />
+    <link rel="prev" title="Creating scenarios" href="creating-scenarios.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Scenarios</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#directory-layout">Directory layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compilation-pipeline">Compilation pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#parameter-map">Parameter map</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#base-parameters">Base parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#per-service-parameters">Per-service parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#secrets">Secrets</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#example-scenario-config-conceptual">Example scenario config (conceptual)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#bundled-scenarios">Bundled scenarios</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#template"><code class="docutils literal notranslate"><span class="pre">template</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#login-node"><code class="docutils literal notranslate"><span class="pre">login_node</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#admin-node"><code class="docutils literal notranslate"><span class="pre">admin_node</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#modules">Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#authoring-a-new-scenario">Authoring a new scenario</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compose-runtime">Compose runtime</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Scenarios</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/scenarios.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="scenarios">
+<h1>Scenarios<a class="headerlink" href="#scenarios" title="Link to this heading"></a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For a step-by-step guide to <strong>creating</strong> challenges (templates, secrets, deployment),
+start with <a class="reference internal" href="challenge-authoring.html"><span class="doc">Challenge authoring</span></a> and <a class="reference internal" href="creating-scenarios.html"><span class="doc">Creating scenarios</span></a>. This page
+documents <strong>compilation internals</strong>.</p>
+</div>
+<p>Scenarios are the building blocks of challenge environments. Each scenario is a
+<strong>Jinja2 template</strong> that compiles into a Docker Compose file with all paths, networks,
+secrets, and per-service settings resolved.</p>
+<section id="directory-layout">
+<h2>Directory layout<a class="headerlink" href="#directory-layout" title="Link to this heading"></a></h2>
+<p>Global template (before compilation):</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>{SCENARIO_SHARE_DIR}/login_node/
+├── scenario_compose.yaml.j2    ← Jinja2 Compose template
+└── volumes/
+    └── config.template         ← volume file templates (secrets injected here)
+</pre></div>
+</div>
+<p>After compilation for a user cluster:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>{PROJECT_SHARE_DIR}/demo/users/alice/login_node/
+├── scenario_compose.yaml       ← rendered Compose file
+├── scenario_compose.yaml.j2    ← copy of template
+└── volumes/
+    └── config                  ← rendered volume files
+</pre></div>
+</div>
+</section>
+<section id="compilation-pipeline">
+<h2>Compilation pipeline<a class="headerlink" href="#compilation-pipeline" title="Link to this heading"></a></h2>
+<p>Handled by <code class="docutils literal notranslate"><span class="pre">ScenarioCompiler</span></code> (<code class="docutils literal notranslate"><span class="pre">src/fit_ctf/models/infra/scenario_compile.py</span></code>):</p>
+<ol class="arabic simple">
+<li><p><strong>Copy template trees</strong> — <code class="docutils literal notranslate"><span class="pre">volumes/</span></code> and <code class="docutils literal notranslate"><span class="pre">modules/</span></code> directories are copied to
+the destination.</p></li>
+<li><p><strong>Build parameter map</strong> — merges base paths, network names, config parameters,
+per-service environment/port/volume maps, and secret values.</p></li>
+<li><p><strong>Render Compose</strong> — Jinja2 renders <code class="docutils literal notranslate"><span class="pre">scenario_compose.yaml.j2</span></code> →
+<code class="docutils literal notranslate"><span class="pre">scenario_compose.yaml</span></code>.</p></li>
+<li><p><strong>Render volume templates</strong> — <code class="docutils literal notranslate"><span class="pre">.template</span></code> files in <code class="docutils literal notranslate"><span class="pre">volumes/</span></code> are processed with
+secret injection.</p></li>
+</ol>
+<p>Trigger compilation from the CLI:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>compile<span class="w"> </span>-p<span class="w"> </span>demo<span class="w"> </span>-u<span class="w"> </span>alice
+fit-ctf<span class="w"> </span>project-cluster<span class="w"> </span>compile<span class="w"> </span>-p<span class="w"> </span>demo
+</pre></div>
+</div>
+</section>
+<section id="parameter-map">
+<h2>Parameter map<a class="headerlink" href="#parameter-map" title="Link to this heading"></a></h2>
+<p>The compiler builds a flat dictionary of Jinja2 variables:</p>
+<section id="base-parameters">
+<h3>Base parameters<a class="headerlink" href="#base-parameters" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">paths__projects</span></code>, <code class="docutils literal notranslate"><span class="pre">paths__users</span></code>, <code class="docutils literal notranslate"><span class="pre">paths__modules</span></code>, <code class="docutils literal notranslate"><span class="pre">paths__scenarios</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">network_map__shared</span></code>, <code class="docutils literal notranslate"><span class="pre">network_map__private</span></code>, <code class="docutils literal notranslate"><span class="pre">network_map__operational</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config_params</span></code> — scenario-level custom parameters</p></li>
+</ul>
+</section>
+<section id="per-service-parameters">
+<h3>Per-service parameters<a class="headerlink" href="#per-service-parameters" title="Link to this heading"></a></h3>
+<p>For each service <code class="docutils literal notranslate"><span class="pre">S</span></code> in the scenario config:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">S__env_map__{key}</span></code> — environment variables</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">S__port_map__{key}</span></code> — port mappings</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">S__volume_map__{vol}</span></code> — volume source paths</p></li>
+</ul>
+</section>
+<section id="secrets">
+<h3>Secrets<a class="headerlink" href="#secrets" title="Link to this heading"></a></h3>
+<p>Secrets are <strong>not</strong> placed directly in the Compose template. Instead they are injected
+into volume template files (<code class="docutils literal notranslate"><span class="pre">volumes/*.template</span></code>) as <code class="docutils literal notranslate"><span class="pre">secret_map__{key}</span></code> variables
+during volume rendering.</p>
+</section>
+</section>
+<section id="example-scenario-config-conceptual">
+<h2>Example scenario config (conceptual)<a class="headerlink" href="#example-scenario-config-conceptual" title="Link to this heading"></a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">secrets</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">flag_main</span><span class="p">:</span><span class="w"> </span><span class="s">"FITCTF{example_flag}"</span>
+<span class="nt">service_configs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">challenge</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">env_map</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">DEBUG</span><span class="p">:</span><span class="w"> </span><span class="s">"0"</span>
+<span class="w">    </span><span class="nt">port_map</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">web</span><span class="p">:</span><span class="w"> </span><span class="s">"8080:8080"</span>
+<span class="w">    </span><span class="nt">volume_map</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">data</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">src_path</span><span class="p">:</span><span class="w"> </span><span class="s">"./volumes/data"</span>
+<span class="w">        </span><span class="nt">template_params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+</pre></div>
+</div>
+</section>
+<section id="bundled-scenarios">
+<h2>Bundled scenarios<a class="headerlink" href="#bundled-scenarios" title="Link to this heading"></a></h2>
+<section id="template">
+<h3><code class="docutils literal notranslate"><span class="pre">template</span></code><a class="headerlink" href="#template" title="Link to this heading"></a></h3>
+<p>Minimal example for learning the compilation pipeline.</p>
+</section>
+<section id="login-node">
+<h3><code class="docutils literal notranslate"><span class="pre">login_node</span></code><a class="headerlink" href="#login-node" title="Link to this heading"></a></h3>
+<p>SSH entry point for participants. References <code class="docutils literal notranslate"><span class="pre">ssh_debian</span></code> or <code class="docutils literal notranslate"><span class="pre">ssh_ubi</span></code> modules.
+Used as the default login node type during enrollment.</p>
+</section>
+<section id="admin-node">
+<h3><code class="docutils literal notranslate"><span class="pre">admin_node</span></code><a class="headerlink" href="#admin-node" title="Link to this heading"></a></h3>
+<p>Shared administrative service, typically deployed in a <strong>project cluster</strong>.</p>
+<p>See <a class="reference internal" href="creating-scenarios.html"><span class="doc">Creating scenarios</span></a> for CLI commands to create and attach scenarios.</p>
+</section>
+</section>
+<section id="modules">
+<h2>Modules<a class="headerlink" href="#modules" title="Link to this heading"></a></h2>
+<p>Scenarios reference <strong>modules</strong> for container images. See <a class="reference internal" href="modules.html"><span class="doc">Creating modules</span></a> for how to
+create and build modules.</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>module<span class="w"> </span>build<span class="w"> </span>ssh_debian
+fit-ctf<span class="w"> </span>user-cluster<span class="w"> </span>build<span class="w"> </span>-p<span class="w"> </span>demo<span class="w"> </span>-u<span class="w"> </span>alice
+</pre></div>
+</div>
+<p>Module images are tagged <code class="docutils literal notranslate"><span class="pre">fit-ctf/{module_name}</span></code>.</p>
+</section>
+<section id="authoring-a-new-scenario">
+<h2>Authoring a new scenario<a class="headerlink" href="#authoring-a-new-scenario" title="Link to this heading"></a></h2>
+<p>See <a class="reference internal" href="creating-scenarios.html"><span class="doc">Creating scenarios</span></a> for the full workflow. Summary:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">scenario</span> <span class="pre">create</span> <span class="pre">-n</span> <span class="pre">my_challenge</span></code></p></li>
+<li><p>Edit <code class="docutils literal notranslate"><span class="pre">scenario_compose.yaml.j2</span></code> and <code class="docutils literal notranslate"><span class="pre">volumes/*.template</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">user-cluster</span> <span class="pre">add-scenario</span> <span class="pre">...</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">compile</span></code> → <code class="docutils literal notranslate"><span class="pre">build</span></code> → <code class="docutils literal notranslate"><span class="pre">start</span></code></p></li>
+</ol>
+</section>
+<section id="compose-runtime">
+<h2>Compose runtime<a class="headerlink" href="#compose-runtime" title="Link to this heading"></a></h2>
+<p>Compiled <code class="docutils literal notranslate"><span class="pre">scenario_compose.yaml</span></code> files are managed by the container client
+(<code class="docutils literal notranslate"><span class="pre">podman-compose</span></code> or <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span></code>). Cluster running state is detected via
+<code class="docutils literal notranslate"><span class="pre">compose</span> <span class="pre">ps</span> <span class="pre">-q</span></code> — see <a class="reference internal" href="container-client.html"><span class="doc">Container client</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="creating-scenarios.html" class="btn btn-neutral float-left" title="Creating scenarios" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="deployment.html" class="btn btn-neutral float-right" title="Deployment" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

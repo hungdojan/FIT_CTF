@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architecture &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Core concepts" href="concepts.html" />
+    <link rel="prev" title="Quickstart" href="quickstart.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#high-level-overview">High-level overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#services">Services</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mongodb">MongoDB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#container-engine">Container engine</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#share-directory">Share directory</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#core-managers">Core managers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cluster-networking">Cluster networking</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#platform-networks-external">Platform networks (external)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scenario-local-networks-internal">Scenario-local networks (internal)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#port-allocation">Port allocation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rendezvous-over-ssh">Rendezvous over SSH</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Architecture</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/architecture.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="architecture">
+<h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading"></a></h1>
+<section id="high-level-overview">
+<h2>High-level overview<a class="headerlink" href="#high-level-overview" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>┌─────────────────────────────────────────────────────────────┐
+│                        Operator host                        │
+│                                                             │
+│  ┌──────────────┐     ┌───────────────┐     ┌─────────────┐ │
+│  │  fit-ctf     │     │ fit-rendezvous│     │  MongoDB    │ │
+│  │  (CLI)       │     │ (Textual TUI) │     │  (database) │ │
+│  └──────┬───────┘     └──────┬────────┘     └──────▲──────┘ │
+│         │                    │                     │        │
+│         └────────┬───────────┘                     │        │
+│                  │                                 │        │
+│         ┌────────▼────────┐                        │        │
+│         │    fit_ctf      │◄───────────────────────┘        │
+│         │  (core library) │                                 │
+│         └────────┬────────┘                                 │
+│                  │                                          │
+│         ┌────────▼─────────┐     ┌───────────────────────┐  │
+│         │ Container client │────►│ Podman (+ Docker exp.)│  │
+│         │ (compose API)    │     │ + compose             │  │
+│         └──────────────────┘     └──────────┬────────────┘  │
+│                                             │               │
+│                              ┌──────────────▼────────────┐  │
+│                              │  Challenge containers     │  │
+│                              │  (project + user clusters)│  │
+│                              └───────────────────────────┘  │
+│                                                             │
+│  ~/.local/share/fit-ctf/  ← projects, users, modules,       │
+│                              scenarios, compiled compose    │
+└─────────────────────────────────────────────────────────────┘
+</pre></div>
+</div>
+</section>
+<section id="services">
+<h2>Services<a class="headerlink" href="#services" title="Link to this heading"></a></h2>
+<section id="mongodb">
+<h3>MongoDB<a class="headerlink" href="#mongodb" title="Link to this heading"></a></h3>
+<p>Stores all persistent metadata:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Collection</p></th>
+<th class="head"><p>Contents</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">project</span></code></p></td>
+<td><p>Competition definitions (name, capacity, port range)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">user</span></code></p></td>
+<td><p>Accounts (username, hashed password, role, email)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">enrollment</span></code></p></td>
+<td><p>User ↔ project links, container ports, progress</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">project_cluster</span></code></p></td>
+<td><p>Shared cluster state and scenario configs per project</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">user_cluster</span></code></p></td>
+<td><p>Per-enrollment cluster state and scenario configs</p></td>
+</tr>
+</tbody>
+</table>
+<p>Local development uses <code class="docutils literal notranslate"><span class="pre">podman</span> <span class="pre">compose</span></code> via <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">inv</span> <span class="pre">db-start</span></code>
+(<code class="docutils literal notranslate"><span class="pre">db/compose.yaml</span></code>). Production can use a Podman Quadlet unit via
+<code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">inv</span> <span class="pre">db-deploy</span></code>.</p>
+</section>
+<section id="container-engine">
+<h3>Container engine<a class="headerlink" href="#container-engine" title="Link to this heading"></a></h3>
+<p>Selected by <code class="docutils literal notranslate"><span class="pre">CONTAINER_CLIENT</span></code>:</p>
+<ul class="simple">
+<li><p><strong>podman</strong> — uses <code class="docutils literal notranslate"><span class="pre">podman</span></code> and <code class="docutils literal notranslate"><span class="pre">podman-compose</span></code> (recommended; primary backend).</p></li>
+<li><p><strong>docker</strong> — uses <code class="docutils literal notranslate"><span class="pre">docker</span></code> and <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">compose</span></code> (<strong>experimental</strong> — less tested than
+Podman; set <code class="docutils literal notranslate"><span class="pre">CONTAINER_CLIENT=docker</span></code> in <code class="docutils literal notranslate"><span class="pre">.env</span></code>).</p></li>
+<li><p><strong>mock</strong> — no real containers; for automated tests.</p></li>
+</ul>
+<p>The container client wraps compose lifecycle operations: <code class="docutils literal notranslate"><span class="pre">up</span></code>, <code class="docutils literal notranslate"><span class="pre">down</span></code>, <code class="docutils literal notranslate"><span class="pre">build</span></code>,
+<code class="docutils literal notranslate"><span class="pre">ps</span></code>, <code class="docutils literal notranslate"><span class="pre">logs</span></code>, and image/network management. See <a class="reference internal" href="container-client.html"><span class="doc">Container client</span></a>.</p>
+</section>
+<section id="share-directory">
+<h3>Share directory<a class="headerlink" href="#share-directory" title="Link to this heading"></a></h3>
+<p>Default root: <code class="docutils literal notranslate"><span class="pre">$HOME/.local/share/fit-ctf/</span></code></p>
+<p>Four top-level directories (overridable via environment variables):</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 75.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Directory</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">project/</span></code></p></td>
+<td><p>Per-project trees (users, logs, compiled scenarios)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">user/</span></code></p></td>
+<td><p>Global user data (shadow file, SSH keys, Rendezvous settings)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">module/</span></code></p></td>
+<td><p>Reusable container image definitions (Containerfiles)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">scenario/</span></code></p></td>
+<td><p>Global scenario templates (Jinja2 Compose + volumes)</p></td>
+</tr>
+</tbody>
+</table>
+<p>On first run, <code class="docutils literal notranslate"><span class="pre">CTFApp.init_tool</span></code> copies bundled templates from
+<code class="docutils literal notranslate"><span class="pre">src/fit_ctf/templates/v1/</span></code> into the share directories.</p>
+</section>
+</section>
+<section id="core-managers">
+<h2>Core managers<a class="headerlink" href="#core-managers" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">CTFBase</span></code> class wires together managers used by both CLI and Rendezvous:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Manager</p></th>
+<th class="head"><p>Responsibility</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ProjectManager</span></code></p></td>
+<td><p>CRUD for projects, filesystem init</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">UserManager</span></code></p></td>
+<td><p>CRUD for users, password hashing, SSH key storage</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">EnrollmentManager</span></code></p></td>
+<td><p>Enroll users into projects, track progress and secrets</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ScenarioManager</span></code></p></td>
+<td><p>Global scenario templates on disk</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ModuleManager</span></code></p></td>
+<td><p>Global module images, build via container client</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ProjectClusterManager</span></code></p></td>
+<td><p>Shared per-project container clusters</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">UserClusterManager</span></code></p></td>
+<td><p>Per-enrollment container clusters</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="cluster-networking">
+<h2>Cluster networking<a class="headerlink" href="#cluster-networking" title="Link to this heading"></a></h2>
+<p>FIT-CTF uses two layers of networking: <strong>platform networks</strong> (shared across a project or
+enrollment) and <strong>scenario-local networks</strong> (defined by the operator inside a scenario
+Compose template).</p>
+<section id="platform-networks-external">
+<h3>Platform networks (external)<a class="headerlink" href="#platform-networks-external" title="Link to this heading"></a></h3>
+<p>Created when a project is initialized and referenced as <code class="docutils literal notranslate"><span class="pre">external:</span> <span class="pre">true</span></code> in compiled
+Compose files. Names are injected at compile time via <code class="docutils literal notranslate"><span class="pre">network_map__*</span></code> variables.</p>
+<p>Each project gets:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{project}_shared_net</span></code> — reachable by all enrolled users (e.g. login node, shared
+services)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">{project}_operational_net</span></code> — operator/admin traffic (e.g. <code class="docutils literal notranslate"><span class="pre">admin_node</span></code>)</p></li>
+</ul>
+<p>Each enrolled user additionally gets:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">{project}_{username}_private_net</span></code> — isolated network for that participant’s
+challenge instances</p></li>
+</ul>
+<p>Typical attachment:</p>
+<ul class="simple">
+<li><p><strong>Login node</strong> — <code class="docutils literal notranslate"><span class="pre">shared</span></code> + <code class="docutils literal notranslate"><span class="pre">private</span></code> so participants can SSH in and reach services
+on their private net.</p></li>
+<li><p><strong>User challenge</strong> — often <code class="docutils literal notranslate"><span class="pre">private</span></code> (and sometimes <code class="docutils literal notranslate"><span class="pre">shared</span></code>) for participant-
+facing services.</p></li>
+<li><p><strong>Project cluster admin service</strong> — <code class="docutils literal notranslate"><span class="pre">operational</span></code> (and <code class="docutils literal notranslate"><span class="pre">shared</span></code> where needed).</p></li>
+</ul>
+</section>
+<section id="scenario-local-networks-internal">
+<h3>Scenario-local networks (internal)<a class="headerlink" href="#scenario-local-networks-internal" title="Link to this heading"></a></h3>
+<p>In addition to the platform networks, operators can define <strong>extra networks inside
+``scenario_compose.yaml.j2``</strong> that exist only for that scenario’s Compose stack. These
+are <strong>not</strong> part of <code class="docutils literal notranslate"><span class="pre">network_map__*</span></code>; Podman Compose creates them when the scenario
+starts and removes them when it stops.</p>
+<p>Use scenario-local networks to <strong>hide backend services</strong> from participant-reachable
+networks. A common pattern is a web challenge with a database:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">web</span></code> joins the participant network (<code class="docutils literal notranslate"><span class="pre">network_map__private</span></code>) <strong>and</strong> an internal
+<code class="docutils literal notranslate"><span class="pre">backend</span></code> network.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">db</span></code> joins <strong>only</strong> <code class="docutils literal notranslate"><span class="pre">backend</span></code>.</p></li>
+</ul>
+<p>Participants can reach the web service (published port or via login node), but the
+database is not attached to <code class="docutils literal notranslate"><span class="pre">shared</span></code> or <code class="docutils literal notranslate"><span class="pre">private</span></code>, so it is not exposed on those
+platform networks.</p>
+<p>Example excerpt for a <code class="docutils literal notranslate"><span class="pre">sql_injection</span></code> scenario:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">web</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fit-ctf/web_challenge:latest</span>
+<span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">participant</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backend</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"{{</span><span class="nv"> </span><span class="s">web__port_map__http</span><span class="nv"> </span><span class="s">}}:80"</span>
+
+<span class="w">  </span><span class="nt">db</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fit-ctf/mariadb:latest</span>
+<span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">backend</span><span class="w">          </span><span class="c1"># not on participant — hidden from shared/private</span>
+
+<span class="nt">networks</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">participant</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">external</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">network_map__private</span><span class="w"> </span><span class="p p-Indicator">}}</span>
+<span class="w">  </span><span class="nt">backend</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">driver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bridge</span><span class="w">       </span><span class="c1"># scenario-only; created per compile/start</span>
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>{project}_{user}_private_net          backend (scenario-local)
+       │                                      │
+       │    ┌─────────┐      SQL (internal)   │    ┌─────────┐
+       └───►│   web   │◄──────────────────────┼───►│   db    │
+            └─────────┘                       │    └─────────┘
+         participant port                     └── db not on private_net
+</pre></div>
+</div>
+<p>Guidelines:</p>
+<ul class="simple">
+<li><p>Declare platform nets as <code class="docutils literal notranslate"><span class="pre">external:</span> <span class="pre">true</span></code> with <code class="docutils literal notranslate"><span class="pre">name:</span> <span class="pre">{{</span> <span class="pre">network_map__...</span> <span class="pre">}}</span></code>.</p></li>
+<li><p>Use a non-external <code class="docutils literal notranslate"><span class="pre">driver:</span> <span class="pre">bridge</span></code> (or default) network for scenario-only traffic.</p></li>
+<li><p>Only attach sensitive services (databases, flag stores, admin APIs) to the internal
+network.</p></li>
+<li><p>Publish <strong>only</strong> the services participants should reach (<code class="docutils literal notranslate"><span class="pre">ports:</span></code> on <code class="docutils literal notranslate"><span class="pre">web</span></code>, not on
+<code class="docutils literal notranslate"><span class="pre">db</span></code>).</p></li>
+</ul>
+<p>Scenario-local networks are scoped to <strong>one scenario’s</strong> <code class="docutils literal notranslate"><span class="pre">scenario_compose.yaml</span></code>. They
+do not connect two different scenarios unless both services are in the same Compose file.</p>
+<p>Network names are injected into scenario templates at compile time via
+<code class="docutils literal notranslate"><span class="pre">network_map__*</span></code> variables for the platform layer. See <a class="reference internal" href="creating-scenarios.html"><span class="doc">Creating scenarios</span></a> for
+how to author multi-service templates.</p>
+</section>
+</section>
+<section id="port-allocation">
+<h2>Port allocation<a class="headerlink" href="#port-allocation" title="Link to this heading"></a></h2>
+<p>Projects define <code class="docutils literal notranslate"><span class="pre">starting_port_bind</span></code> and <code class="docutils literal notranslate"><span class="pre">max_nof_users</span></code>. Each enrollment receives
+a <code class="docutils literal notranslate"><span class="pre">container_port</span></code> and <code class="docutils literal notranslate"><span class="pre">forwarded_port</span></code> from this range, used for SSH access to
+participant instances. The default starting port constant is <code class="docutils literal notranslate"><span class="pre">10000</span></code>.</p>
+</section>
+<section id="rendezvous-over-ssh">
+<h2>Rendezvous over SSH<a class="headerlink" href="#rendezvous-over-ssh" title="Link to this heading"></a></h2>
+<p>In production, participants SSH to a dedicated port. An sshd <code class="docutils literal notranslate"><span class="pre">Match</span></code> rule
+(<code class="docutils literal notranslate"><span class="pre">config/setup/99-ctf-rule.conf</span></code>) forces the command to launch <code class="docutils literal notranslate"><span class="pre">fit-rendezvous</span></code>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Match LocalPort &lt;rdz_port&gt;
+    AllowUsers &lt;user&gt;
+    ForceCommand cd &lt;fitctf_dirpath&gt; &amp;&amp; poetry run fit-rendezvous
+</pre></div>
+</div>
+<p>Generate this file with <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">inv</span> <span class="pre">setup-sshd</span></code>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="quickstart.html" class="btn btn-neutral float-left" title="Quickstart" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="concepts.html" class="btn btn-neutral float-right" title="Core concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,35 @@
+/* Collapsible quickstart panels (HTML <details> in quickstart.rst) */
+details.quickstart-panel {
+  margin: 1em 0;
+  padding: 0;
+  border: 1px solid var(--wy-border-color, #e1e4e5);
+  border-radius: 4px;
+  background: var(--wy-menu-background, #f3f6f6);
+}
+
+details.quickstart-panel > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.75em 1em;
+  list-style: none;
+}
+
+details.quickstart-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.quickstart-panel > summary::before {
+  content: "▸ ";
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+details.quickstart-panel[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+details.quickstart-panel .quickstart-body {
+  padding: 0 1em 1em 1em;
+  border-top: 1px solid var(--wy-border-color, #e1e4e5);
+  background: var(--wy-body-background, #fcfcfc);
+}

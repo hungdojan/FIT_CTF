@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Configuration" href="configuration.html" />
+    <link rel="prev" title="Requirements" href="requirements.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#install-system-dependencies">Install system dependencies</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#debian">Debian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fedora-rhel">Fedora / RHEL</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#install-and-verify-podman">Install and verify Podman</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#clone-and-install">Clone and install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generate-environment-file">Generate environment file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#start-mongodb-local-development">Start MongoDB (local development)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#verify-installation">Verify installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#development-installation">Development installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<section id="install-system-dependencies">
+<h2>Install system dependencies<a class="headerlink" href="#install-system-dependencies" title="Link to this heading"></a></h2>
+<section id="debian">
+<h3>Debian<a class="headerlink" href="#debian" title="Link to this heading"></a></h3>
+<p>On Debian 12 (bookworm) or newer:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt<span class="w"> </span>update
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>git<span class="w"> </span>python3<span class="w"> </span>python3-venv<span class="w"> </span>pipx<span class="w"> </span>podman<span class="w"> </span>podman-compose
+</pre></div>
+</div>
+<p>Install Poetry (if not already available):</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>pipx<span class="w"> </span>install<span class="w"> </span>poetry
+pipx<span class="w"> </span>ensurepath
+<span class="c1"># reopen the shell, then continue below</span>
+</pre></div>
+</div>
+</section>
+<section id="fedora-rhel">
+<h3>Fedora / RHEL<a class="headerlink" href="#fedora-rhel" title="Link to this heading"></a></h3>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>podman<span class="w"> </span>podman-compose
+</pre></div>
+</div>
+</section>
+</section>
+<section id="install-and-verify-podman">
+<h2>Install and verify Podman<a class="headerlink" href="#install-and-verify-podman" title="Link to this heading"></a></h2>
+<p>Local MongoDB and challenge containers both run through Podman. Confirm the tools are
+available before continuing:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>podman<span class="w"> </span>--version
+podman<span class="w"> </span>compose<span class="w"> </span>version
+podman-compose<span class="w"> </span>--version
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">inv</span> <span class="pre">db-start</span></code> uses <code class="docutils literal notranslate"><span class="pre">podman</span> <span class="pre">compose</span></code> to run <code class="docutils literal notranslate"><span class="pre">db/compose.yaml</span></code>. Challenge clusters
+use <code class="docutils literal notranslate"><span class="pre">podman-compose</span></code> when <code class="docutils literal notranslate"><span class="pre">CONTAINER_CLIENT=podman</span></code> (the default).</p>
+</section>
+<section id="clone-and-install">
+<h2>Clone and install<a class="headerlink" href="#clone-and-install" title="Link to this heading"></a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/hungdojan/fit-ctf.git
+<span class="nb">cd</span><span class="w"> </span>fit-ctf
+poetry<span class="w"> </span>install<span class="w"> </span>--only<span class="w"> </span>main
+</pre></div>
+</div>
+<p>This installs three packages from <code class="docutils literal notranslate"><span class="pre">src/</span></code>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fit_ctf</span></code> — core library</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit_ctf_cli</span></code> — operator CLI (<code class="docutils literal notranslate"><span class="pre">fit-ctf</span></code> command)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit_ctf_rendezvous</span></code> — participant TUI (<code class="docutils literal notranslate"><span class="pre">fit-rendezvous</span></code> command)</p></li>
+</ul>
+</section>
+<section id="generate-environment-file">
+<h2>Generate environment file<a class="headerlink" href="#generate-environment-file" title="Link to this heading"></a></h2>
+<p>Create a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file at the repository root with database credentials and paths:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>generate-env<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--db-username<span class="o">=</span>ctf_user<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--db-password<span class="o">=</span>changeme<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--db-name<span class="o">=</span>ctf_db
+</pre></div>
+</div>
+<p>Optional flags: <code class="docutils literal notranslate"><span class="pre">--db-host</span></code> (default <code class="docutils literal notranslate"><span class="pre">localhost</span></code>), <code class="docutils literal notranslate"><span class="pre">--db-port</span></code> (default <code class="docutils literal notranslate"><span class="pre">27017</span></code>).</p>
+<p>The template is rendered from <code class="docutils literal notranslate"><span class="pre">config/setup/env_example</span></code>. See <a class="reference internal" href="configuration.html"><span class="doc">Configuration</span></a> for
+all variables.</p>
+<p>Set <code class="docutils literal notranslate"><span class="pre">CONTAINER_CLIENT=podman</span></code> in <code class="docutils literal notranslate"><span class="pre">.env</span></code> (this is the default).</p>
+</section>
+<section id="start-mongodb-local-development">
+<h2>Start MongoDB (local development)<a class="headerlink" href="#start-mongodb-local-development" title="Link to this heading"></a></h2>
+<p>FIT-CTF’s Invoke task starts MongoDB via <strong>Podman Compose</strong> (requires Podman from the
+previous step):</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>db-start
+</pre></div>
+</div>
+<p>This reads <code class="docutils literal notranslate"><span class="pre">db/compose.yaml</span></code> and expects <code class="docutils literal notranslate"><span class="pre">DB_ADMIN_USERNAME</span></code> and
+<code class="docutils literal notranslate"><span class="pre">DB_ADMIN_PASSWORD</span></code> for the MongoDB root user. Add them to <code class="docutils literal notranslate"><span class="pre">.env</span></code> before starting
+if they are not already present:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nv">DB_ADMIN_USERNAME</span><span class="o">=</span>admin
+<span class="nv">DB_ADMIN_PASSWORD</span><span class="o">=</span>admin_secret
+</pre></div>
+</div>
+<p>Other database tasks:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>db-stop<span class="w">      </span><span class="c1"># stop MongoDB container</span>
+poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>db-restart<span class="w">   </span><span class="c1"># restart</span>
+poetry<span class="w"> </span>run<span class="w"> </span>inv<span class="w"> </span>db-shell<span class="w">     </span><span class="c1"># open mongosh shell</span>
+</pre></div>
+</div>
+</section>
+<section id="verify-installation">
+<h2>Verify installation<a class="headerlink" href="#verify-installation" title="Link to this heading"></a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>--help
+poetry<span class="w"> </span>run<span class="w"> </span>fit-rendezvous<span class="w">   </span><span class="c1"># launches TUI (Ctrl+C to exit)</span>
+</pre></div>
+</div>
+<p>On first use, FIT-CTF creates the share directory tree and copies bundled templates:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/.local/share/fit-ctf/
+├── project/
+├── user/
+├── module/      ← template, ssh_debian, ssh_ubi
+└── scenario/    ← template, login_node, admin_node
+</pre></div>
+</div>
+</section>
+<section id="development-installation">
+<h2>Development installation<a class="headerlink" href="#development-installation" title="Link to this heading"></a></h2>
+<p>For contributors, install all dependency groups:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>install
+poetry<span class="w"> </span>run<span class="w"> </span>pre-commit<span class="w"> </span>install<span class="w">   </span><span class="c1"># optional hooks</span>
+</pre></div>
+</div>
+<p>Run the test suite:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>pytest
+</pre></div>
+</div>
+<p>Build documentation:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>docs/sphinx
+poetry<span class="w"> </span>run<span class="w"> </span>make<span class="w"> </span>html
+xdg-open<span class="w"> </span>_build/html/index.html
+</pre></div>
+</div>
+</section>
+<section id="next-steps">
+<h2>Next steps<a class="headerlink" href="#next-steps" title="Link to this heading"></a></h2>
+<p>Continue with <a class="reference internal" href="quickstart.html"><span class="doc">Quickstart</span></a> for a minimal end-to-end setup, <a class="reference internal" href="rendezvous.html"><span class="doc">Rendezvous (SSH and TUI)</span></a> for SSH
+and participant TUI setup, or <a class="reference internal" href="configuration.html"><span class="doc">Configuration</span></a> to customize paths and logging.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="requirements.html" class="btn btn-neutral float-left" title="Requirements" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="configuration.html" class="btn btn-neutral float-right" title="Configuration" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

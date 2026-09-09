@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creating modules &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Creating scenarios" href="creating-scenarios.html" />
+    <link rel="prev" title="Challenge authoring" href="challenge-authoring.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Creating modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#directory-layout">Directory layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#create-a-module">Create a module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#list-and-locate-modules">List and locate modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#edit-the-containerfile">Edit the Containerfile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#build-the-image">Build the image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#use-the-module-in-a-scenario">Use the module in a scenario</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#check-usage-before-removing">Check usage before removing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#remove-an-unused-module">Remove an unused module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#workflow-checklist">Workflow checklist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#common-pitfalls">Common pitfalls</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Creating modules</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="creating-modules">
+<h1>Creating modules<a class="headerlink" href="#creating-modules" title="Link to this heading"></a></h1>
+<p>A <strong>module</strong> is a container image definition that scenarios reference when declaring
+services. Modules live on disk under <code class="docutils literal notranslate"><span class="pre">{MODULE_SHARE_DIR}/{module_name}/</span></code> (default:
+<code class="docutils literal notranslate"><span class="pre">~/.local/share/fit-ctf/module/</span></code>).</p>
+<p>After building, images are tagged <code class="docutils literal notranslate"><span class="pre">fit-ctf/{module_name}</span></code>.</p>
+<section id="directory-layout">
+<h2>Directory layout<a class="headerlink" href="#directory-layout" title="Link to this heading"></a></h2>
+<p>A new module contains a copy of the bundled <code class="docutils literal notranslate"><span class="pre">template</span></code> module:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>module/my_challenge/
+├── Containerfile      ← image build instructions
+└── entrypoint.sh      ← container entrypoint (customize as needed)
+</pre></div>
+</div>
+<p>Bundled reference modules (<code class="docutils literal notranslate"><span class="pre">ssh_debian</span></code>, <code class="docutils literal notranslate"><span class="pre">ssh_ubi</span></code>) also include <code class="docutils literal notranslate"><span class="pre">init_script.sh</span></code>
+and are a good starting point for SSH-based challenges.</p>
+</section>
+<section id="create-a-module">
+<h2>Create a module<a class="headerlink" href="#create-a-module" title="Link to this heading"></a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>module<span class="w"> </span>create<span class="w"> </span>my_challenge
+</pre></div>
+</div>
+<p>This copies <code class="docutils literal notranslate"><span class="pre">template/</span></code> from <code class="docutils literal notranslate"><span class="pre">src/fit_ctf/templates/v1/modules/template/</span></code>. The module
+name must not already exist.</p>
+</section>
+<section id="list-and-locate-modules">
+<h2>List and locate modules<a class="headerlink" href="#list-and-locate-modules" title="Link to this heading"></a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>module<span class="w"> </span>ls
+fit-ctf<span class="w"> </span>module<span class="w"> </span>get-path<span class="w"> </span>-mn<span class="w"> </span>my_challenge
+<span class="nb">cd</span><span class="w"> </span><span class="s2">"</span><span class="k">$(</span>fit-ctf<span class="w"> </span>module<span class="w"> </span>get-path<span class="w"> </span>-mn<span class="w"> </span>my_challenge<span class="k">)</span><span class="s2">"</span>
+</pre></div>
+</div>
+</section>
+<section id="edit-the-containerfile">
+<h2>Edit the Containerfile<a class="headerlink" href="#edit-the-containerfile" title="Link to this heading"></a></h2>
+<p>Open the module directory and edit <code class="docutils literal notranslate"><span class="pre">Containerfile</span></code>. Example structure (from the
+template):</p>
+<div class="highlight-dockerfile notranslate"><div class="highlight"><pre><span></span><span class="k">FROM</span><span class="w"> </span><span class="s">registry.access.redhat.com/ubi9:latest</span>
+
+<span class="k">RUN</span><span class="w"> </span>dnf<span class="w"> </span>update<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span>dnf<span class="w"> </span>install<span class="w"> </span>vim<span class="w"> </span>curl<span class="w"> </span>iproute<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span>dnf<span class="w"> </span>clean<span class="w"> </span>all
+
+<span class="k">COPY</span><span class="w"> </span>./entrypoint.sh<span class="w"> </span>/entrypoint.sh
+<span class="k">RUN</span><span class="w"> </span>chmod<span class="w"> </span>+x<span class="w"> </span>/entrypoint.sh
+
+<span class="k">ENTRYPOINT</span><span class="w"> </span><span class="p">[</span><span class="s2">"/entrypoint.sh"</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>For Debian-based challenges, compare with the bundled <code class="docutils literal notranslate"><span class="pre">ssh_debian</span></code> module, which
+installs <code class="docutils literal notranslate"><span class="pre">openssh-server</span></code>, creates a <code class="docutils literal notranslate"><span class="pre">user</span></code> account, and exposes port 22.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Scenarios reference modules by <strong>directory name</strong> in the <code class="docutils literal notranslate"><span class="pre">build.context</span></code> path, e.g.
+<code class="docutils literal notranslate"><span class="pre">{{</span> <span class="pre">paths__modules</span> <span class="pre">}}/my_challenge</span></code>. The image name in the Compose file should match:
+<code class="docutils literal notranslate"><span class="pre">fit-ctf/my_challenge:latest</span></code>.</p>
+</div>
+</section>
+<section id="build-the-image">
+<h2>Build the image<a class="headerlink" href="#build-the-image" title="Link to this heading"></a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>module<span class="w"> </span>build<span class="w"> </span>my_challenge
+fit-ctf<span class="w"> </span>module<span class="w"> </span>build<span class="w"> </span>my_challenge<span class="w"> </span>-v<span class="w">    </span><span class="c1"># show build log</span>
+</pre></div>
+</div>
+<p>Building uses <code class="docutils literal notranslate"><span class="pre">podman</span> <span class="pre">build</span></code> (or Docker when <code class="docutils literal notranslate"><span class="pre">CONTAINER_CLIENT=docker</span></code>).</p>
+<p>Verify the image exists:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>podman<span class="w"> </span>images<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>fit-ctf
+</pre></div>
+</div>
+</section>
+<section id="use-the-module-in-a-scenario">
+<h2>Use the module in a scenario<a class="headerlink" href="#use-the-module-in-a-scenario" title="Link to this heading"></a></h2>
+<p>In <code class="docutils literal notranslate"><span class="pre">scenario_compose.yaml.j2</span></code>, reference the module in a service:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">web</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">build</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">context</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">paths__modules</span><span class="w"> </span><span class="p p-Indicator">}}</span><span class="l l-Scalar l-Scalar-Plain">/my_challenge</span>
+<span class="w">      </span><span class="nt">dockerfile</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Containerfile</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fit-ctf/my_challenge:latest</span>
+<span class="w">    </span><span class="nt">networks</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">{{</span><span class="w"> </span><span class="nv">network_map__private</span><span class="w"> </span><span class="p p-Indicator">}}:</span>
+</pre></div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">network_map__shared</span></code>, <code class="docutils literal notranslate"><span class="pre">network_map__private</span></code>, or <code class="docutils literal notranslate"><span class="pre">network_map__operational</span></code>
+depending on whether the service should sit on the shared project network, the
+per-user private network, or the operational network. See <a class="reference internal" href="creating-scenarios.html"><span class="doc">Creating scenarios</span></a>.</p>
+</section>
+<section id="check-usage-before-removing">
+<h2>Check usage before removing<a class="headerlink" href="#check-usage-before-removing" title="Link to this heading"></a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>module<span class="w"> </span>referenced
+fit-ctf<span class="w"> </span>module<span class="w"> </span>referenced<span class="w"> </span>-pn<span class="w"> </span>demo_project
+</pre></div>
+</div>
+</section>
+<section id="remove-an-unused-module">
+<h2>Remove an unused module<a class="headerlink" href="#remove-an-unused-module" title="Link to this heading"></a></h2>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>module<span class="w"> </span>rm<span class="w"> </span>my_challenge
+</pre></div>
+</div>
+<p>Removal fails if compiled <code class="docutils literal notranslate"><span class="pre">scenario_compose.yaml</span></code> files still reference the module.</p>
+</section>
+<section id="workflow-checklist">
+<h2>Workflow checklist<a class="headerlink" href="#workflow-checklist" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">module</span> <span class="pre">create</span> <span class="pre">&lt;name&gt;</span></code></p></li>
+<li><p>Edit <code class="docutils literal notranslate"><span class="pre">Containerfile</span></code> and <code class="docutils literal notranslate"><span class="pre">entrypoint.sh</span></code> (add challenge files, packages, flags)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">module</span> <span class="pre">build</span> <span class="pre">&lt;name&gt;</span></code></p></li>
+<li><p>Reference <code class="docutils literal notranslate"><span class="pre">fit-ctf/&lt;name&gt;</span></code> in a scenario template (<a class="reference internal" href="creating-scenarios.html"><span class="doc">Creating scenarios</span></a>)</p></li>
+<li><p>After changing the Containerfile, rebuild the module <strong>and</strong> re-run
+<code class="docutils literal notranslate"><span class="pre">user-cluster</span> <span class="pre">build</span></code> / <code class="docutils literal notranslate"><span class="pre">project-cluster</span> <span class="pre">build</span></code> for affected clusters</p></li>
+</ol>
+</section>
+<section id="common-pitfalls">
+<h2>Common pitfalls<a class="headerlink" href="#common-pitfalls" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Forgot to rebuild</strong> — scenario <code class="docutils literal notranslate"><span class="pre">build</span></code> uses the module context; image layers are
+cached until you run <code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">module</span> <span class="pre">build</span></code> again.</p></li>
+<li><p><strong>Wrong image tag</strong> — keep <code class="docutils literal notranslate"><span class="pre">image:</span> <span class="pre">fit-ctf/{module_name}:latest</span></code> aligned with the
+module folder name.</p></li>
+<li><p><strong>Module in use</strong> — <code class="docutils literal notranslate"><span class="pre">module</span> <span class="pre">rm</span></code> scans compiled compose files; remove scenarios from
+clusters first if needed.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="challenge-authoring.html" class="btn btn-neutral float-left" title="Challenge authoring" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="creating-scenarios.html" class="btn btn-neutral float-right" title="Creating scenarios" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

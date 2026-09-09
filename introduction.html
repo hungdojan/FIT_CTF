@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Introduction &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Requirements" href="requirements.html" />
+    <link rel="prev" title="FIT-CTF documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-fit-ctf-does">What FIT-CTF does</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#typical-workflow">Typical workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#two-front-end-programs">Two front-end programs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit-ctf-operator-cli"><code class="docutils literal notranslate"><span class="pre">fit-ctf</span></code> (operator CLI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fit-rendezvous-participant-tui"><code class="docutils literal notranslate"><span class="pre">fit-rendezvous</span></code> (participant TUI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#backend-library">Backend library</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Introduction</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/introduction.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h1>
+<section id="what-fit-ctf-does">
+<h2>What FIT-CTF does<a class="headerlink" href="#what-fit-ctf-does" title="Link to this heading"></a></h2>
+<p>FIT-CTF orchestrates the full lifecycle of a container-based CTF event:</p>
+<ol class="arabic simple">
+<li><p><strong>Define a competition</strong> as a <em>project</em> with a capacity limit and port range.</p></li>
+<li><p><strong>Register participants</strong> as <em>users</em> and <em>enroll</em> them into projects.</p></li>
+<li><p><strong>Author challenge environments</strong> as reusable <em>scenarios</em> (Jinja2 Compose templates)
+built from <em>modules</em> (container images).</p></li>
+<li><p><strong>Deploy containers</strong> in two scopes:</p>
+<ul class="simple">
+<li><p><strong>Project clusters</strong> — shared services visible to all enrolled users (e.g. a login
+node or admin dashboard).</p></li>
+<li><p><strong>User clusters</strong> — per-participant instances with private networks and secrets.</p></li>
+</ul>
+</li>
+<li><p><strong>Track progress</strong> — participants submit flags/secrets; the platform records solves and
+maintains a leaderboard.</p></li>
+</ol>
+</section>
+<section id="typical-workflow">
+<h2>Typical workflow<a class="headerlink" href="#typical-workflow" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Operator                          Participant
+--------                          -------------
+fit-ctf project create
+fit-ctf user create
+fit-ctf enrollment enroll
+fit-ctf user-cluster compile
+fit-ctf user-cluster start
+                                  SSH → fit-rendezvous
+                                  Select project
+                                  Start instance
+                                  Submit secret
+fit-ctf user-progress list        View leaderboard
+</pre></div>
+</div>
+</section>
+<section id="two-front-end-programs">
+<h2>Two front-end programs<a class="headerlink" href="#two-front-end-programs" title="Link to this heading"></a></h2>
+<section id="fit-ctf-operator-cli">
+<h3><code class="docutils literal notranslate"><span class="pre">fit-ctf</span></code> (operator CLI)<a class="headerlink" href="#fit-ctf-operator-cli" title="Link to this heading"></a></h3>
+<p>A Click-based command-line tool for administrators. It talks to MongoDB and the
+container engine to manage projects, users, enrollments, modules, scenarios, and both
+cluster types. Database connections are opened lazily — only commands that need the DB
+trigger a connection.</p>
+<p>Entry point: <code class="docutils literal notranslate"><span class="pre">fit-ctf</span></code> (Poetry script → <code class="docutils literal notranslate"><span class="pre">fit_ctf_cli</span></code>).</p>
+</section>
+<section id="fit-rendezvous-participant-tui">
+<h3><code class="docutils literal notranslate"><span class="pre">fit-rendezvous</span></code> (participant TUI)<a class="headerlink" href="#fit-rendezvous-participant-tui" title="Link to this heading"></a></h3>
+<p>A Textual terminal UI launched over SSH. After login, participants can:</p>
+<ul class="simple">
+<li><p>Select an enrolled project</p></li>
+<li><p>Read task instructions and connection details</p></li>
+<li><p>Start or stop their personal cluster instance</p></li>
+<li><p>Submit secrets and view the leaderboard</p></li>
+<li><p>Upload an SSH public key</p></li>
+</ul>
+<p>Entry point: <code class="docutils literal notranslate"><span class="pre">fit-rendezvous</span></code> (Poetry script → <code class="docutils literal notranslate"><span class="pre">fit_ctf_rendezvous</span></code>).</p>
+<p>Supported languages: English (<code class="docutils literal notranslate"><span class="pre">en</span></code>) and Czech (<code class="docutils literal notranslate"><span class="pre">cs</span></code>), controlled by the
+<code class="docutils literal notranslate"><span class="pre">FIT_RENDEZVOUS_LANG</span></code> environment variable.</p>
+</section>
+<section id="backend-library">
+<h3>Backend library<a class="headerlink" href="#backend-library" title="Link to this heading"></a></h3>
+<p>The shared Python package <code class="docutils literal notranslate"><span class="pre">fit_ctf</span></code> contains managers, models, scenario compilation,
+container client abstractions, and database access. Both front-ends import from this
+library; operators rarely interact with it directly.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="FIT-CTF documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="requirements.html" class="btn btn-neutral float-right" title="Requirements" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

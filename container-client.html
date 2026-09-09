@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Container client &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Changelog" href="changelog.html" />
+    <link rel="prev" title="CLI commands" href="click-commands.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Container client</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#compose-helpers">Compose helpers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#compose-ps"><code class="docutils literal notranslate"><span class="pre">compose_ps</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compose-down"><code class="docutils literal notranslate"><span class="pre">compose_down</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#podman-implementation">Podman implementation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit_ctf.components.container_client.podman_client.PodmanClient"><code class="docutils literal notranslate"><span class="pre">PodmanClient</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fit_ctf.components.container_client.podman_client.PodmanClient.compose_down"><code class="docutils literal notranslate"><span class="pre">PodmanClient.compose_down()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit_ctf.components.container_client.podman_client.PodmanClient.compose_ps"><code class="docutils literal notranslate"><span class="pre">PodmanClient.compose_ps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit_ctf.components.container_client.podman_client.PodmanClient.compose_ps_json"><code class="docutils literal notranslate"><span class="pre">PodmanClient.compose_ps_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit_ctf.components.container_client.podman_client.PodmanClient.compose_states"><code class="docutils literal notranslate"><span class="pre">PodmanClient.compose_states()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#interface">Interface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface"><code class="docutils literal notranslate"><span class="pre">ContainerClientInterface</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_down"><code class="docutils literal notranslate"><span class="pre">ContainerClientInterface.compose_down()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_ps"><code class="docutils literal notranslate"><span class="pre">ContainerClientInterface.compose_ps()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_ps_json"><code class="docutils literal notranslate"><span class="pre">ContainerClientInterface.compose_ps_json()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_states"><code class="docutils literal notranslate"><span class="pre">ContainerClientInterface.compose_states()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Container client</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/container-client.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="container-client">
+<h1>Container client<a class="headerlink" href="#container-client" title="Link to this heading"></a></h1>
+<p>FIT-CTF talks to Podman or Docker through <a class="reference internal" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface" title="fit_ctf.components.container_client.container_client_interface.ContainerClientInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContainerClientInterface</span></code></a>.
+The concrete implementation is selected at runtime via the <code class="docutils literal notranslate"><span class="pre">CONTAINER_CLIENT</span></code> environment variable
+(<code class="docutils literal notranslate"><span class="pre">podman</span></code>, <code class="docutils literal notranslate"><span class="pre">docker</span></code>, or <code class="docutils literal notranslate"><span class="pre">mock</span></code>).</p>
+<section id="compose-helpers">
+<h2>Compose helpers<a class="headerlink" href="#compose-helpers" title="Link to this heading"></a></h2>
+<section id="compose-ps">
+<h3><code class="docutils literal notranslate"><span class="pre">compose_ps</span></code><a class="headerlink" href="#compose-ps" title="Link to this heading"></a></h3>
+<p>Lists containers managed by a compose project. Implementations call <code class="docutils literal notranslate"><span class="pre">compose</span> <span class="pre">ps</span> <span class="pre">-q</span></code> so the
+result is a list of <strong>container IDs</strong> (one ID per line), not service names or table output.</p>
+<p>An empty compose file list or a project with no running containers returns <code class="docutils literal notranslate"><span class="pre">[]</span></code>.</p>
+<p>This method is used by cluster managers to answer “is this cluster running?”:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">running</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="k">await</span> <span class="n">c_client</span><span class="o">.</span><span class="n">compose_ps</span><span class="p">(</span><span class="n">compose_files</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="compose-down">
+<h3><code class="docutils literal notranslate"><span class="pre">compose_down</span></code><a class="headerlink" href="#compose-down" title="Link to this heading"></a></h3>
+<p>Tears down a compose project. The method first runs <code class="docutils literal notranslate"><span class="pre">compose</span> <span class="pre">ps</span> <span class="pre">-q</span></code>; if there is no output it
+returns <code class="docutils literal notranslate"><span class="pre">(0,</span> <span class="pre">False)</span></code> without calling <code class="docutils literal notranslate"><span class="pre">down</span></code>. Otherwise it runs <code class="docutils literal notranslate"><span class="pre">compose</span> <span class="pre">down</span></code> and returns
+<code class="docutils literal notranslate"><span class="pre">(exit_code,</span> <span class="pre">True)</span></code> on success.</p>
+</section>
+</section>
+<section id="podman-implementation">
+<h2>Podman implementation<a class="headerlink" href="#podman-implementation" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.podman_client.PodmanClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fit_ctf.components.container_client.podman_client.</span></span><span class="sig-name descname"><span class="pre">PodmanClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctf_base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">_ctf_base.CTFBase</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fit_ctf.components.container_client.podman_client.PodmanClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface" title="fit_ctf.components.container_client.container_client_interface.ContainerClientInterface"><code class="xref py py-class docutils literal notranslate"><span class="pre">ContainerClientInterface</span></code></a></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.podman_client.PodmanClient.compose_down">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compose_down</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_stdout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#fit_ctf.components.container_client.podman_client.PodmanClient.compose_down" title="Link to this definition"></a></dt>
+<dd><p>Run compose down for the given file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logger</strong> (<em>Logger</em>) – A logger handler to write output to.</p></li>
+<li><p><strong>file</strong> (<em>str</em><em> | </em><em>Path</em>) – Path to the compose file.</p></li>
+<li><p><strong>to_stdout</strong> (<em>bool</em>) – Pipe output to stdout as well. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An exit code.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.podman_client.PodmanClient.compose_ps">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compose_ps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#fit_ctf.components.container_client.podman_client.PodmanClient.compose_ps" title="Link to this definition"></a></dt>
+<dd><p>Get container states using compose command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<em>list</em><em>[</em><em>Path</em><em>]</em>) – List of compose file paths</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A status info for each found container.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.podman_client.PodmanClient.compose_ps_json">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compose_ps_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#fit_ctf.components.container_client.podman_client.PodmanClient.compose_ps_json" title="Link to this definition"></a></dt>
+<dd><p>Get container states in JSON format using compose command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<em>list</em><em>[</em><em>Path</em><em>]</em>) – List of compose file paths</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A status info for each found container.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dict[str, Any]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.podman_client.PodmanClient.compose_states">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compose_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">HealthCheckDict</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#fit_ctf.components.container_client.podman_client.PodmanClient.compose_states" title="Link to this definition"></a></dt>
+<dd><p>Returns a simple table that shows the state of each service in the cluster.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<em>list</em><em>[</em><em>Path</em><em>]</em>) – List of compose file paths</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A basic status for each service</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[HealthCheckDict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="interface">
+<h2>Interface<a class="headerlink" href="#interface" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.container_client_interface.ContainerClientInterface">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">fit_ctf.components.container_client.container_client_interface.</span></span><span class="sig-name descname"><span class="pre">ContainerClientInterface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctf_base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">_ctf_base.CTFBase</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_down">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compose_down</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logger_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_stdout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_down" title="Link to this definition"></a></dt>
+<dd><p>Run compose down for the given file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logger</strong> (<em>Logger</em>) – A logger handler to write output to.</p></li>
+<li><p><strong>file</strong> (<em>str</em><em> | </em><em>Path</em>) – Path to the compose file.</p></li>
+<li><p><strong>to_stdout</strong> (<em>bool</em>) – Pipe output to stdout as well. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An exit code.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_ps">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compose_ps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_ps" title="Link to this definition"></a></dt>
+<dd><p>Get container states using compose command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<em>list</em><em>[</em><em>Path</em><em>]</em>) – List of compose file paths</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A status info for each found container.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_ps_json">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compose_ps_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_ps_json" title="Link to this definition"></a></dt>
+<dd><p>Get container states in JSON format using compose command.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<em>list</em><em>[</em><em>Path</em><em>]</em>) – List of compose file paths</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A status info for each found container.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[dict[str, Any]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_states">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">compose_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">HealthCheckDict</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#fit_ctf.components.container_client.container_client_interface.ContainerClientInterface.compose_states" title="Link to this definition"></a></dt>
+<dd><p>Returns a simple table that shows the state of each service in the cluster.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<em>list</em><em>[</em><em>Path</em><em>]</em>) – List of compose file paths</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A basic status for each service</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[HealthCheckDict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="click-commands.html" class="btn btn-neutral float-left" title="CLI commands" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="changelog.html" class="btn btn-neutral float-right" title="Changelog" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

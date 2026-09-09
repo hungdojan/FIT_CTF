@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FIT-CTF documentation &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Introduction" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">FIT-CTF documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fit-ctf-documentation">
+<h1>FIT-CTF documentation<a class="headerlink" href="#fit-ctf-documentation" title="Link to this heading"></a></h1>
+<p><strong>FIT-CTF</strong> is a container-oriented Capture The Flag (CTF) platform developed at
+<a class="reference external" href="https://www.fit.vut.cz/">FIT BUT</a> (Brno University of Technology). It lets
+operators run classroom or competition-style CTF events where each participant gets
+isolated container instances, while shared infrastructure (login nodes, admin services)
+runs at the project level.</p>
+<p>The platform is built around <strong>Podman</strong> and <strong>podman-compose</strong> (Docker is also supported
+as a container backend). State is stored in <strong>MongoDB</strong>; challenge environments are
+defined as <strong>scenarios</strong> compiled from Jinja2 templates into Docker Compose files.</p>
+<section id="documentation-map">
+<h2>Documentation map<a class="headerlink" href="#documentation-map" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#what-fit-ctf-does">What FIT-CTF does</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#typical-workflow">Typical workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#two-front-end-programs">Two front-end programs</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="requirements.html#software">Software</a></li>
+<li class="toctree-l2"><a class="reference internal" href="requirements.html#optional">Optional</a></li>
+<li class="toctree-l2"><a class="reference internal" href="requirements.html#development-dependencies">Development dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-system-dependencies">Install system dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#install-and-verify-podman">Install and verify Podman</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#clone-and-install">Clone and install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#generate-environment-file">Generate environment file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#start-mongodb-local-development">Start MongoDB (local development)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#verify-installation">Verify installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#development-installation">Development installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#next-steps">Next steps</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="configuration.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#required-variables">Required variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#optional-variables">Optional variables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#cli-path-overrides">CLI path overrides</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#project-level-settings">Project-level settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#scenario-and-service-configuration">Scenario and service configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#logging">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration.html#example-minimal-env">Example minimal <code class="docutils literal notranslate"><span class="pre">.env</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html#next-steps">Next steps</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#high-level-overview">High-level overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#services">Services</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#core-managers">Core managers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#cluster-networking">Cluster networking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#port-allocation">Port allocation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="architecture.html#rendezvous-over-ssh">Rendezvous over SSH</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#project">Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#user">User</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#enrollment">Enrollment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#module">Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#scenario">Scenario</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#project-cluster-vs-user-cluster">Project cluster vs user cluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#secrets-and-progress">Secrets and progress</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#object-relationships">Object relationships</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="challenge-authoring.html#how-the-pieces-fit-together">How the pieces fit together</a></li>
+<li class="toctree-l2"><a class="reference internal" href="challenge-authoring.html#terminology">Terminology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="challenge-authoring.html#end-to-end-workflow">End-to-end workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="challenge-authoring.html#bundled-examples">Bundled examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="challenge-authoring.html#project-wide-vs-per-user-challenges">Project-wide vs per-user challenges</a></li>
+<li class="toctree-l2"><a class="reference internal" href="challenge-authoring.html#compilation-details">Compilation details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="challenge-authoring.html#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#directory-layout">Directory layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#create-a-module">Create a module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#list-and-locate-modules">List and locate modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#edit-the-containerfile">Edit the Containerfile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#build-the-image">Build the image</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#use-the-module-in-a-scenario">Use the module in a scenario</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#check-usage-before-removing">Check usage before removing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#remove-an-unused-module">Remove an unused module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#workflow-checklist">Workflow checklist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#common-pitfalls">Common pitfalls</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#directory-layout">Directory layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#create-a-scenario">Create a scenario</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#list-and-inspect">List and inspect</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#edit-the-compose-template">Edit the Compose template</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#flags-and-secrets">Flags and secrets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#attach-a-scenario-to-a-cluster">Attach a scenario to a cluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#deploy-the-challenge">Deploy the challenge</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#compiled-output-location">Compiled output location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#maintain-scenarios">Maintain scenarios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#multi-challenge-projects">Multi-challenge projects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="creating-scenarios.html#example-from-bulk-setup">Example from bulk setup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html#directory-layout">Directory layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html#compilation-pipeline">Compilation pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html#parameter-map">Parameter map</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html#example-scenario-config-conceptual">Example scenario config (conceptual)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html#bundled-scenarios">Bundled scenarios</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html#modules">Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html#authoring-a-new-scenario">Authoring a new scenario</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scenarios.html#compose-runtime">Compose runtime</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#local-development">Local development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#user-level-systemd-mongodb-via-quadlet">User-level systemd (MongoDB via Quadlet)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#production-vm-fit-ctf-virt">Production VM (fit-ctf-virt)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#rendezvous-over-ssh">Rendezvous over SSH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#container-engine-in-production">Container engine in production</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#pre-event-checklist">Pre-event checklist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#backup-and-migration">Backup and migration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deployment.html#hosted-documentation">Hosted documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#relationship-to-fit-ctf">Relationship to FIT-CTF</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#architecture">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#requirements">Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#repository-layout">Repository layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#installation-workflow">Installation workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#configuration-reference">Configuration reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#invoke-tasks">Invoke tasks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#what-each-instance-receives">What each instance receives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#participant-access">Participant access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#operator-workflow">Operator workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#monitoring-access">Monitoring access</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#teardown">Teardown</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#security-notes">Security notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#troubleshooting">Troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fit-ctf-virt.html#see-also">See also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rendezvous.html#how-login-works">How login works</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rendezvous.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rendezvous.html#local-setup-no-ssh">Local setup (no SSH)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rendezvous.html#ssh-setup">SSH setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rendezvous.html#using-the-tui">Using the TUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rendezvous.html#operator-checklist">Operator checklist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rendezvous.html#production-note">Production note</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rendezvous.html#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#schema">Schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#minimal-example">Minimal example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#users-section">Users section</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#projects-section">Projects section</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#enrollments-section">Enrollments section</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#full-repository-examples">Full repository examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#apply-the-setup-file">Apply the setup file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#setup-file-vs-zip-import">Setup file vs ZIP import</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#troubleshooting">Troubleshooting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup-file.html#see-also">See also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="click-commands.html#fit-ctf">fit-ctf</a></li>
+<li class="toctree-l2"><a class="reference internal" href="click-commands.html#fit-ctf-project">fit-ctf project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="click-commands.html#fit-ctf-user">fit-ctf user</a></li>
+<li class="toctree-l2"><a class="reference internal" href="click-commands.html#fit-ctf-user-cluster">fit-ctf user-cluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="click-commands.html#fit-ctf-project-cluster">fit-ctf project-cluster</a></li>
+<li class="toctree-l2"><a class="reference internal" href="click-commands.html#fit-ctf-scenario">fit-ctf scenario</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="container-client.html#compose-helpers">Compose helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="container-client.html#podman-implementation">Podman implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="container-client.html#interface">Interface</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

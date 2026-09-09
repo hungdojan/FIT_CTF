@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Configuration &mdash; fit-ctf 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="_static/quickstart.css?v=f1d6a997" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=8d563738"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quickstart" href="quickstart.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            fit-ctf
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="requirements.html">Requirements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#required-variables">Required variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mongodb-admin-credentials-local-dev">MongoDB admin credentials (local dev)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#optional-variables">Optional variables</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#rendezvous">Rendezvous</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cli-path-overrides">CLI path overrides</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#project-level-settings">Project-level settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#scenario-and-service-configuration">Scenario and service configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bulk-setup-file">Bulk setup file</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#logging">Logging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-minimal-env">Example minimal <code class="docutils literal notranslate"><span class="pre">.env</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Concepts and architecture</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Core concepts</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Challenge authoring</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="challenge-authoring.html">Challenge authoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Creating modules</a></li>
+<li class="toctree-l1"><a class="reference internal" href="creating-scenarios.html">Creating scenarios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scenarios.html">Scenarios</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Operations</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="deployment.html">Deployment</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fit-ctf-virt.html">Production infrastructure (fit-ctf-virt)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rendezvous.html">Rendezvous (SSH and TUI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="setup-file.html">Bulk setup file</a></li>
+<li class="toctree-l1"><a class="reference internal" href="click-commands.html">CLI commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container-client.html">Container client</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Project</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="roadmap.html">Roadmap</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">fit-ctf</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Configuration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/configuration.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="configuration">
+<h1>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h1>
+<p>FIT-CTF reads configuration from a <code class="docutils literal notranslate"><span class="pre">.env</span></code> file at the repository root (loaded via
+<code class="docutils literal notranslate"><span class="pre">python-dotenv</span></code>). Generate it with <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">inv</span> <span class="pre">generate-env</span></code> or create it
+manually from the template at <code class="docutils literal notranslate"><span class="pre">config/setup/env_example</span></code>.</p>
+<section id="required-variables">
+<h2>Required variables<a class="headerlink" href="#required-variables" title="Link to this heading"></a></h2>
+<p>The application exits on startup if any of these are missing:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25.0%" />
+<col style="width: 15.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Example</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DB_USERNAME</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ctf_user</span></code></p></td>
+<td><p>MongoDB application user (created by init script)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DB_PASSWORD</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">changeme</span></code></p></td>
+<td><p>Password for the application user</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DB_HOST</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">localhost</span></code></p></td>
+<td><p>MongoDB hostname</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DB_PORT</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">27017</span></code></p></td>
+<td><p>MongoDB port</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DB_NAME</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ctf_db</span></code></p></td>
+<td><p>Database name (optional in code but should always be set)</p></td>
+</tr>
+</tbody>
+</table>
+<section id="mongodb-admin-credentials-local-dev">
+<h3>MongoDB admin credentials (local dev)<a class="headerlink" href="#mongodb-admin-credentials-local-dev" title="Link to this heading"></a></h3>
+<p>When using <code class="docutils literal notranslate"><span class="pre">poetry</span> <span class="pre">run</span> <span class="pre">inv</span> <span class="pre">db-start</span></code>, Podman Compose needs root credentials for
+the MongoDB container. Add these to <code class="docutils literal notranslate"><span class="pre">.env</span></code> (not written by <code class="docutils literal notranslate"><span class="pre">generate-env</span></code>):</p>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">DB_ADMIN_USERNAME</span><span class="o">=</span><span class="s">admin</span>
+<span class="na">DB_ADMIN_PASSWORD</span><span class="o">=</span><span class="s">admin_secret</span>
+</pre></div>
+</div>
+<p>The init script at <code class="docutils literal notranslate"><span class="pre">db/mongodb-quadlet/init-mongo.js</span></code> creates the application user
+with <code class="docutils literal notranslate"><span class="pre">readWrite</span></code> on <code class="docutils literal notranslate"><span class="pre">DB_NAME</span></code>.</p>
+</section>
+</section>
+<section id="optional-variables">
+<h2>Optional variables<a class="headerlink" href="#optional-variables" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 20.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">CONTAINER_CLIENT</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">podman</span></code></p></td>
+<td><p>Container backend: <code class="docutils literal notranslate"><span class="pre">podman</span></code>, <code class="docutils literal notranslate"><span class="pre">docker</span></code>, or <code class="docutils literal notranslate"><span class="pre">mock</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DB_CONNECTION_TIMEOUT</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">30</span></code></p></td>
+<td><p>Seconds to wait for MongoDB on connect</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">LOG_DEST</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">/tmp</span></code></p></td>
+<td><p>Directory for log files (one file per logger name)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">PROJECT_SHARE_DIR</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$HOME/.local/share/fit-ctf/project</span></code></p></td>
+<td><p>Root directory for project data</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">USER_SHARE_DIR</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$HOME/.local/share/fit-ctf/user</span></code></p></td>
+<td><p>Root directory for user data</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">MODULE_SHARE_DIR</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$HOME/.local/share/fit-ctf/module</span></code></p></td>
+<td><p>Root directory for module definitions</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">SCENARIO_SHARE_DIR</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">$HOME/.local/share/fit-ctf/scenario</span></code></p></td>
+<td><p>Root directory for scenario templates</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The comments in <code class="docutils literal notranslate"><span class="pre">config/setup/env_example</span></code> use plural directory names
+(<code class="docutils literal notranslate"><span class="pre">projects</span></code>, <code class="docutils literal notranslate"><span class="pre">users</span></code>). The <strong>code defaults</strong> use singular names
+(<code class="docutils literal notranslate"><span class="pre">project</span></code>, <code class="docutils literal notranslate"><span class="pre">user</span></code>, <code class="docutils literal notranslate"><span class="pre">module</span></code>, <code class="docutils literal notranslate"><span class="pre">scenario</span></code>). Follow the code defaults unless
+you explicitly override the environment variables.</p>
+</div>
+<section id="rendezvous">
+<h3>Rendezvous<a class="headerlink" href="#rendezvous" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 20.0%" />
+<col style="width: 50.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Variable</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">FIT_RENDEZVOUS_LANG</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">en</span></code></p></td>
+<td><p>UI language: <code class="docutils literal notranslate"><span class="pre">en</span></code> or <code class="docutils literal notranslate"><span class="pre">cs</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>Per-user Rendezvous preferences (locale, dark theme) are stored in:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>~/.local/share/fit-ctf/user/&lt;username&gt;/rendezvous_settings.json
+</pre></div>
+</div>
+</section>
+</section>
+<section id="cli-path-overrides">
+<h2>CLI path overrides<a class="headerlink" href="#cli-path-overrides" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">fit-ctf</span></code> CLI accepts global options that override share directories for a single
+invocation (without changing <code class="docutils literal notranslate"><span class="pre">.env</span></code>):</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>fit-ctf<span class="w"> </span>--project-dir<span class="w"> </span>/data/projects<span class="w"> </span>--user-dir<span class="w"> </span>/data/users<span class="w"> </span>project<span class="w"> </span>list
+</pre></div>
+</div>
+<p>Options: <code class="docutils literal notranslate"><span class="pre">--project-dir</span></code> (<code class="docutils literal notranslate"><span class="pre">-pd</span></code>), <code class="docutils literal notranslate"><span class="pre">--user-dir</span></code> (<code class="docutils literal notranslate"><span class="pre">-ud</span></code>), <code class="docutils literal notranslate"><span class="pre">--module-dir</span></code> (<code class="docutils literal notranslate"><span class="pre">-md</span></code>),
+<code class="docutils literal notranslate"><span class="pre">--scenario-dir</span></code> (<code class="docutils literal notranslate"><span class="pre">-sd</span></code>).</p>
+</section>
+<section id="project-level-settings">
+<h2>Project-level settings<a class="headerlink" href="#project-level-settings" title="Link to this heading"></a></h2>
+<p>Stored in MongoDB when a project is created:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>Lowercase alphanumeric + underscores only</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">max_nof_users</span></code></p></td>
+<td><p>Maximum enrollments</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">starting_port_bind</span></code></p></td>
+<td><p>First port in the SSH port range (default constant: <code class="docutils literal notranslate"><span class="pre">10000</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">description</span></code></p></td>
+<td><p>Free-text project description</p></td>
+</tr>
+</tbody>
+</table>
+<p>Each enrollment receives ports from the range
+<code class="docutils literal notranslate"><span class="pre">starting_port_bind</span> <span class="pre">..</span> <span class="pre">starting_port_bind</span> <span class="pre">+</span> <span class="pre">max_nof_users</span> <span class="pre">-</span> <span class="pre">1</span></code>.</p>
+</section>
+<section id="scenario-and-service-configuration">
+<h2>Scenario and service configuration<a class="headerlink" href="#scenario-and-service-configuration" title="Link to this heading"></a></h2>
+<p>Scenario configs (secrets, environment variables, port maps, volume maps) are stored in
+cluster documents in MongoDB and edited via CLI commands such as
+<code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">user-cluster</span> <span class="pre">edit-service</span></code> and <code class="docutils literal notranslate"><span class="pre">fit-ctf</span> <span class="pre">user-cluster</span> <span class="pre">secrets</span></code>.</p>
+<p>JSON schemas for validation live in <code class="docutils literal notranslate"><span class="pre">src/fit_ctf/components/schemas/v1/</span></code>.</p>
+<section id="bulk-setup-file">
+<h3>Bulk setup file<a class="headerlink" href="#bulk-setup-file" title="Link to this heading"></a></h3>
+<p>For bootstrapping multiple projects, users, and enrollments at once, use a YAML file
+validated against <code class="docutils literal notranslate"><span class="pre">setup.yaml</span></code>:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>poetry<span class="w"> </span>run<span class="w"> </span>fit-ctf<span class="w"> </span>data-mgmt<span class="w"> </span>setup<span class="w"> </span>-i<span class="w"> </span>connected_data.yaml
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="setup-file.html"><span class="doc">Bulk setup file</span></a> for how to author the file, <code class="docutils literal notranslate"><span class="pre">connected_data.yaml</span></code> examples, and
+how this differs from <code class="docutils literal notranslate"><span class="pre">data-mgmt</span> <span class="pre">import</span></code> (ZIP).</p>
+</section>
+</section>
+<section id="logging">
+<h2>Logging<a class="headerlink" href="#logging" title="Link to this heading"></a></h2>
+<p>Loggers write to <code class="docutils literal notranslate"><span class="pre">$LOG_DEST/&lt;logger_name&gt;.log</span></code>. Cluster operations use the logger name
+<code class="docutils literal notranslate"><span class="pre">fit_ctf.cluster</span></code>.</p>
+</section>
+<section id="example-minimal-env">
+<h2>Example minimal <code class="docutils literal notranslate"><span class="pre">.env</span></code><a class="headerlink" href="#example-minimal-env" title="Link to this heading"></a></h2>
+<div class="highlight-ini notranslate"><div class="highlight"><pre><span></span><span class="na">DB_USERNAME</span><span class="o">=</span><span class="s">ctf_user</span>
+<span class="na">DB_PASSWORD</span><span class="o">=</span><span class="s">changeme</span>
+<span class="na">DB_NAME</span><span class="o">=</span><span class="s">ctf_db</span>
+<span class="na">DB_HOST</span><span class="o">=</span><span class="s">localhost</span>
+<span class="na">DB_PORT</span><span class="o">=</span><span class="s">27017</span>
+
+<span class="na">DB_ADMIN_USERNAME</span><span class="o">=</span><span class="s">admin</span>
+<span class="na">DB_ADMIN_PASSWORD</span><span class="o">=</span><span class="s">admin_secret</span>
+
+<span class="na">CONTAINER_CLIENT</span><span class="o">=</span><span class="s">podman</span>
+<span class="na">DB_CONNECTION_TIMEOUT</span><span class="o">=</span><span class="s">30</span>
+<span class="na">LOG_DEST</span><span class="o">=</span><span class="s">/tmp</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="quickstart.html" class="btn btn-neutral float-right" title="Quickstart" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Hung Do.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
