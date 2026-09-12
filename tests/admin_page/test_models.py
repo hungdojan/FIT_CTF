@@ -1,8 +1,11 @@
 """Tests for admin page models and compose export."""
 
+import pytest
+
 from fit_ctf_admin.scenario.compose_export import export_compose_preview
 from fit_ctf_admin.scenario.design_model import (
     ScenarioDesign,
+    normalize_image_ref,
     parse_key_value_lines,
     parse_port_lines,
 )
@@ -121,3 +124,50 @@ def test_parse_helpers():
         "ADMIN": "root",
     }
     assert parse_port_lines("web:8080, api:3000") == {"web": 8080, "api": 3000}
+
+
+@pytest.mark.parametrize(
+    ("typed", "expected"),
+    [
+        ("nginx", "docker.io/library/nginx"),
+        ("nginx:alpine", "docker.io/library/nginx:alpine"),
+        ("  nginx:alpine  ", "docker.io/library/nginx:alpine"),
+        ("bitnami/nginx", "docker.io/bitnami/nginx"),
+        ("ghcr.io/owner/app:1.2", "ghcr.io/owner/app:1.2"),
+        ("localhost:5000/owner/app", "localhost:5000/owner/app"),
+        ("docker.io/library/nginx", "docker.io/library/nginx"),
+    ],
+)
+def test_normalize_image_ref_fills_in_the_registry(typed, expected):
+    assert normalize_image_ref(typed) == expected
+
+
+@pytest.mark.parametrize("typed", ["", "   ", "two words"])
+def test_normalize_image_ref_rejects_junk(typed):
+    with pytest.raises(ValueError):
+        normalize_image_ref(typed)
+
+
+def test_external_image_service_has_no_build_section():
+    design = ScenarioDesign(name="demo")
+    block = design.add_block(label="proxy")
+    design.set_service_key(block.id, "proxy")
+    block.image_source = "image"
+    block.image_ref = "docker.io/library/nginx:alpine"
+
+    preview = export_compose_preview(design)
+
+    assert "    image: docker.io/library/nginx:alpine" in preview
+    assert "build:" not in preview
+    assert "paths__modules" not in preview
+
+
+def test_module_service_still_builds_from_modules():
+    design = ScenarioDesign(name="demo")
+    block = design.add_block(label="web", module_name="ssh_debian")
+    design.set_service_key(block.id, "web")
+
+    preview = export_compose_preview(design)
+
+    assert "context: {{ paths__modules }}/ssh_debian" in preview
+    assert "image: fit-ctf/ssh_debian:latest" in preview

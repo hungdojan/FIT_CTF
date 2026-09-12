@@ -63,13 +63,20 @@ def _volume_lines(block: ServiceBlock) -> list[str]:
 
 
 def export_service_block(block: ServiceBlock) -> str:
-    lines = [
-        f"  {block.service_key}:",
-        "    build:",
-        f"      context: {{{{ paths__modules }}}}/{block.module_name}",
-        "      dockerfile: Containerfile",
-        f"    image: fit-ctf/{block.module_name}:latest",
-    ]
+    if block.image_source == "image":
+        # external image: pulled as-is, nothing to build from modules/
+        lines = [
+            f"  {block.service_key}:",
+            f"    image: {block.image_ref}",
+        ]
+    else:
+        lines = [
+            f"  {block.service_key}:",
+            "    build:",
+            f"      context: {{{{ paths__modules }}}}/{block.module_name}",
+            "      dockerfile: Containerfile",
+            f"    image: fit-ctf/{block.module_name}:latest",
+        ]
     lines.extend(_container_name_lines(block))
     lines.extend(
         [

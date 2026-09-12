@@ -119,14 +119,14 @@ class BlockNode(Widget):
             return Text.assemble(
                 (self.block.label, "bold"),
                 "\n",
-                (self.block.module_name, "dim"),
+                (self.block.image_label, "dim"),
             )
         return Text.assemble(
             (self.block.label, "bold"),
             "\n",
             (f"key: {self.block.service_key}", "dim"),
             "\n",
-            (f"module: {self.block.module_name}", "dim"),
+            (f"image: {self.block.image_label}", "dim"),
             "\n",
             (f"net: {self._networks_text()}", "green"),
             "\n",

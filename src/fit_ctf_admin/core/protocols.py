@@ -8,7 +8,7 @@ operations and blocking Mongo queries alike.
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Callable, Protocol, runtime_checkable
 
 from fit_ctf.components.types import UserRole
 from fit_ctf_admin.dto import (
@@ -45,9 +45,21 @@ class UsersGateway(Protocol):
 
     async def change_password(self, username: str, password: str) -> None: ...
 
+    async def update_user(self, username: str, *, email: str, role: UserRole) -> UserRow:
+        """Update the editable profile fields; returns the refreshed row."""
+        ...
+
     async def disable_user(self, username: str) -> None: ...
 
     async def delete_user(self, username: str) -> None: ...
+
+    async def disable_users(self, usernames: list[str]) -> list[str]:
+        """Disable several users; returns non-fatal failure messages."""
+        ...
+
+    async def delete_users(self, usernames: list[str]) -> list[str]:
+        """Delete several users; returns non-fatal failure messages."""
+        ...
 
 
 @runtime_checkable
@@ -88,6 +100,14 @@ class EnrollmentsGateway(Protocol):
     async def enroll_user(self, username: str, project_name: str) -> EnrollmentRow: ...
 
     async def cancel_enrollment(self, username: str, project_name: str) -> None: ...
+
+    async def cancel_enrollments(self, pairs: list[tuple[str, str]]) -> list[str]:
+        """Cancel several ``(username, project)`` enrollments.
+
+        Cancellation is batched per project, so a failure on one project does not
+        stop the others; returns one message per failed project.
+        """
+        ...
 
 
 @runtime_checkable
@@ -233,6 +253,10 @@ class ModulesGateway(Protocol):
 
     async def build_module(self, name: str) -> tuple[bool, str]:
         """Build the module image; returns ``(success, build output text)``."""
+        ...
+
+    async def build_module_stream(self, name: str, on_line: Callable[[str], None]) -> bool:
+        """Build the module image, reporting output lines while it runs."""
         ...
 
     async def remove_module(self, name: str) -> None: ...

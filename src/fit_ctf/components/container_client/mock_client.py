@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import fit_ctf.components.container_client.container_client_interface as c_client
 from fit_ctf.components.types import ErrorCode, HealthCheckDict, TaskSuccess
@@ -118,6 +118,21 @@ class MockClient(c_client.ContainerClientInterface):
         containerfile: str = "Containerfile",
     ) -> tuple[ErrorCode, str]:  # pragma: no cover
         return 0, ""
+
+    async def build_image_stream(
+        self,
+        context_path: Path,
+        image_name: str,
+        on_line: Callable[[str], None],
+        containerfile: str = "Containerfile",
+    ) -> ErrorCode:  # pragma: no cover
+        for line in (
+            f"STEP 1/2: FROM {containerfile} context {context_path}",
+            f"STEP 2/2: COMMIT {image_name}",
+            f"Successfully tagged {image_name}:latest",
+        ):
+            on_line(line)
+        return 0
 
     async def compose_states(self, files: list[Path]) -> list[HealthCheckDict]:
         return []

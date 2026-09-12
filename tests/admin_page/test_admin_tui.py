@@ -1,8 +1,17 @@
 """Pilot tests for the admin TUI shell and management pages (preview mode)."""
 
 import pytest
-from textual.widgets import Button, Checkbox, ContentSwitcher, Input, Select
+from textual.widgets import (
+    Button,
+    Checkbox,
+    ContentSwitcher,
+    Input,
+    OptionList,
+    Select,
+    TabbedContent,
+)
 
+from fit_ctf.components.types import UserRole
 from fit_ctf_admin.admin_app import AdminApp
 from fit_ctf_admin.core.admin_core import AdminCore
 from fit_ctf_admin.screens.dialogs.confirm_dialog import ConfirmDialog
@@ -105,7 +114,7 @@ async def test_create_user_flow_reveals_password_once(app: AdminApp):
         assert table.row_count == 4  # 3 active + erin
 
 
-async def test_create_user_empty_username_shows_error(app: AdminApp):
+async def test_create_user_empty_username_keeps_dialog_open(app: AdminApp):
     async with app.run_test(size=SIZE) as pilot:
         await _goto(pilot, "users-page")
         await pilot.click("#users-new-btn")
@@ -114,9 +123,115 @@ async def test_create_user_empty_username_shows_error(app: AdminApp):
         await pilot.pause()
         await pilot.click("#new-user-create-btn")
         await _settle(pilot)
-        # dialog dismissed, error surfaced as a notification, table unchanged
+        # the form stays open with its values so the operator can fix the field
+        assert isinstance(app.screen, NewUserDialog)
+        assert "empty" in str(app.screen.query_one("#new-user-username-error").render())
+
+        # fixing the username completes the creation
+        # (press() instead of click(): Button ignores clicks during its -active effect)
+        app.screen.query_one("#new-user-username", Input).value = "erin"
+        app.screen.query_one("#new-user-create-btn", Button).press()
+        await _settle(pilot)
+        assert isinstance(app.screen, SecretRevealDialog)
+        await pilot.click("#secret-done-btn")
+        await _settle(pilot)
+        table = app.screen.query_one("#users-table", RefreshableTable)
+        assert table.row_count == 4
+
+
+async def test_create_user_weak_password_is_caught_before_the_gateway(app: AdminApp):
+    async with app.run_test(size=SIZE) as pilot:
+        await _goto(pilot, "users-page")
+        await pilot.click("#users-new-btn")
+        await pilot.pause()
+        app.screen.query_one("#new-user-username", Input).value = "frank"
+        app.screen.query_one("#new-user-password", Input).value = "weak"
+        await pilot.click("#new-user-create-btn")
+        await _settle(pilot)
+        assert isinstance(app.screen, NewUserDialog)
+        error = str(app.screen.query_one("#new-user-password-error").render())
+        assert "8 characters" in error
+        # nothing was created
+        await pilot.click("#new-user-cancel-btn")
+        await _settle(pilot)
+        assert app.screen.query_one("#users-table", RefreshableTable).row_count == 3
+
+
+async def test_new_user_password_show_hide_button(app: AdminApp):
+    async with app.run_test(size=SIZE) as pilot:
+        await _goto(pilot, "users-page")
+        await pilot.click("#users-new-btn")
+        await pilot.pause()
+        password = app.screen.query_one("#new-user-password", Input)
+        toggle = app.screen.query_one("#new-user-password-toggle", Button)
+        assert password.password is True
+        await pilot.click("#new-user-password-toggle")
+        await pilot.pause()
+        assert password.password is False
+        assert str(toggle.label) == "Hide"
+        toggle.press()  # click() would be swallowed by the -active effect
+        await pilot.pause()
+        assert password.password is True
+        assert str(toggle.label) == "Show"
+
+        # generating a password disables the field and its toggle
+        app.screen.query_one("#new-user-generate", Checkbox).value = True
+        await pilot.pause()
+        assert password.disabled is True
+        assert app.screen.query_one("#new-user-password-toggle", Button).disabled is True
+
+
+async def test_edit_user_changes_role_email_and_password(app: AdminApp):
+    from fit_ctf_admin.screens.dialogs.edit_user_dialog import EditUserDialog
+
+    async with app.run_test(size=SIZE) as pilot:
+        await _goto(pilot, "users-page")
+        table = app.screen.query_one("#users-table", RefreshableTable)
+        table.move_cursor(row=table.get_row_index("alice"))
+        await pilot.click("#users-edit-btn")
+        await _settle(pilot)
+        assert isinstance(app.screen, EditUserDialog)
+
+        app.screen.query_one("#edit-user-email", Input).value = "alice@example.org"
+        app.screen.query_one("#edit-user-role", Select).value = UserRole.ADMIN
+        app.screen.query_one("#edit-user-password", Input).value = "NewPassw0rd"
+        await pilot.click("#edit-user-save-btn")
+        await _settle(pilot)
+
+        # the new password is revealed once
+        assert isinstance(app.screen, SecretRevealDialog)
+        await pilot.click("#secret-done-btn")
+        await _settle(pilot)
+
+        store = app.admin_core.gateway.store
+        record = next(u for u in store.users if u.username == "alice")
+        assert record.email == "alice@example.org"
+        assert record.role == "admin"
+        assert record.password == "NewPassw0rd"
+
+
+async def test_users_bulk_delete_via_marked_rows(app: AdminApp):
+    async with app.run_test(size=SIZE) as pilot:
+        await _goto(pilot, "users-page")
         table = app.screen.query_one("#users-table", RefreshableTable)
         assert table.row_count == 3
+        table.move_cursor(row=table.get_row_index("alice"))
+        table.action_toggle_row()
+        table.move_cursor(row=table.get_row_index("dave"))
+        table.action_toggle_row()
+        await pilot.pause()
+        assert table.selected_keys == ["alice", "dave"]
+        assert "(2)" in str(app.screen.query_one("#users-delete-btn", Button).label)
+
+        await pilot.click("#users-delete-btn")
+        await pilot.pause()
+        assert isinstance(app.screen, ConfirmDialog)
+        await pilot.click("#confirm-ok-btn")
+        await _settle(pilot)
+
+        table = app.screen.query_one("#users-table", RefreshableTable)
+        assert table.row_count == 1
+        assert table.selected_keys == []
 
 
 async def test_delete_project_requires_confirmation(app: AdminApp):
@@ -157,6 +272,24 @@ async def test_enroll_flow(app: AdminApp):
 
         table = app.screen.query_one("#enrollments-table", RefreshableTable)
         assert table.row_count == 5
+
+
+async def test_enrollments_bulk_cancel(app: AdminApp):
+    async with app.run_test(size=SIZE) as pilot:
+        await _goto(pilot, "enrollments-page")
+        table = app.screen.query_one("#enrollments-table", RefreshableTable)
+        assert table.row_count == 4
+        table.action_select_all()
+        await pilot.pause()
+        assert len(table.selected_keys) == 4
+        assert "(4)" in str(app.screen.query_one("#enrollments-cancel-btn", Button).label)
+
+        await pilot.click("#enrollments-cancel-btn")
+        await pilot.pause()
+        assert isinstance(app.screen, ConfirmDialog)
+        await pilot.click("#confirm-ok-btn")
+        await _settle(pilot)
+        assert app.screen.query_one("#enrollments-table", RefreshableTable).row_count == 0
 
 
 async def test_clusters_page_lifecycle(app: AdminApp):
@@ -294,6 +427,150 @@ async def test_designer_new_save_open_roundtrip(app: AdminApp):
         await _settle(pilot)
         form = app.screen.query_one("#design-form", DesignForm)
         assert form.design.name == "pilot_scn"
+
+
+async def test_designer_preview_renders_when_its_tab_is_opened(app: AdminApp):
+    from textual.widgets import TextArea
+
+    from fit_ctf_admin.widgets.designer.design_form import DesignForm
+
+    async with app.run_test(size=(140, 60)) as pilot:
+        await _goto(pilot, "designer-page")
+        form = app.screen.query_one("#design-form", DesignForm)
+        form.query_one("#service-add-btn", Button).press()
+        await _settle(pilot)
+
+        tabs = app.screen.query_one("#designer-tabs", TabbedContent)
+        tabs.active = "preview-tab"
+        await _settle(pilot)
+        preview = app.screen.query_one("#compose-preview", TextArea)
+        assert "svc_" in preview.text  # generated service key
+
+        # typing does not re-render on its own ...
+        tabs.active = "design-tab"
+        await _settle(pilot)
+        form.query_one("#svc-key", Input).value = "web"
+        form.query_one("#svc-ports", Input).value = "http:8080"
+        await _settle(pilot)
+        assert "web:" not in app.screen.query_one("#compose-preview", TextArea).text
+
+        # ... opening the preview harvests the form, no Apply needed
+        tabs.active = "preview-tab"
+        await _settle(pilot)
+        text = app.screen.query_one("#compose-preview", TextArea).text
+        assert "  web:" in text
+        assert "web__port_map__http" in text
+
+
+async def test_designer_picks_up_modules_created_meanwhile(app: AdminApp):
+    from fit_ctf_admin.screens.dialogs.input_dialog import InputDialog
+    from fit_ctf_admin.widgets.designer.design_form import DesignForm
+
+    async with app.run_test(size=(140, 60)) as pilot:
+        await _goto(pilot, "designer-page")
+        form = app.screen.query_one("#design-form", DesignForm)
+        with pytest.raises(Exception):
+            form.query_one("#svc-module", Select).value = "fresh_mod"
+
+        await _goto(pilot, "modules-page")
+        await pilot.click("#modules-new-btn")
+        await pilot.pause()
+        assert isinstance(app.screen, InputDialog)
+        app.screen.query_one("#input-dialog-value", Input).value = "fresh_mod"
+        await pilot.click("#input-dialog-ok-btn")
+        await _settle(pilot)
+
+        await _goto(pilot, "designer-page")
+        form = app.screen.query_one("#design-form", DesignForm)
+        form.query_one("#svc-module", Select).value = "fresh_mod"  # no longer raises
+        assert form.query_one("#svc-module", Select).value == "fresh_mod"
+
+
+async def test_designer_external_image_service(app: AdminApp):
+    from textual.widgets import TextArea
+
+    from fit_ctf_admin.widgets.designer.design_form import DesignForm
+
+    async with app.run_test(size=(140, 60)) as pilot:
+        await _goto(pilot, "designer-page")
+        form = app.screen.query_one("#design-form", DesignForm)
+        form.query_one("#service-add-btn", Button).press()
+        await _settle(pilot)
+
+        form.query_one("#svc-image-source", Select).value = "image"
+        await pilot.pause()
+        form.query_one("#svc-image-ref", Input).value = "nginx:alpine"
+        form.query_one("#svc-key", Input).value = "proxy"
+        form.query_one("#svc-apply-btn", Button).press()
+        await _settle(pilot)
+
+        block = form.design.blocks[0]
+        assert block.image_source == "image"
+        assert block.image_ref == "docker.io/library/nginx:alpine"  # registry filled in
+
+        app.screen.query_one("#designer-tabs", TabbedContent).active = "preview-tab"
+        await _settle(pilot)
+        text = app.screen.query_one("#compose-preview", TextArea).text
+        assert "image: docker.io/library/nginx:alpine" in text
+        assert "build:" not in text
+
+
+async def test_designer_volume_flow(app: AdminApp):
+    from fit_ctf_admin.screens.dialogs.volume_slot_dialog import VolumeSlotDialog
+    from fit_ctf_admin.widgets.designer.design_form import DesignForm
+
+    async with app.run_test(size=(140, 60)) as pilot:
+        await _goto(pilot, "designer-page")
+        form = app.screen.query_one("#design-form", DesignForm)
+
+        # a fresh design has no service, so the volume buttons are disabled and
+        # the section says why
+        assert form.query_one("#volume-add-btn", Button).disabled is True
+        assert "Add a service first" in str(form.query_one("#volume-hint").render())
+
+        form.query_one("#service-add-btn", Button).press()
+        await _settle(pilot)
+        assert form.query_one("#volume-add-btn", Button).disabled is False
+
+        form.query_one("#volume-add-btn", Button).press()
+        await _settle(pilot)
+        assert isinstance(app.screen, VolumeSlotDialog)
+        app.screen.query_one("#volume-name", Input).value = "cfg"
+        app.screen.query_one("#volume-container-path", Input).value = "/data/cfg"
+        await pilot.click("#volume-save-btn")
+        await _settle(pilot)
+
+        block = form.design.blocks[0]
+        assert [slot.name for slot in block.volumes] == ["cfg"]
+        # the new slot is highlighted, so Edit/Remove act on it right away
+        assert form.query_one("#volume-list", OptionList).highlighted == 0
+
+        form.query_one("#volume-remove-btn", Button).press()
+        await _settle(pilot)
+        assert block.volumes == []
+
+
+async def test_volume_dialog_reports_a_readable_validation_error(app: AdminApp):
+    from fit_ctf_admin.screens.dialogs.volume_slot_dialog import VolumeSlotDialog
+    from fit_ctf_admin.widgets.designer.design_form import DesignForm
+
+    async with app.run_test(size=(140, 60)) as pilot:
+        await _goto(pilot, "designer-page")
+        form = app.screen.query_one("#design-form", DesignForm)
+        form.query_one("#service-add-btn", Button).press()
+        await _settle(pilot)
+        form.query_one("#volume-add-btn", Button).press()
+        await _settle(pilot)
+
+        app.screen.query_one("#volume-name", Input).value = "cfg"
+        app.screen.query_one("#volume-container-path", Input).value = "relative/path"
+        await pilot.click("#volume-save-btn")
+        await _settle(pilot)
+        # dialog stays open with a one-line message instead of a pydantic dump
+        assert isinstance(app.screen, VolumeSlotDialog)
+        error = str(app.screen.query_one("#volume-error").render())
+        assert error.startswith("Container path must be absolute")
+        assert "validation error" not in error
 
 
 async def test_designer_raw_edit_flow(app: AdminApp):
@@ -552,10 +829,10 @@ async def test_modules_edit_files_screen(app: AdminApp):
         await _settle(pilot)
 
 
-async def test_modules_build_shows_log_dialog(app: AdminApp):
-    from textual.widgets import TextArea
+async def test_modules_build_streams_into_a_log_window(app: AdminApp):
+    from textual.widgets import Log, Static
 
-    from fit_ctf_admin.screens.dialogs.text_dialog import TextDialog
+    from fit_ctf_admin.screens.dialogs.build_log_screen import BuildLogScreen
 
     async with app.run_test(size=(140, 50)) as pilot:
         await _goto(pilot, "modules-page")
@@ -563,10 +840,102 @@ async def test_modules_build_shows_log_dialog(app: AdminApp):
         table.move_cursor(row=table.get_row_index("template"))
         app.screen.query_one("#modules-build-btn", Button).press()
         await _settle(pilot)
-        assert isinstance(app.screen, TextDialog)
-        assert "preview mode" in app.screen.query_one("#text-dialog-area", TextArea).text
-        await pilot.click("#text-dialog-close-btn")
+        assert isinstance(app.screen, BuildLogScreen)
+
+        lines = app.screen.query_one("#build-log", Log).lines
+        assert any("STEP 1/2" in line for line in lines)
+        assert any("preview mode" in line for line in lines)
+        status = str(app.screen.query_one("#build-status", Static).render())
+        assert "successfully" in status
+        await pilot.click("#build-log-close-btn")
         await _settle(pilot)
+        assert not isinstance(app.screen, BuildLogScreen)
+
+
+async def test_modules_build_failure_is_reported(app: AdminApp):
+    from textual.widgets import Static
+
+    from fit_ctf_admin.screens.dialogs.build_log_screen import BuildLogScreen
+
+    async def failing_build(name, on_line):
+        on_line("STEP 1/2: FROM base")
+        return False
+
+    async with app.run_test(size=(140, 50)) as pilot:
+        await _goto(pilot, "modules-page")
+        app.admin_core.gateway.build_module_stream = failing_build  # type: ignore[assignment]
+        table = app.screen.query_one("#modules-table", RefreshableTable)
+        table.move_cursor(row=table.get_row_index("template"))
+        app.screen.query_one("#modules-build-btn", Button).press()
+        await _settle(pilot)
+        assert isinstance(app.screen, BuildLogScreen)
+        assert "failed" in str(app.screen.query_one("#build-status", Static).render())
+
+
+async def test_module_editor_confirms_before_dropping_edits(app: AdminApp):
+    from textual.widgets import TextArea
+
+    from fit_ctf_admin.screens.module_files_screen import ModuleFilesScreen
+
+    async with app.run_test(size=(140, 50)) as pilot:
+        await _goto(pilot, "modules-page")
+        table = app.screen.query_one("#modules-table", RefreshableTable)
+        table.move_cursor(row=table.get_row_index("template"))
+        app.screen.query_one("#modules-edit-btn", Button).press()
+        await _settle(pilot)
+        assert isinstance(app.screen, ModuleFilesScreen)
+
+        # escape with no edits just closes
+        await pilot.press("escape")
+        await _settle(pilot)
+        assert not isinstance(app.screen, ModuleFilesScreen)
+
+        app.screen.query_one("#modules-edit-btn", Button).press()
+        await _settle(pilot)
+        editor = app.screen
+        editor.query_one("#module-file-area", TextArea).text = "FROM edited\n"
+        await pilot.press("escape")
+        await _settle(pilot)
+        assert isinstance(app.screen, ConfirmDialog)
+
+        # cancelling the confirmation keeps the editor and the text
+        await pilot.click("#confirm-cancel-btn")
+        await _settle(pilot)
+        assert app.screen is editor
+        assert editor.query_one("#module-file-area", TextArea).text == "FROM edited\n"
+
+        # confirming discards
+        await pilot.press("escape")
+        await _settle(pilot)
+        await pilot.click("#confirm-ok-btn")
+        await _settle(pilot)
+        assert not isinstance(app.screen, ModuleFilesScreen)
+        store = app.admin_core.gateway.store
+        assert store.module_files[("template", "Containerfile")] != "FROM edited\n"
+
+
+async def test_module_editor_clean_after_save(app: AdminApp):
+    from textual.widgets import TextArea
+
+    from fit_ctf_admin.screens.module_files_screen import ModuleFilesScreen
+
+    async with app.run_test(size=(140, 50)) as pilot:
+        await _goto(pilot, "modules-page")
+        table = app.screen.query_one("#modules-table", RefreshableTable)
+        table.move_cursor(row=table.get_row_index("template"))
+        app.screen.query_one("#modules-edit-btn", Button).press()
+        await _settle(pilot)
+        editor = app.screen
+        assert isinstance(editor, ModuleFilesScreen)
+
+        editor.query_one("#module-file-area", TextArea).text = "FROM saved\n"
+        editor.query_one("#module-file-save-btn", Button).press()
+        await _settle(pilot)
+        assert editor.is_dirty() is False
+        # saved edits leave without a confirmation
+        await pilot.press("escape")
+        await _settle(pilot)
+        assert not isinstance(app.screen, ModuleFilesScreen)
 
 
 async def test_designer_env_vars_via_add_button(app: AdminApp):
@@ -586,6 +955,9 @@ async def test_designer_env_vars_via_add_button(app: AdminApp):
 
         block = form.design.blocks[0]
         assert block.env_keys == ["ADMIN"]
+        # the preview renders when its tab is opened
+        app.screen.query_one("#designer-tabs", TabbedContent).active = "preview-tab"
+        await _settle(pilot)
         preview = app.screen.query_one("#designer-preview", PreviewPanel)
         assert "__env_map__ADMIN" in preview.query_one("#compose-preview").text
 

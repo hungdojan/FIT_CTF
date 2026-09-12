@@ -45,12 +45,13 @@ class DesignerPage(AdminPage):
             self._fill_scenario_select,
             group="designer-scenarios",
         )
-        if self._module_names is None:
-            self.call_gateway(
-                lambda: self.core.gateway.list_module_names(),
-                self._modules_loaded,
-                group="designer-modules",
-            )
+        # always reloaded: modules created on the Modules page have to show up
+        # in the service form without restarting the app
+        self.call_gateway(
+            lambda: self.core.gateway.list_module_names(),
+            self._modules_loaded,
+            group="designer-modules",
+        )
 
     def _fill_scenario_select(self, rows: list[ScenarioSummary]) -> None:
         select = self.query_one("#designer-scenario-select", Select)
@@ -60,8 +61,17 @@ class DesignerPage(AdminPage):
             select.value = current
 
     def _modules_loaded(self, names: list[str]) -> None:
+        first_load = self._module_names is None
+        changed = self._module_names != names
         self._module_names = names
-        self._rebuild_body()
+        if first_load:
+            self._rebuild_body()
+            return
+        if not changed:
+            return
+        # update the catalog in place; rebuilding would throw away form state
+        for form in self.query(DesignForm):
+            form.set_module_names(names)
 
     def _rebuild_body(self) -> None:
         self.run_worker(self._async_rebuild_body, group="designer-ui", exclusive=True)
@@ -92,10 +102,32 @@ class DesignerPage(AdminPage):
 
     @on(DesignForm.Changed)
     def _design_changed(self) -> None:
-        for preview in self.query(PreviewPanel):
-            preview.refresh_preview(self._design)
+        """Structural edits (services, secrets, volumes) refresh the canvas."""
         for canvas in self.query(DesignCanvas):
             canvas.refresh_blocks(self._design)
+
+    @on(TabbedContent.TabActivated, "#designer-tabs")
+    def _tab_activated(self, event: TabbedContent.TabActivated) -> None:
+        """Re-render the opened tab from the form's current values.
+
+        `event.pane.id` (not `event.tab.id`, which carries TabbedContent's
+        internal `--content-tab-` prefix) identifies the pane. Harvesting here is
+        what makes "Apply service changes" optional: whatever is typed in the
+        form is in the preview as soon as the preview is opened.
+        """
+        if event.pane.id not in ("preview-tab", "layout-tab"):
+            return
+        self._harvest_form()
+        if event.pane.id == "preview-tab":
+            for preview in self.query(PreviewPanel):
+                preview.refresh_preview(self._design)
+        else:
+            for canvas in self.query(DesignCanvas):
+                canvas.refresh_blocks(self._design)
+
+    def _harvest_form(self) -> None:
+        for form in self.query(DesignForm):
+            form.harvest_into_design()
 
     # -- toolbar actions -----------------------------------------------------------
 
@@ -166,6 +198,7 @@ class DesignerPage(AdminPage):
 
     @on(Button.Pressed, "#designer-save-btn")
     def _save(self) -> None:
+        self._harvest_form()  # save what is on screen, not the last Apply
         self.call_gateway(
             lambda: self.core.gateway.designer_state(self._design.name),
             self._save_with_state,

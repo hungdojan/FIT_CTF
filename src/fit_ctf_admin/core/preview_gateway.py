@@ -6,6 +6,8 @@ pilot test) runs against it without a database or container runtime.
 
 from __future__ import annotations
 
+from typing import Callable
+
 from fit_ctf.components.types import UserRole
 from fit_ctf_admin.core.passwords import resolve_new_password
 from fit_ctf_admin.core.preview_store import PreviewStore
@@ -60,11 +62,28 @@ class PreviewGateway:
         plain_password = resolve_new_password(password, generate=False)
         self.store.change_password(username, plain_password)
 
+    async def update_user(self, username: str, *, email: str, role: UserRole) -> UserRow:
+        return self.store.update_user(username, email.strip(), role)
+
     async def disable_user(self, username: str) -> None:
         self.store.disable_user(username)
 
     async def delete_user(self, username: str) -> None:
         self.store.delete_user(username)
+
+    async def disable_users(self, usernames: list[str]) -> list[str]:
+        failures: list[str] = []
+        for username in usernames:
+            try:
+                self.store.disable_user(username)
+            except AdminError as exc:
+                failures.append(f"`{username}`: {exc}")
+        return failures
+
+    async def delete_users(self, usernames: list[str]) -> list[str]:
+        for username in usernames:
+            self.store.delete_user(username)
+        return []
 
     # -- projects ---------------------------------------------------------
 
@@ -112,6 +131,15 @@ class PreviewGateway:
         username = required(username, "Username")
         project_name = required(project_name, "Project name")
         return self.store.enroll_user(username, project_name)
+
+    async def cancel_enrollments(self, pairs: list[tuple[str, str]]) -> list[str]:
+        failures: list[str] = []
+        for username, project_name in pairs:
+            try:
+                self.store.cancel_enrollment(username, project_name)
+            except AdminError as exc:
+                failures.append(f"`{username}@{project_name}`: {exc}")
+        return failures
 
     async def cancel_enrollment(self, username: str, project_name: str) -> None:
         self.store.cancel_enrollment(username, project_name)
@@ -238,6 +266,17 @@ class PreviewGateway:
         if name not in self.store.modules:
             raise AdminError(f"Module `{name}` was not found.")
         return True, f"# preview mode — image fit-ctf/{name} not actually built\n"
+
+    async def build_module_stream(self, name: str, on_line: Callable[[str], None]) -> bool:
+        if name not in self.store.modules:
+            raise AdminError(f"Module `{name}` was not found.")
+        for line in (
+            f"STEP 1/2: FROM base image of `{name}`",
+            f"STEP 2/2: COMMIT fit-ctf/{name}",
+            f"# preview mode — image fit-ctf/{name} not actually built",
+        ):
+            on_line(line)
+        return True
 
     async def list_module_files(self, name: str) -> list[str]:
         return self.store.list_module_files(name)

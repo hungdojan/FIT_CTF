@@ -2,7 +2,7 @@ import pathlib
 import re
 from collections import defaultdict
 from shutil import copytree, rmtree
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 import yaml
 
@@ -94,6 +94,26 @@ class ModuleManager:
         return await self._c_client.build_image_text(
             context_path=dir_path,
             image_name=f"fit-ctf/{module_name}",
+            containerfile="Containerfile",
+        )
+
+    async def build_module_stream(
+        self, module_name: str, on_line: Callable[[str], None]
+    ) -> ErrorCode:
+        """Build a module's image, reporting the output line by line.
+
+        :param module_name: Name of the module to build
+        :type module_name: str
+        :param on_line: Called with every line of build output while it runs.
+        :type on_line: Callable[[str], None]
+        :return: An exit code
+        :rtype: ErrorCode
+        """
+        dir_path = self.get_path(module_name)
+        return await self._c_client.build_image_stream(
+            context_path=dir_path,
+            image_name=f"fit-ctf/{module_name}",
+            on_line=on_line,
             containerfile="Containerfile",
         )
 

@@ -312,6 +312,12 @@ class PreviewStore:
     def change_password(self, username: str, password: str) -> None:
         self._user(username).password = password
 
+    def update_user(self, username: str, email: str, role: UserRole) -> UserRow:
+        record = self._user(username)
+        record.email = email
+        record.role = role.value
+        return self.user_row(record)
+
     def disable_user(self, username: str) -> None:
         user = self._user(username)
         user.active = False

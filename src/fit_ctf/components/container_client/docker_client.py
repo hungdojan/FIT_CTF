@@ -4,7 +4,7 @@ import pathlib
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import fit_ctf.components.container_client.container_client_interface as c_client
 from fit_ctf.components.exceptions import CTFComponentException
@@ -382,6 +382,36 @@ class DockerClient(c_client.ContainerClientInterface):
             stderr=asyncio.subprocess.STDOUT,
         )
         await self._process_logging(proc, logger_name=logger_name, to_stdout=to_stdout)
+        await proc.wait()
+        return proc.returncode if proc.returncode is not None else 255
+
+    async def build_image_stream(
+        self,
+        context_path: Path,
+        image_name: str,
+        on_line: Callable[[str], None],
+        containerfile: str = "Containerfile",
+    ) -> ErrorCode:
+        cmd = [
+            "docker",
+            "build",
+            "-t",
+            image_name,
+            "-f",
+            str(context_path / containerfile),
+            str(context_path),
+        ]
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
+        )
+        if proc.stdout is not None:
+            while True:
+                raw_line = await proc.stdout.readline()
+                if not raw_line:
+                    break
+                on_line(raw_line.decode(errors="replace").rstrip("\n"))
         await proc.wait()
         return proc.returncode if proc.returncode is not None else 255
 

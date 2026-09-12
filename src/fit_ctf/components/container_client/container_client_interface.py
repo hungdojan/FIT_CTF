@@ -4,7 +4,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from asyncio.subprocess import Process
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 import fit_ctf.components.utils
 from fit_ctf.components.exceptions import CTFComponentException
@@ -403,5 +403,21 @@ class ContainerClientInterface(ABC):
 
         Unlike :meth:`build_image`, nothing is echoed or written to log files —
         callers (e.g. the admin TUI) render the build output themselves.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    async def build_image_stream(
+        self,
+        context_path: Path,
+        image_name: str,
+        on_line: Callable[[str], None],
+        containerfile: str = "Containerfile",
+    ) -> ErrorCode:  # pragma: no cover
+        """Build a container image, reporting output line by line as it appears.
+
+        Same as :meth:`build_image_text`, but ``on_line`` is called for every
+        output line while the build runs, so a UI can show progress instead of
+        waiting for the whole build. ``on_line`` is called from the event loop.
         """
         raise NotImplementedError()

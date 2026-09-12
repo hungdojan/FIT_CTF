@@ -37,6 +37,13 @@ FALLBACK_MODULE_NAMES: tuple[str, ...] = ("template", "ssh_debian", "ssh_ubi")
 
 TargetKind = Literal["user", "project"]
 VolumeKind = Literal["path", "static", "template"]
+# "module": built from modules/<name>; "image": pulled as-is (no build section)
+ImageSource = Literal["module", "image"]
+IMAGE_SOURCE_OPTIONS: list[tuple[str, str]] = [
+    ("Module (built from modules/)", "module"),
+    ("External image (pulled as-is)", "image"),
+]
+DEFAULT_IMAGE_REGISTRY = "docker.io"
 
 _NETWORK_SLUG_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 _SECRET_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*$")
@@ -79,6 +86,25 @@ def generate_service_key() -> str:
 
 def generate_container_name() -> str:
     return f"ctr_{uuid.uuid4().hex[:6]}"
+
+
+def normalize_image_ref(value: str) -> str:
+    """Complete a short image reference the way the container engines do.
+
+    ``nginx`` -> ``docker.io/library/nginx``, ``bitnami/nginx`` ->
+    ``docker.io/bitnami/nginx``; anything that already names a registry
+    (``ghcr.io/...``, ``localhost:5000/...``) is left alone.
+    """
+    ref = value.strip()
+    if not ref:
+        raise ValueError("Image reference is required (e.g. nginx:alpine).")
+    if any(char.isspace() for char in ref):
+        raise ValueError("Image reference cannot contain spaces.")
+    if "/" not in ref:
+        return f"{DEFAULT_IMAGE_REGISTRY}/library/{ref}"
+    head = ref.split("/", 1)[0]
+    is_registry = "." in head or ":" in head or head == "localhost"
+    return ref if is_registry else f"{DEFAULT_IMAGE_REGISTRY}/{ref}"
 
 
 def normalize_service_key(name: str) -> str:
@@ -179,12 +205,21 @@ class ServiceBlock(BaseModel):
     container_name: str | None = None
     container_name_mode: NameMode = "random"
     module_name: str = "template"
+    image_source: ImageSource = "module"
+    image_ref: str = ""
     x: int = 4
     y: int = 4
     networks: list[str] = Field(default_factory=lambda: ["shared"])
     ports: dict[str, int] = Field(default_factory=lambda: {"web": 8080})
     env_keys: list[str] = Field(default_factory=list)
     volumes: list[VolumeSlot] = Field(default_factory=list)
+
+    @property
+    def image_label(self) -> str:
+        """What the service pulls/builds, for compact displays."""
+        if self.image_source == "image":
+            return self.image_ref or "(no image set)"
+        return self.module_name
 
     def clamp_position(self, world_width: int, world_height: int) -> None:
         max_x = max(0, world_width - BLOCK_WIDTH)

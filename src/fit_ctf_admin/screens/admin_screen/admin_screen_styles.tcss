@@ -58,6 +58,11 @@ AdminPage {
     margin-right: 2;
 }
 
+.page-hint {
+    color: $text-muted;
+    margin-bottom: 1;
+}
+
 RefreshableTable {
     height: 1fr;
 }

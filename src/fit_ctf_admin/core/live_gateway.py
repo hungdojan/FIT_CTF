@@ -145,12 +145,44 @@ class LiveGateway:
         await asyncio.to_thread(self._app.user_mgr.change_password, username, plain_password)
 
     @guard
+    async def update_user(self, username: str, *, email: str, role: UserRole) -> UserRow:
+        def _update() -> UserRow:
+            user = self._app.user_mgr.get_user(username, active=None)
+            user.email = email.strip()
+            user.role = role
+            self._app.user_mgr.update_doc(user)
+            projects = self._app.enroll_mgr.get_enrolled_projects(user)
+            return UserRow(
+                username=user.username,
+                email=user.email,
+                role=str(user.role),
+                active=user.active,
+                projects=tuple(project.name for project in projects),
+            )
+
+        return await asyncio.to_thread(_update)
+
+    @guard
     async def disable_user(self, username: str) -> None:
         await self._app.user_mgr.disable_user(username, self._app.enroll_mgr)
 
     @guard
     async def delete_user(self, username: str) -> None:
         await self._app.user_mgr.delete_users([username], self._app.enroll_mgr)
+
+    @guard
+    async def disable_users(self, usernames: list[str]) -> list[str]:
+        if not usernames:
+            return []
+        await self._app.user_mgr.disable_multiple_users(list(usernames), self._app.enroll_mgr)
+        return []
+
+    @guard
+    async def delete_users(self, usernames: list[str]) -> list[str]:
+        if not usernames:
+            return []
+        await self._app.user_mgr.delete_users(list(usernames), self._app.enroll_mgr)
+        return []
 
     # -- projects ---------------------------------------------------------
 
@@ -265,6 +297,22 @@ class LiveGateway:
             )
 
         return await asyncio.to_thread(_enroll)
+
+    @guard
+    async def cancel_enrollments(self, pairs: list[tuple[str, str]]) -> list[str]:
+        by_project: dict[str, list[str]] = {}
+        for username, project_name in pairs:
+            by_project.setdefault(project_name, []).append(username)
+
+        failures: list[str] = []
+        for project_name, usernames in by_project.items():
+            try:
+                await self._app.enroll_mgr.cancel_multiple_enrollments(
+                    usernames, project_name, self._app.user_mgr
+                )
+            except CTFBaseException as exc:
+                failures.append(f"`{project_name}`: {exc}")
+        return failures
 
     @guard
     async def cancel_enrollment(self, username: str, project_name: str) -> None:
@@ -408,7 +456,7 @@ class LiveGateway:
             overview = self._app.scenario_mgr.scenario_overview(self._app.user_cluster_mgr)
             return [
                 ScenarioSummary(name=name, user_cluster_count=len(clusters))
-                for name, clusters in sorted(overview.items())
+                for name, clusters in sorted(overview.items(), key=lambda item: item[0] or "")
             ]
 
         return await asyncio.to_thread(_collect)
@@ -562,6 +610,11 @@ class LiveGateway:
     async def build_module(self, name: str) -> tuple[bool, str]:
         code, text = await self._app.module_mgr.build_module_text(name)
         return code == 0, text or "(no build output)"
+
+    @guard
+    async def build_module_stream(self, name: str, on_line: Callable[[str], None]) -> bool:
+        code = await self._app.module_mgr.build_module_stream(name, on_line)
+        return code == 0
 
     @guard
     async def remove_module(self, name: str) -> None:

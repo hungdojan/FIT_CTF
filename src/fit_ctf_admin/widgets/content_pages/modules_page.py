@@ -8,9 +8,9 @@ from textual.containers import Horizontal
 from textual.widgets import Button, Label
 
 from fit_ctf_admin.dto import ModuleRow
+from fit_ctf_admin.screens.dialogs.build_log_screen import BuildLogScreen
 from fit_ctf_admin.screens.dialogs.confirm_dialog import ConfirmDialog
 from fit_ctf_admin.screens.dialogs.input_dialog import InputDialog
-from fit_ctf_admin.screens.dialogs.text_dialog import TextDialog
 from fit_ctf_admin.screens.module_files_screen import ModuleFilesScreen
 from fit_ctf_admin.widgets.core_widget import AdminPage
 from fit_ctf_admin.widgets.refreshable_table import RefreshableTable
@@ -80,20 +80,14 @@ class ModulesPage(AdminPage):
         if name is None:
             self.notify("Select a module first.", severity="warning")
             return
-        self.notify(f"Building image for `{name}`…", timeout=3)
-        self.call_gateway(
-            lambda: self.core.gateway.build_module(name),
-            lambda result: self._build_done(name, result),
-            group="modules-mutate",
+        # the log window opens right away and fills while the build runs
+        self.app.push_screen(
+            BuildLogScreen(
+                f"Building image `fit-ctf/{name}`",
+                lambda on_line: self.core.gateway.build_module_stream(name, on_line),
+            ),
+            lambda _success: self.refresh_page(),
         )
-
-    def _build_done(self, name: str, result: tuple[bool, str]) -> None:
-        success, text = result
-        if success:
-            self.notify(f"Image `fit-ctf/{name}` built.")
-        else:
-            self.notify(f"Build of `fit-ctf/{name}` failed.", severity="error")
-        self.app.push_screen(TextDialog(f"Build output of `fit-ctf/{name}`", text, language=None))
 
     @on(Button.Pressed, "#modules-delete-btn")
     def _delete_module(self) -> None:

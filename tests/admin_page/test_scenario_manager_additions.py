@@ -133,3 +133,42 @@ class TestFetchUnmappedVariables:
     def test_missing_compose_raises(self, scenario_mgr):
         with pytest.raises(ScenarioNotExistException):
             scenario_mgr.fetch_unmapped_variables("ghost")
+
+
+class _FakeCollection:
+    """Stands in for the user-cluster collection of a connected manager."""
+
+    def __init__(self, documents: list[dict]) -> None:
+        self._documents = documents
+
+    def aggregate(self, _pipeline):
+        return iter(self._documents)
+
+
+class _FakeUserClusterManager:
+    def __init__(self, documents: list[dict]) -> None:
+        self.collection = _FakeCollection(documents)
+
+
+class TestScenarioOverview:
+    def test_clusters_without_scenarios_do_not_add_a_none_key(self, scenario_mgr):
+        """Regression: the `_id: None` group crashed every sort over the mapping."""
+        scenario_mgr.save_scenario_files("demo", COMPOSE)
+        cluster_mgr = _FakeUserClusterManager(
+            [
+                {"_id": None, "clusters": [{"cluster_name": "alice_intro"}]},
+                {"_id": "demo", "clusters": [{"cluster_name": "bob_intro"}]},
+            ]
+        )
+
+        overview = scenario_mgr.scenario_overview(cluster_mgr)  # type: ignore[arg-type]
+
+        assert None not in overview
+        assert sorted(overview.items())  # would raise TypeError with a None key
+        assert len(overview["demo"]) == 1
+
+    def test_unknown_scenario_names_are_ignored(self, scenario_mgr):
+        cluster_mgr = _FakeUserClusterManager(
+            [{"_id": "deleted_scn", "clusters": [{"cluster_name": "alice_intro"}]}]
+        )
+        assert scenario_mgr.scenario_overview(cluster_mgr) == {}  # type: ignore[arg-type]

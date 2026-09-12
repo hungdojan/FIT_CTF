@@ -1,14 +1,17 @@
 """Form-based editor over a shared :class:`ScenarioDesign` instance.
 
-The form mutates the design object owned by the designer page and posts
-:class:`DesignForm.Changed` so the page can refresh the preview/layout tabs.
+The form mutates the design object owned by the designer page. Field edits are
+*not* pushed to the preview on every keystroke: the page harvests the current
+field values (:meth:`DesignForm.harvest_into_design`) when the Compose preview
+or Layout tab is opened, and :class:`DesignForm.Changed` is posted only for
+structural edits (services, secrets, volumes) that the canvas has to follow.
 """
 
 from __future__ import annotations
 
 from textual import on
 from textual.app import ComposeResult
-from textual.containers import Horizontal, VerticalScroll
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.message import Message
 from textual.widgets import (
     Button,
@@ -17,14 +20,17 @@ from textual.widgets import (
     Label,
     OptionList,
     Select,
+    Static,
 )
 
 from fit_ctf_admin.scenario.design_model import (
     BUILTIN_NETWORKS,
+    IMAGE_SOURCE_OPTIONS,
     ScenarioDesign,
     VolumeSlot,
     format_key_value_lines,
     format_port_lines,
+    normalize_image_ref,
     parse_port_lines,
 )
 from fit_ctf_admin.screens.dialogs.volume_slot_dialog import VolumeSlotDialog
@@ -34,6 +40,16 @@ TARGET_OPTIONS = [
     ("User cluster scenario", "user"),
     ("Project cluster scenario", "project"),
 ]
+
+SERVICE_KEY_TOOLTIP = (
+    "The service's name in the generated compose file, and the prefix of every "
+    "variable the scenario config asks for: <key>__port_map__http, "
+    "<key>__env_map__ADMIN, <key>__volume_map__cfg. Leave it as the generated "
+    "svc_xxxxxx if you don't care — use Reroll for a fresh one."
+)
+
+NO_SERVICE_HINT = "Add a service first — volumes belong to a service."
+VOLUME_HINT = "Volumes of the selected service:"
 
 
 class DesignForm(VerticalScroll):
@@ -47,6 +63,11 @@ class DesignForm(VerticalScroll):
     }
     DesignForm .field-label {
         color: $text-muted;
+    }
+    DesignForm .field-hint {
+        color: $text-muted;
+        height: auto;
+        margin-bottom: 1;
     }
     DesignForm Input, DesignForm Select {
         margin-bottom: 1;
@@ -65,15 +86,28 @@ class DesignForm(VerticalScroll):
     DesignForm .network-row {
         height: auto;
     }
+    DesignForm #svc-key-row {
+        height: auto;
+    }
+    DesignForm #svc-key-row Input {
+        width: 1fr;
+    }
+    DesignForm #svc-key-row Button {
+        width: 10;
+        margin-left: 1;
+    }
+    DesignForm #svc-module-row, DesignForm #svc-image-row {
+        height: auto;
+    }
     """
 
     class Changed(Message):
-        pass
+        """A structural edit the canvas/preview has to follow."""
 
     def __init__(self, design: ScenarioDesign, module_names: list[str], **kwargs) -> None:
         super().__init__(**kwargs)
         self.design = design
-        self._module_names = module_names or ["template"]
+        self._module_names = list(module_names) or ["template"]
         self._selected_block_id: str | None = design.blocks[0].id if design.blocks else None
 
     # -- composition -----------------------------------------------------------
@@ -101,17 +135,39 @@ class DesignForm(VerticalScroll):
             yield Button("Add service", id="service-add-btn")
             yield Button("Remove service", id="service-remove-btn")
         yield Label("Selected service", classes="form-section")
+        yield Static("", id="svc-hint", classes="field-hint")
         yield Label("Display name", classes="field-label")
         yield Input(placeholder="e.g. Web challenge", id="svc-label")
-        yield Label("Module (container image source)", classes="field-label")
+        yield Label("Image source", classes="field-label")
         yield Select(
-            [(name, name) for name in self._module_names],
-            value=self._module_names[0],
+            IMAGE_SOURCE_OPTIONS,
+            value="module",
             allow_blank=False,
-            id="svc-module",
+            id="svc-image-source",
         )
+        with Vertical(id="svc-module-row"):
+            yield Label("Module (built from modules/<name>)", classes="field-label")
+            yield Select(
+                [(name, name) for name in self._module_names],
+                value=self._module_names[0],
+                allow_blank=False,
+                id="svc-module",
+            )
+        with Vertical(id="svc-image-row"):
+            yield Label("Image reference (registry is filled in for you)", classes="field-label")
+            yield Input(
+                placeholder="e.g. nginx:alpine  ->  docker.io/library/nginx:alpine",
+                id="svc-image-ref",
+            )
         yield Label("Service key (compose service name, slug)", classes="field-label")
-        yield Input(placeholder="e.g. web", id="svc-key")
+        with Horizontal(id="svc-key-row"):
+            yield Input(placeholder="e.g. web", id="svc-key", tooltip=SERVICE_KEY_TOOLTIP)
+            yield Button("Reroll", id="svc-key-reroll-btn", tooltip=SERVICE_KEY_TOOLTIP)
+        yield Static(
+            "Service key = the compose service name; every port/env/volume variable "
+            "of this service is prefixed with it.",
+            classes="field-hint",
+        )
         yield Label("Container name (empty = random)", classes="field-label")
         yield Input(placeholder="e.g. web_ctr_1", id="svc-container")
         yield Label("Networks", classes="field-label")
@@ -129,6 +185,7 @@ class DesignForm(VerticalScroll):
             id="svc-env-tags",
         )
         yield Label("Volumes of the selected service", classes="form-section")
+        yield Static(NO_SERVICE_HINT, id="volume-hint", classes="field-hint")
         yield OptionList(id="volume-list")
         with Horizontal(classes="form-row"):
             yield Button("Add volume", id="volume-add-btn")
@@ -168,6 +225,19 @@ class DesignForm(VerticalScroll):
             block.env_keys if block is not None else []
         )
 
+    def set_module_names(self, names: list[str]) -> None:
+        """Refresh the module catalog (modules created elsewhere show up here)."""
+        self._module_names = list(names) or ["template"]
+        select = self.query_one("#svc-module", Select)
+        current = select.value
+        select.set_options((name, name) for name in self._module_names)
+        if isinstance(current, str) and current in self._module_names:
+            select.value = current
+        else:
+            block = self.selected_block
+            if block is not None and block.module_name in self._module_names:
+                select.value = block.module_name
+
     def _reload_service_list(self) -> None:
         option_list = self.query_one("#service-list", OptionList)
         option_list.clear_options()
@@ -184,26 +254,56 @@ class DesignForm(VerticalScroll):
             if index is not None:
                 option_list.highlighted = index
 
+    DETAIL_IDS = (
+        "#svc-label",
+        "#svc-image-source",
+        "#svc-module",
+        "#svc-image-ref",
+        "#svc-key",
+        "#svc-key-reroll-btn",
+        "#svc-container",
+        "#svc-ports",
+        "#svc-apply-btn",
+        "#volume-add-btn",
+        "#volume-edit-btn",
+        "#volume-remove-btn",
+    )
+
+    def _set_detail_enabled(self, enabled: bool) -> None:
+        for widget_id in self.DETAIL_IDS:
+            self.query_one(widget_id).disabled = not enabled
+        for network in BUILTIN_NETWORKS:
+            self.query_one(f"#svc-net-{network}", Checkbox).disabled = not enabled
+        self.query_one("#svc-hint", Static).update(
+            "" if enabled else "No service selected — add one above to edit its details."
+        )
+        self.query_one("#volume-hint", Static).update(VOLUME_HINT if enabled else NO_SERVICE_HINT)
+
+    def _sync_image_rows(self, image_source: str) -> None:
+        self.query_one("#svc-module-row", Vertical).display = image_source == "module"
+        self.query_one("#svc-image-row", Vertical).display = image_source == "image"
+
     def _load_detail(self) -> None:
         block = self.selected_block
-        detail_ids = (
-            "#svc-label",
-            "#svc-key",
-            "#svc-container",
-            "#svc-ports",
-        )
+        detail_inputs = ("#svc-label", "#svc-key", "#svc-container", "#svc-ports", "#svc-image-ref")
         if block is None:
-            for widget_id in detail_ids:
+            for widget_id in detail_inputs:
                 self.query_one(widget_id, Input).value = ""
             for network in BUILTIN_NETWORKS:
                 self.query_one(f"#svc-net-{network}", Checkbox).value = False
             self.query_one("#volume-list", OptionList).clear_options()
+            self._sync_image_rows("module")
+            self._set_detail_enabled(False)
             self._rebind_env_editor()
             return
+        self._set_detail_enabled(True)
         self.query_one("#svc-label", Input).value = block.label
+        self.query_one("#svc-image-source", Select).value = block.image_source
         self.query_one("#svc-module", Select).value = (
             block.module_name if block.module_name in self._module_names else Select.BLANK
         )
+        self.query_one("#svc-image-ref", Input).value = block.image_ref
+        self._sync_image_rows(block.image_source)
         self.query_one("#svc-key", Input).value = block.service_key
         self.query_one("#svc-container", Input).value = block.container_name or ""
         for network in BUILTIN_NETWORKS:
@@ -212,7 +312,7 @@ class DesignForm(VerticalScroll):
         self._rebind_env_editor()
         self._reload_volume_list()
 
-    def _reload_volume_list(self) -> None:
+    def _reload_volume_list(self, highlight: int | None = None) -> None:
         block = self.selected_block
         option_list = self.query_one("#volume-list", OptionList)
         option_list.clear_options()
@@ -224,13 +324,16 @@ class DesignForm(VerticalScroll):
                     for slot in block.volumes
                 ]
             )
+            if highlight is not None and 0 <= highlight < len(block.volumes):
+                option_list.highlighted = highlight
 
     # -- scenario meta -----------------------------------------------------------
 
     @on(Input.Changed, "#design-name")
     def _name_changed(self, event: Input.Changed) -> None:
+        # kept out of Changed on purpose: the preview renders on tab switch,
+        # not on every keystroke
         self.design.name = event.value.strip() or "new_scenario"
-        self._changed()
 
     @on(Select.Changed, "#design-target")
     def _target_changed(self, event: Select.Changed) -> None:
@@ -273,6 +376,90 @@ class DesignForm(VerticalScroll):
 
     # -- service detail ------------------------------------------------------------
 
+    @on(Select.Changed, "#svc-image-source")
+    def _image_source_changed(self, event: Select.Changed) -> None:
+        self._sync_image_rows(str(event.value))
+
+    @on(Input.Blurred, "#svc-image-ref")
+    def _normalize_image_ref(self, event: Input.Blurred) -> None:
+        """Fill in the registry for the operator (nginx -> docker.io/library/nginx)."""
+        raw = event.input.value.strip()
+        if not raw:
+            return
+        try:
+            event.input.value = normalize_image_ref(raw)
+        except ValueError as exc:
+            self.notify(str(exc), severity="warning")
+
+    @on(Button.Pressed, "#svc-key-reroll-btn")
+    def _reroll_service_key(self, event: Button.Pressed) -> None:
+        event.stop()
+        block = self.selected_block
+        if block is None:
+            self.notify("Select a service first.", severity="warning")
+            return
+        key = self.design.regenerate_service_key(block.id)
+        block.service_key_mode = "random"
+        self.query_one("#svc-key", Input).value = key
+        self._changed()
+        self.notify(f"Service key is now `{key}`.")
+
+    def harvest_into_design(self) -> list[str]:
+        """Write the current field values into the selected block.
+
+        Values that do not validate yet are left out (the form may be half-typed
+        when the preview is opened); their messages are returned so the explicit
+        "Apply service changes" button can report them.
+        """
+        block = self.selected_block
+        if block is None:
+            return []
+        problems: list[str] = []
+
+        label = self.query_one("#svc-label", Input).value.strip()
+        if label:
+            block.label = label
+        else:
+            problems.append("Display name cannot be empty.")
+
+        key = self.query_one("#svc-key", Input).value.strip()
+        if key and key != block.service_key:
+            try:
+                self.design.set_service_key(block.id, key)
+                block.service_key_mode = "concrete"
+            except ValueError as exc:
+                problems.append(str(exc))
+
+        container = self.query_one("#svc-container", Input).value.strip()
+        try:
+            self.design.set_container_name(block.id, container or None)
+            block.container_name_mode = "concrete" if container else "random"
+        except ValueError as exc:
+            problems.append(str(exc))
+
+        image_source = str(self.query_one("#svc-image-source", Select).value or "module")
+        if image_source == "image":
+            raw_ref = self.query_one("#svc-image-ref", Input).value.strip()
+            try:
+                block.image_ref = normalize_image_ref(raw_ref)
+                block.image_source = "image"
+            except ValueError as exc:
+                problems.append(str(exc))
+        else:
+            module = self.query_one("#svc-module", Select).value
+            if module is not Select.BLANK:
+                block.module_name = str(module)
+            block.image_source = "module"
+
+        networks = [
+            network
+            for network in BUILTIN_NETWORKS
+            if self.query_one(f"#svc-net-{network}", Checkbox).value
+        ]
+        block.networks = networks or ["shared"]
+        block.ports = parse_port_lines(self.query_one("#svc-ports", Input).value)
+        return problems
+
     @on(Button.Pressed, "#svc-apply-btn")
     def _apply_detail(self, event: Button.Pressed) -> None:
         event.stop()
@@ -280,33 +467,13 @@ class DesignForm(VerticalScroll):
         if block is None:
             self.notify("Select a service first.", severity="warning")
             return
-        try:
-            label = self.query_one("#svc-label", Input).value.strip()
-            if label:
-                block.label = label
-            key = self.query_one("#svc-key", Input).value.strip()
-            if key and key != block.service_key:
-                self.design.set_service_key(block.id, key)
-                block.service_key_mode = "concrete"
-            container = self.query_one("#svc-container", Input).value.strip()
-            self.design.set_container_name(block.id, container or None)
-            block.container_name_mode = "concrete" if container else "random"
-            module = self.query_one("#svc-module", Select).value
-            if module is not Select.BLANK:
-                block.module_name = str(module)
-            networks = [
-                network
-                for network in BUILTIN_NETWORKS
-                if self.query_one(f"#svc-net-{network}", Checkbox).value
-            ]
-            block.networks = networks or ["shared"]
-            block.ports = parse_port_lines(self.query_one("#svc-ports", Input).value)
-        except ValueError as exc:
-            self.notify(str(exc), severity="error")
-            return
+        problems = self.harvest_into_design()
         self._reload_service_list()
         self._load_detail()
         self._changed()
+        if problems:
+            self.notify(problems[0], severity="error")
+            return
         self.notify(f"Service `{block.label}` updated.")
 
     # -- volumes ---------------------------------------------------------------------
@@ -319,7 +486,7 @@ class DesignForm(VerticalScroll):
     def _add_volume(self, event: Button.Pressed) -> None:
         event.stop()
         if self.selected_block is None:
-            self.notify("Select a service first.", severity="warning")
+            self.notify(NO_SERVICE_HINT, severity="warning")
             return
         self.app.push_screen(VolumeSlotDialog(), self._volume_saved(None))
 
@@ -328,7 +495,10 @@ class DesignForm(VerticalScroll):
         event.stop()
         block = self.selected_block
         index = self._selected_volume_index()
-        if block is None or index is None or index >= len(block.volumes):
+        if block is None:
+            self.notify(NO_SERVICE_HINT, severity="warning")
+            return
+        if index is None or index >= len(block.volumes):
             self.notify("Select a volume first.", severity="warning")
             return
         self.app.push_screen(VolumeSlotDialog(block.volumes[index]), self._volume_saved(index))
@@ -346,10 +516,14 @@ class DesignForm(VerticalScroll):
                 return
             if index is None:
                 block.volumes.append(slot)
+                position = len(block.volumes) - 1
             else:
                 block.volumes[index] = slot
-            self._reload_volume_list()
+                position = index
+            # highlight it so Edit/Remove work right away
+            self._reload_volume_list(highlight=position)
             self._changed()
+            self.notify(f"Volume `{slot.name}` saved.")
 
         return _callback
 
@@ -358,11 +532,14 @@ class DesignForm(VerticalScroll):
         event.stop()
         block = self.selected_block
         index = self._selected_volume_index()
-        if block is None or index is None or index >= len(block.volumes):
+        if block is None:
+            self.notify(NO_SERVICE_HINT, severity="warning")
+            return
+        if index is None or index >= len(block.volumes):
             self.notify("Select a volume first.", severity="warning")
             return
         del block.volumes[index]
-        self._reload_volume_list()
+        self._reload_volume_list(highlight=min(index, len(block.volumes) - 1))
         self._changed()
 
 

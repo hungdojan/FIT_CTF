@@ -11,10 +11,11 @@ from textual.widgets import Button, Footer, Header, Label, Select, TextArea
 
 from fit_ctf_admin.constants import ERROR_NOTIFY_TIMEOUT
 from fit_ctf_admin.exceptions import AdminError
-from fit_ctf_admin.screens.base_screen import BaseScreen
+from fit_ctf_admin.screens.dialogs.confirm_dialog import ConfirmDialog
+from fit_ctf_admin.screens.editor_screen import EditorScreen
 
 
-class ModuleFilesScreen(BaseScreen):
+class ModuleFilesScreen(EditorScreen):
     DEFAULT_CSS = """
     ModuleFilesScreen Vertical {
         padding: 0 2;
@@ -36,12 +37,25 @@ class ModuleFilesScreen(BaseScreen):
     }
     """
 
-    BINDINGS = [("escape", "dismiss(None)", "Close")]
-
     def __init__(self, module_name: str) -> None:
         super().__init__()
         self._module_name = module_name
         self._current_file: str | None = None
+        self._loaded_text: str | None = None
+        self._reverting_select = False
+
+    # -- unsaved-changes guard -------------------------------------------------
+
+    def is_dirty(self) -> bool:
+        if self._loaded_text is None:
+            return False
+        return self.query_one("#module-file-area", TextArea).text != self._loaded_text
+
+    def discard_result(self) -> None:
+        return None
+
+    def discard_subject(self) -> str:
+        return f"`{self._current_file}`" if self._current_file else "this file"
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -70,11 +84,36 @@ class ModuleFilesScreen(BaseScreen):
 
     @on(Select.Changed, "#module-file-select")
     def _file_selected(self, event: Select.Changed) -> None:
+        if self._reverting_select:
+            self._reverting_select = False
+            return
         if event.value is Select.BLANK:
             return
-        self.run_worker(
-            partial(self._load_file, str(event.value)), exclusive=True, exit_on_error=False
-        )
+        target = str(event.value)
+        if target == self._current_file:
+            return
+        if self.is_dirty():
+            self.app.push_screen(
+                ConfirmDialog(
+                    f"Discard unsaved changes to {self.discard_subject()}?",
+                    f"Switching to `{target}` drops the edits.",
+                    confirm_label="Discard",
+                ),
+                partial(self._switch_confirmed, target, self._current_file),
+            )
+            return
+        self._start_load(target)
+
+    def _switch_confirmed(self, target: str, previous: str | None, confirmed: bool | None) -> None:
+        if confirmed:
+            self._start_load(target)
+            return
+        if previous is not None:  # put the picker back on the edited file
+            self._reverting_select = True
+            self.query_one("#module-file-select", Select).value = previous
+
+    def _start_load(self, file_name: str) -> None:
+        self.run_worker(partial(self._load_file, file_name), exclusive=True, exit_on_error=False)
 
     async def _load_file(self, file_name: str) -> None:
         try:
@@ -83,6 +122,7 @@ class ModuleFilesScreen(BaseScreen):
             self.notify(str(exc), severity="error", timeout=ERROR_NOTIFY_TIMEOUT)
             return
         self._current_file = file_name
+        self._loaded_text = text
         self.query_one("#module-file-area", TextArea).text = text
 
     @on(Button.Pressed, "#module-file-save-btn")
@@ -103,8 +143,9 @@ class ModuleFilesScreen(BaseScreen):
         except AdminError as exc:
             self.notify(str(exc), severity="error", timeout=ERROR_NOTIFY_TIMEOUT)
             return
+        self._loaded_text = text
         self.notify(f"Saved `{file_name}` of module `{self._module_name}`.")
 
     @on(Button.Pressed, "#module-file-close-btn")
     def _close(self) -> None:
-        self.dismiss(None)
+        self.request_close()

@@ -367,7 +367,14 @@ class ScenarioManager:
         scenarios_map = {scenario_name: [] for scenario_name in self.list_scenarios()}
         data = list(user_cluster_mgr.collection.aggregate(MongoQueries.scenario_usage_overview()))
         for item in data:
-            scenarios_map[item["_id"]] = item["clusters"]
+            # clusters without any assigned scenario are grouped under `_id: None`
+            # (the pipeline unwinds with preserveNullAndEmptyArrays); scenarios that
+            # only exist in the DB are ignored -- the template dirs are the source
+            # of truth, and a None key breaks every sort over this mapping
+            name = item["_id"]
+            if name is None or name not in scenarios_map:
+                continue
+            scenarios_map[name] = item["clusters"]
         return scenarios_map
 
     def scenario_usage(

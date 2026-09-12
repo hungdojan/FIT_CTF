@@ -9,6 +9,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, Select, TextArea
 
 from fit_ctf_admin.scenario.design_model import VolumeSlot
+from fit_ctf_admin.screens.dialogs.form_support import FieldError, friendly_error
 
 KIND_OPTIONS = [
     ("Host path (set at assignment)", "path"),
@@ -78,9 +79,14 @@ class VolumeSlotDialog(ModalScreen[VolumeSlot | None]):
                 id="volume-kind",
             )
             yield TextArea(slot.body if slot else "", id="volume-body")
+            yield FieldError("", id="volume-error")
             with Horizontal():
                 yield Button("Cancel", id="volume-cancel-btn")
                 yield Button("Save", variant="primary", id="volume-save-btn")
+
+    @on(Input.Changed)
+    def _clear_error(self) -> None:
+        self.query_one("#volume-error", FieldError).clear()
 
     @on(Button.Pressed, "#volume-save-btn")
     def _save(self) -> None:
@@ -93,7 +99,10 @@ class VolumeSlotDialog(ModalScreen[VolumeSlot | None]):
                 body=self.query_one("#volume-body", TextArea).text,
             )
         except ValueError as exc:
-            self.notify(str(exc), severity="error")
+            # pydantic validation errors are multi-line dumps; show the message only
+            message = friendly_error(exc)
+            self.query_one("#volume-error", FieldError).show(message)
+            self.notify(message, severity="error")
             return
         self.dismiss(slot)
 

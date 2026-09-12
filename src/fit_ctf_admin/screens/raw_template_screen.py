@@ -11,10 +11,10 @@ from textual.widgets import Button, Footer, Header, Label, TextArea
 
 from fit_ctf_admin.constants import ERROR_NOTIFY_TIMEOUT
 from fit_ctf_admin.exceptions import AdminError
-from fit_ctf_admin.screens.base_screen import BaseScreen
+from fit_ctf_admin.screens.editor_screen import EditorScreen
 
 
-class RawTemplateScreen(BaseScreen):
+class RawTemplateScreen(EditorScreen):
     """Dismisses ``True`` after saving."""
 
     DEFAULT_CSS = """
@@ -37,12 +37,16 @@ class RawTemplateScreen(BaseScreen):
     }
     """
 
-    BINDINGS = [("escape", "dismiss(False)", "Cancel")]
-
     def __init__(self, scenario_name: str, text: str) -> None:
         super().__init__()
         self._scenario_name = scenario_name
         self._text = text
+
+    def is_dirty(self) -> bool:
+        return self.query_one("#raw-template-area", TextArea).text != self._text
+
+    def discard_subject(self) -> str:
+        return f"the template of `{self._scenario_name}`"
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -68,9 +72,10 @@ class RawTemplateScreen(BaseScreen):
         except AdminError as exc:
             self.notify(str(exc), severity="error", timeout=ERROR_NOTIFY_TIMEOUT)
             return
+        self._text = text
         self.notify(f"Template of `{self._scenario_name}` saved.")
         self.dismiss(True)
 
     @on(Button.Pressed, "#raw-cancel-btn")
     def _cancel(self) -> None:
-        self.dismiss(False)
+        self.request_close()

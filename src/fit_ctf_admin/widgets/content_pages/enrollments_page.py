@@ -29,7 +29,11 @@ class EnrollmentsPage(AdminPage):
             yield Button("Enroll user", variant="primary", id="enrollments-enroll-btn")
             yield Button("Cancel enrollment", variant="error", id="enrollments-cancel-btn")
             yield Checkbox("Show inactive", id="enrollments-show-inactive")
-        yield RefreshableTable(id="enrollments-table")
+        yield Label(
+            "space marks a row for a bulk action, ctrl+a marks all, ctrl+d clears",
+            classes="page-hint",
+        )
+        yield RefreshableTable(id="enrollments-table", selectable=True)
 
     def refresh_page(self) -> None:
         self.call_gateway(
@@ -82,12 +86,18 @@ class EnrollmentsPage(AdminPage):
         )
 
     @property
-    def _selected_enrollment(self) -> tuple[str, str] | None:
-        key = self.query_one("#enrollments-table", RefreshableTable).selected_key
-        if key is None or "@" not in key:
-            return None
-        username, _, project = key.partition("@")
-        return username, project
+    def _table(self) -> RefreshableTable:
+        return self.query_one("#enrollments-table", RefreshableTable)
+
+    @property
+    def _selected_enrollments(self) -> list[tuple[str, str]]:
+        """Marked rows, else the cursor row, as ``(username, project)`` pairs."""
+        pairs = []
+        for key in self._table.action_keys:
+            username, separator, project = key.partition("@")
+            if separator:
+                pairs.append((username, project))
+        return pairs
 
     @on(Select.Changed, "#enrollments-project-select")
     def _project_filter_changed(self) -> None:
@@ -117,29 +127,52 @@ class EnrollmentsPage(AdminPage):
             group="enrollments-mutate",
         )
 
+    @on(RefreshableTable.SelectionChanged, "#enrollments-table")
+    def _selection_changed(self, event: RefreshableTable.SelectionChanged) -> None:
+        count = len(event.keys)
+        suffix = f" ({count})" if count else ""
+        self.query_one("#enrollments-cancel-btn", Button).label = f"Cancel enrollment{suffix}"
+
     @on(Button.Pressed, "#enrollments-cancel-btn")
     def _cancel_enrollment(self) -> None:
-        selected = self._selected_enrollment
-        if selected is None:
+        pairs = self._selected_enrollments
+        if not pairs:
             self.notify("Select an enrollment first.", severity="warning")
             return
-        username, project = selected
         self.app.push_screen(
             ConfirmDialog(
-                f"Cancel enrollment of `{username}` in `{project}`?",
-                "Stops and removes the user's cluster for this project.",
+                _cancel_title(pairs),
+                "Stops and removes the users' clusters for those projects.",
                 confirm_label="Cancel enrollment",
             ),
-            lambda confirmed: self._do_cancel(username, project) if confirmed else None,
+            lambda confirmed: self._do_cancel(pairs) if confirmed else None,
         )
 
-    def _do_cancel(self, username: str, project: str) -> None:
+    def _do_cancel(self, pairs: list[tuple[str, str]]) -> None:
         self.call_gateway(
-            lambda: self.core.gateway.cancel_enrollment(username, project),
-            lambda _: self._mutation_done(f"Enrollment of `{username}` in `{project}` cancelled."),
+            lambda: self.core.gateway.cancel_enrollments(pairs),
+            lambda failures: self._cancel_done(pairs, failures),
             group="enrollments-mutate",
         )
+
+    def _cancel_done(self, pairs: list[tuple[str, str]], failures: list[str]) -> None:
+        for failure in failures:
+            self.notify(failure, severity="error")
+        done = len(pairs) - len(failures)
+        self.notify(f"{done} enrollment(s) cancelled.")
+        self._table.clear_marks()
+        self._load_enrollments()
 
     def _mutation_done(self, message: str) -> None:
         self.notify(message)
         self._load_enrollments()
+
+
+def _cancel_title(pairs: list[tuple[str, str]]) -> str:
+    if len(pairs) == 1:
+        username, project = pairs[0]
+        return f"Cancel enrollment of `{username}` in `{project}`?"
+    listed = ", ".join(f"`{user}@{project}`" for user, project in pairs[:5])
+    if len(pairs) > 5:
+        listed += f", … (+{len(pairs) - 5})"
+    return f"Cancel {len(pairs)} enrollments: {listed}?"

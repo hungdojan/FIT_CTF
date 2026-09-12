@@ -54,8 +54,19 @@ Dashboard
 
 Users
    List, create (with optional password generation — the password is shown exactly once
-   in a dialog), disable, and delete users. The *Show inactive* toggle includes disabled
-   accounts.
+   in a dialog), edit, disable, and delete users. The *Show inactive* toggle includes
+   disabled accounts.
+
+   The create and edit forms validate as you go (username, email format, password
+   strength) and show the problem inline; a rejected value — including one the database
+   refuses, like a duplicate username — keeps the form open with everything you typed.
+   The password field has a *Show*/*Hide* button, and *Edit* can change email, role and
+   password (a new password is revealed once, like at creation).
+
+   *Disable* and *Delete* act on every marked row: ``space`` marks the row under the
+   cursor (clicking a row marks it too), ``ctrl+a`` marks all, ``ctrl+d`` clears the
+   marks. With nothing marked they act on the cursor row. The confirmation lists what
+   is about to go. The Enrollments page works the same way for *Cancel enrollment*.
 
 Projects
    List, create, disable, and delete projects (a project's cluster and networks are
@@ -103,14 +114,32 @@ Scenarios
    are stored in ``ScenarioConfig.config_params`` and injected at compile time.
 
 Designer
-   Form-first scenario authoring with labeled fields: services (module, service key,
-   container name, networks, ports, env variables managed via add/remove buttons,
+   Form-first scenario authoring with labeled fields: services (image source, service
+   key, container name, networks, ports, env variables managed via add/remove buttons,
    volume slots incl. Jinja volume templates that may
    reference ``secret_map__<name>`` slots), name-only secrets, and the target kind
    (user-cluster vs project-cluster scenario — this decides whether the compose
    ``name:`` line may use ``{{ username }}``). The *Compose preview* tab shows the
    generated ``scenario_compose.yaml.j2``; the *Layout* tab is an optional visual
-   arrangement of the services.
+   arrangement of the services. Both re-render from the form when you open them, so
+   half-finished field edits show up without pressing *Apply service changes* (Apply
+   is still the way to get the validation messages).
+
+   **Service key** is the service's name in the generated compose file, and the prefix
+   of every variable the scenario config will ask for: a service keyed ``web`` with a
+   port named ``http`` produces ``web__port_map__http``, and likewise
+   ``web__env_map__ADMIN`` and ``web__volume_map__cfg``. It has to be a lowercase slug
+   and unique inside the scenario. Leaving the generated ``svc_xxxxxx`` is fine —
+   *Reroll* draws a new one — but a readable key makes the scenario config readable
+   too.
+
+   **Image source** picks where a service's image comes from. *Module* builds
+   ``modules/<name>`` (``build:`` + ``image: fit-ctf/<name>:latest``) and is the
+   default. *External image* pulls a ready-made image instead and emits no ``build:``
+   section; a short reference is completed the way the container engines do it, so
+   ``nginx:alpine`` becomes ``docker.io/library/nginx:alpine`` and
+   ``bitnami/nginx`` becomes ``docker.io/bitnami/nginx``, while anything naming a
+   registry (``ghcr.io/...``, ``localhost:5000/...``) is left as typed.
 
    Saving writes a real scenario directory (compose template, ``volumes/`` files, and
    an ``admin_design.json`` sidecar). Scenarios saved by the designer reopen with exact
@@ -121,8 +150,12 @@ Designer
 Modules
    Container module registry: create a module from the template, view and edit its
    files (Containerfile, entrypoint.sh, …) in a built-in editor, build its image —
-   the full build output is shown in a dialog — and delete it (guarded by the
-   compiled-scenario reference count).
+   the build log window opens immediately and fills line by line while the engine
+   runs, ending in a success/failure banner and a notification — and delete it
+   (guarded by the compiled-scenario reference count). Modules created here appear in
+   the Designer's image-source picker as soon as that page is opened again. Leaving
+   the file editor with unsaved changes (escape, *Close*, or switching files) asks for
+   confirmation first.
 
 Progress
    Per-project leaderboard with a per-user drill-down: solved secrets and the raw

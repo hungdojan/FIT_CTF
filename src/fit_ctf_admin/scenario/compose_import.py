@@ -169,12 +169,15 @@ class ScenarioComposeImporter:
                 continue
             key = str(service_key)
             section = self._service_section_text(key)
+            module_name, image_source, image_ref = self._extract_image(section, raw_service)
             blocks.append(
                 ServiceBlock(
                     label=key,
                     service_key=key,
                     service_key_mode="concrete",
-                    module_name=self._extract_module_name(section, raw_service),
+                    module_name=module_name,
+                    image_source=image_source,
+                    image_ref=image_ref,
                     networks=self._extract_service_networks(raw_service),
                     ports=self._extract_ports(section, key),
                     env_keys=self._extract_env_keys(section, key),
@@ -194,19 +197,28 @@ class ScenarioComposeImporter:
         match = pattern.search(self.text)
         return match.group(0) if match else ""
 
-    def _extract_module_name(self, section: str, service: dict) -> str:
+    def _extract_image(self, section: str, service: dict) -> tuple[str, str, str]:
+        """Return ``(module_name, image_source, image_ref)`` for one service.
+
+        A service that only carries an ``image:`` which is not a locally built
+        ``fit-ctf/<module>`` one is treated as an external image, so designs
+        using off-the-shelf images survive a round-trip through the importer.
+        """
         default_match = _MODULE_DEFAULT.search(section)
         if default_match:
-            return default_match.group(1)
+            return default_match.group(1), "module", ""
         context_match = _MODULE_CONTEXT.search(section)
         if context_match:
-            return context_match.group(1)
+            return context_match.group(1), "module", ""
         image = service.get("image")
         if isinstance(image, str):
             image_match = _MODULE_IMAGE.search(f"image: {image}")
             if image_match:
-                return image_match.group(1)
-        return "template"
+                return image_match.group(1), "module", ""
+            reference = image.strip()
+            if reference and not _JINJA_EXPR.search(reference):
+                return "template", "image", reference
+        return "template", "module", ""
 
     def _extract_service_networks(self, service: dict) -> list[str]:
         networks = service.get("networks")

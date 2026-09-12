@@ -19,12 +19,12 @@ from textual.widgets import Button, Collapsible, Footer, Header, Label, Static, 
 
 from fit_ctf_admin.constants import ERROR_NOTIFY_TIMEOUT
 from fit_ctf_admin.exceptions import AdminError
-from fit_ctf_admin.screens.base_screen import BaseScreen
 from fit_ctf_admin.screens.dialogs.text_dialog import TextDialog
+from fit_ctf_admin.screens.editor_screen import EditorScreen
 from fit_ctf_admin.widgets.kv_editor import KeyValueEditor
 
 
-class ScenarioConfigScreen(BaseScreen):
+class ScenarioConfigScreen(EditorScreen):
     """Pushed with a prefilled draft; dismisses ``True`` after a successful save."""
 
     DEFAULT_CSS = """
@@ -57,8 +57,6 @@ class ScenarioConfigScreen(BaseScreen):
     }
     """
 
-    BINDINGS = [("escape", "dismiss(False)", "Cancel")]
-
     def __init__(
         self,
         kind: str,
@@ -73,6 +71,32 @@ class ScenarioConfigScreen(BaseScreen):
         self._username = username
         self._scenario = scenario
         self._draft = draft
+        self._saved_state: dict | None = None
+
+    def on_mount(self) -> None:
+        self._saved_state = self._current_state()
+
+    # -- unsaved-changes guard -------------------------------------------------
+
+    def _current_state(self) -> dict:
+        """Editor contents in the draft's shape; invalid YAML counts as edited."""
+        try:
+            services = yaml.safe_load(self.query_one("#services-yaml", TextArea).text) or {}
+        except yaml.YAMLError:
+            return {"invalid_yaml": self.query_one("#services-yaml", TextArea).text}
+        return {
+            "secrets": self.query_one("#secrets-editor", KeyValueEditor).data(),
+            "service_configs": services,
+            "config_params": self.query_one("#params-editor", KeyValueEditor).data(),
+        }
+
+    def is_dirty(self) -> bool:
+        if self._saved_state is None:
+            return False
+        return self._current_state() != self._saved_state
+
+    def discard_subject(self) -> str:
+        return f"the config of `{self._scenario}`"
 
     @property
     def _target_label(self) -> str:
@@ -205,4 +229,4 @@ class ScenarioConfigScreen(BaseScreen):
 
     @on(Button.Pressed, "#config-cancel-btn")
     def _cancel(self) -> None:
-        self.dismiss(False)
+        self.request_close()
